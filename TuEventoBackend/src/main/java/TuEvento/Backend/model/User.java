@@ -37,14 +37,14 @@ public class User {
     @Column(name="birthDate", nullable = false)
     private Date birthDate;
 
-    @Column(name="adress", length=100, nullable = false)
-    private String adress;
+    @Column(name="address", length=100, nullable = false)
+    private String address;
 
     public User() {
     }
 
     public User(int userID, String fullName, String telephone, boolean status, boolean activated, Role role,
-            Date birthDate, String adress) {
+            Date birthDate, String address) {
         this.userID = userID;
         this.fullName = fullName;
         this.telephone = telephone;
@@ -52,7 +52,7 @@ public class User {
         this.activated = activated;
         this.role = role;
         this.birthDate = birthDate;
-        this.adress = adress;
+        this.address = address;
     }
 
     public int getUserID() {
@@ -111,11 +111,11 @@ public class User {
         this.birthDate = birthDate;
     }
 
-    public String getAdress() {
-        return adress;
+    public String getAddress() {
+        return address;
     }
 
-    public void setAdress(String adress) {
-        this.adress = adress;
+    public void setAddress(String address) {
+        this.address = address;
     }
 }

@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 
 @Entity(name="login")
@@ -18,7 +19,7 @@ public class Login {
     private int loginID;
 
     @OneToOne
-    @Column(name="userID",nullable=false)
+    @JoinColumn(name="userID",nullable=false)
     private User userID;
 
     @Column(name="password", length = 20, nullable=false)
