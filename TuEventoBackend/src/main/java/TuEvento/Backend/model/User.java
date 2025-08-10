@@ -21,7 +21,7 @@ public class User {
     @Column(name="fullName", length=70, nullable = false)
     private String fullName;
 
-    @Column(name="telephone", length=11, nullable = false)
+    @Column(name="telephone", length=11)
     private String telephone;
 
     @Column(name="status",  nullable = false, columnDefinition = "boolean default true")

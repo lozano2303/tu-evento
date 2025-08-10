@@ -1,6 +1,6 @@
 package TuEvento.Backend.dto;
 
-import java.util.Date;
+import java.sql.Date;
 
 public class UserDto {
 
@@ -8,17 +8,17 @@ public class UserDto {
 
     private String telephone;
 
-    private Date birthDay;
+    private Date birthDate;
 
     private String address;
 
     public UserDto(){
     }
 
-    public UserDto(String fullName, String telephone, Date birthDay, String address) {
+    public UserDto(String fullName, String telephone, Date birthDate, String address) {
         this.fullName = fullName;
         this.telephone = telephone;
-        this.birthDay = birthDay;
+        this.birthDate = birthDate;
         this.address = address;
     }
 
@@ -38,12 +38,12 @@ public class UserDto {
         this.telephone = telephone;
     }
 
-    public Date getBirthDay() {
-        return birthDay;
+    public Date getBirthDate() {
+        return birthDate;
     }
 
-    public void setBirthDay(Date birthDay) {
-        this.birthDay = birthDay;
+    public void setBirthDate(Date birthDate) {
+        this.birthDate = birthDate;
     }
 
     public String getAddress() {
@@ -53,4 +53,6 @@ public class UserDto {
     public void setAddress(String address) {
         this.address = address;
     }
+
+    
 }
