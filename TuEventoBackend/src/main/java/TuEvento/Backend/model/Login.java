@@ -1,7 +1,12 @@
 package TuEvento.Backend.model;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,7 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 
 @Entity(name="login")
-public class Login {
+public class Login implements UserDetails {
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -21,7 +26,8 @@ public class Login {
     @OneToOne
     @JoinColumn(name="userID",nullable=false)
     private User userID;
-
+    @Column(name="alias", length = 50)
+    private String name;
     @Column(name="password", length = 20, nullable=false)
     private String password;
 
@@ -35,7 +41,7 @@ public class Login {
 
     }
 
-    public Login(String email, LocalDateTime loginDate, int loginID, String password, User userID) {
+    public Login(String email, LocalDateTime loginDate, int loginID, String name, String password, User userID) {
         this.email = email;
         this.loginDate = loginDate;
         this.loginID = loginID;
@@ -57,6 +63,12 @@ public class Login {
 
     public void setUserID(User userID) {
         this.userID = userID;
+    }
+    public String getUsername(){
+        return name;
+    }
+    public void setUsername(String name) {
+        this.name = name;
     }
 
     public String getPassword() {
@@ -81,5 +93,9 @@ public class Login {
 
     public void setLoginDate(LocalDateTime loginDate) {
         this.loginDate = loginDate;
+    }
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.emptyList();
     }
 }
