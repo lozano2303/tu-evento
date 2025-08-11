@@ -20,7 +20,7 @@ public class ResponseDto<T> implements Serializable {
         this.data = data;
     }
 
-    // Getters, setters y métodos estáticos de fábrica como antes
+    // Getters, setters y métodos estáticos de fábrica
     public static <T> ResponseDto<T> ok(String message, T data) {
         return new ResponseDto<>(true, message, data);
     }

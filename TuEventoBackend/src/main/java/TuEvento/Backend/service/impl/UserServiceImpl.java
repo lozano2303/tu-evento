@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException; // Enum Role aquí
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,10 +28,10 @@ public class UserServiceImpl implements UserService {
             User user = new User();
             user.setFullName(userDto.getFullName());
             user.setTelephone(userDto.getTelephone());
-            user.setBirthDate(userDto.getBirthDate()); // Asegúrate de tener este setter en User
+            user.setBirthDate(userDto.getBirthDate());
             user.setAddress(userDto.getAddress());
-            user.setRole(Role.USER); // Enum Role
-            user.setStatus(true); // Activo por defecto
+            user.setRole(Role.USER);
+            user.setStatus(true);
 
             userRepository.save(user);
 

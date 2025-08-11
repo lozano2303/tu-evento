@@ -3,7 +3,6 @@ package TuEvento.Backend.dto;
 public class LoginDto {
 
     private String password;
-
     private String email;
 
     public LoginDto(){

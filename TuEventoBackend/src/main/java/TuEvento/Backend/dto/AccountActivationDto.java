@@ -1,6 +1,7 @@
 package TuEvento.Backend.dto;
 
 public class AccountActivationDto {
+
     private String activationCode;
 
     public AccountActivationDto(){
