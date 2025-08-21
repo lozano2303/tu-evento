@@ -4,18 +4,30 @@ import TuEvento.Backend.dto.LoginDto;
 
 import TuEvento.Backend.dto.requests.RequestLoginDTO;
 import TuEvento.Backend.dto.responses.ResponseDto;
+import TuEvento.Backend.dto.responses.ResponseLogin;
 import TuEvento.Backend.model.Login;
 import TuEvento.Backend.repository.LoginRepository;
 import TuEvento.Backend.service.LoginService;
+import TuEvento.Backend.service.jwt.jwtServices;
+
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
 public class LoginServiceImpl implements LoginService {
-
+    @Autowired
+    @Lazy
+    private AuthenticationManager authenticationManager;
+    
+    @Autowired
+    private jwtServices jwtService;
     @Autowired
     private LoginRepository loginRepository;
     public Optional<Login> findByEmail(String email) {
@@ -64,6 +76,19 @@ public class LoginServiceImpl implements LoginService {
         } catch (Exception e) {
             return ResponseDto.error("Error inesperado al guardar el usuario");
         }
+    }
+    public ResponseLogin login(RequestLoginDTO loginDTO) {
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                loginDTO.getUsername(),
+                loginDTO.getPassword()
+            )
+        );
+
+        Login userEntity = loginRepository.findByEmail(loginDTO.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+        String token = jwtService.getToken(userEntity);
+        return new ResponseLogin(token);
     }
     public Optional<Login> findByUsername(String username) {
         return loginRepository.findByUsername(username);

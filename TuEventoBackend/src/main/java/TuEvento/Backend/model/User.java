@@ -24,20 +24,20 @@ public class User {
     @Column(name="telephone", length=11)
     private String telephone;
 
-    @Column(name="status",  nullable = false, columnDefinition = "boolean default true")
+    @Column(name="status", nullable=false, columnDefinition = "boolean default true")
     private boolean status;
 
     @Column(name="activated", nullable = false, columnDefinition = "boolean default false")
     private boolean activated;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @Column(name = "role")
     private Role role;
 
-    @Column(name="birthDate", nullable = false)
+    @Column(name="birthDate")
     private Date birthDate;
 
-    @Column(name="address", length=100, nullable = false)
+    @Column(name="address", length=100)
     private String address;
 
     public User() {

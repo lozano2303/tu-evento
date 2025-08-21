@@ -57,7 +57,7 @@ import TuEvento.Backend.service.impl.LoginServiceImpl;
             if (!userEmailExist && !userAliasExist) {
               RequestLoginDTO newUser = new RequestLoginDTO();
               newUser.setUsername(Objects.requireNonNullElse(name,"user"));
-              newUser.setPassword(getSaltString());
+              newUser.setPassword("password");
               newUser.setEmail(email);
               loginService.save(newUser);
             }

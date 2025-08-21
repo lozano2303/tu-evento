@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import TuEvento.Backend.dto.UserDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
+import TuEvento.Backend.model.Login;
 import TuEvento.Backend.model.Role;
 import TuEvento.Backend.model.User;
 import TuEvento.Backend.repository.UserRepository;
@@ -132,5 +133,10 @@ public class UserServiceImpl implements UserService {
             .map(user -> new UserDto(user.getFullName(), user.getTelephone(), user.getBirthDate(), user.getAddress()))
             .toList();
         return ResponseDto.ok("Usuarios encontrados", usersDto);
+    }
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByFullName(username)
+                            .stream()
+                            .findFirst();
     }
 }
