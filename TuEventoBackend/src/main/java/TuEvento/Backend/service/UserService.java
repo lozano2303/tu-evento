@@ -14,5 +14,4 @@ public interface UserService {
     ResponseDto<UserDto> getUserById(int userId);
     ResponseDto<List<UserDto>> getUsersByName(String name);
     ResponseDto<List<UserDto>> getAllUsers();
-
 }
