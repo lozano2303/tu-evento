@@ -27,7 +27,7 @@ public class Login implements UserDetails {
     @JoinColumn(name="userID",nullable=false)
     private User userID;
     @Column(name="alias", length = 50)
-    private String name;
+    private String username;
     @Column(name="password", length = 20, nullable=false)
     private String password;
 
@@ -41,10 +41,11 @@ public class Login implements UserDetails {
 
     }
 
-    public Login(String email, LocalDateTime loginDate, int loginID, String name, String password, User userID) {
+    public Login(String email, LocalDateTime loginDate, int loginID, String username, String password, User userID) {
         this.email = email;
         this.loginDate = loginDate;
         this.loginID = loginID;
+        this.username = username;
         this.password = password;
         this.userID = userID;
     }
@@ -65,10 +66,10 @@ public class Login implements UserDetails {
         this.userID = userID;
     }
     public String getUsername(){
-        return name;
+        return username;
     }
-    public void setUsername(String name) {
-        this.name = name;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {

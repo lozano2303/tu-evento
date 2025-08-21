@@ -1,6 +1,7 @@
 package TuEvento.Backend.service.oauth;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -18,6 +19,18 @@ import TuEvento.Backend.service.impl.LoginServiceImpl;
     public class customOauht2UserService extends DefaultOAuth2UserService {
     @Autowired
     private LoginServiceImpl loginService;
+    protected String getSaltString() {
+        String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+        StringBuilder salt = new StringBuilder();
+        Random rnd = new Random();
+        while (salt.length() < 18) { // length of the random string.
+            int index = (int) (rnd.nextFloat() * SALTCHARS.length());
+            salt.append(SALTCHARS.charAt(index));
+        }
+        String saltStr = salt.toString();
+        return saltStr;
+
+    }
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = super.loadUser(userRequest);
@@ -44,7 +57,7 @@ import TuEvento.Backend.service.impl.LoginServiceImpl;
             if (!userEmailExist && !userAliasExist) {
               RequestLoginDTO newUser = new RequestLoginDTO();
               newUser.setUsername(Objects.requireNonNullElse(name,"user"));
-              newUser.setPassword("Password");
+              newUser.setPassword(getSaltString());
               newUser.setEmail(email);
               loginService.save(newUser);
             }
