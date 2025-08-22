@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import TuEvento.Backend.dto.UserDto;
-import TuEvento.Backend.dto.UserSocial;
+
 import TuEvento.Backend.dto.responses.ResponseDto;
 
 import TuEvento.Backend.model.Role;
