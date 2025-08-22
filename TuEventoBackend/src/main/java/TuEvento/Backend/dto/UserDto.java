@@ -8,6 +8,7 @@ public class UserDto {
     private String telephone;
     private Date birthDate;
     private String address;
+    
 
     public UserDto(){
     }

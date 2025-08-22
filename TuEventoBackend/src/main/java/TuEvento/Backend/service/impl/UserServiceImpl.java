@@ -9,8 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import TuEvento.Backend.dto.UserDto;
+import TuEvento.Backend.dto.UserSocial;
 import TuEvento.Backend.dto.responses.ResponseDto;
-import TuEvento.Backend.model.Login;
+
 import TuEvento.Backend.model.Role;
 import TuEvento.Backend.model.User;
 import TuEvento.Backend.repository.UserRepository;
@@ -33,7 +34,26 @@ public class UserServiceImpl implements UserService {
             user.setAddress(userDto.getAddress());
             user.setRole(Role.USER);
             user.setStatus(true);
+            user.setActivated(false);
+            userRepository.save(user);
 
+            return ResponseDto.ok("Usuario creado exitosamente");
+        } catch (DataAccessException e) {
+            return ResponseDto.error("Error de base de datos al crear el usuario");
+        } catch (Exception e) {
+            return ResponseDto.error("Error inesperado al crear el usuario");
+        }
+    }
+    public ResponseDto<UserDto> createUserSocialMedia(UserDto userDto) {
+        try {
+            User user = new User();
+            user.setFullName(userDto.getFullName());
+            user.setTelephone(userDto.getTelephone());
+            user.setBirthDate(userDto.getBirthDate());
+            user.setAddress(userDto.getAddress());
+            user.setRole(Role.USER);
+            user.setStatus(true);
+            user.setActivated(true);
             userRepository.save(user);
 
             return ResponseDto.ok("Usuario creado exitosamente");
@@ -135,8 +155,10 @@ public class UserServiceImpl implements UserService {
         return ResponseDto.ok("Usuarios encontrados", usersDto);
     }
     public Optional<User> findByUsername(String username) {
-        return userRepository.findByFullName(username)
-                            .stream()
-                            .findFirst();
+        Optional<User> userOpt = userRepository.findByFullName(username) 
+            .stream()
+            .findFirst();
+        return userOpt;
     }
+
 }

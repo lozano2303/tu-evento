@@ -10,13 +10,15 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import TuEvento.Backend.dto.UserDto;
 import TuEvento.Backend.dto.requests.RequestLoginDTO;
-
+import TuEvento.Backend.model.User;
 import TuEvento.Backend.service.impl.LoginServiceImpl;
-
-
+import TuEvento.Backend.service.impl.UserServiceImpl;
     @Service
     public class customOauht2UserService extends DefaultOAuth2UserService {
+    @Autowired
+    private UserServiceImpl userService;
     @Autowired
     private LoginServiceImpl loginService;
     protected String getSaltString() {
@@ -55,10 +57,19 @@ import TuEvento.Backend.service.impl.LoginServiceImpl;
             boolean userEmailExist = !loginService.findByEmail(email).isEmpty();
             boolean userAliasExist = !loginService.findByUsername(name).isEmpty();
             if (!userEmailExist && !userAliasExist) {
+              UserDto userDto = new UserDto();
+              userDto.setFullName(name);
+              userDto.setTelephone(null);
+              userDto.setBirthDate(null);
+              userDto.setAddress(null);
+              userService.createUserSocialMedia(userDto);
+              User user = userService.findByUsername(name)
+                        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
               RequestLoginDTO newUser = new RequestLoginDTO();
               newUser.setUsername(Objects.requireNonNullElse(name,"user"));
-              newUser.setPassword("password");
+              newUser.setPassword(getSaltString());
               newUser.setEmail(email);
+              newUser.setUserID(user);
               loginService.save(newUser);
             }
         }

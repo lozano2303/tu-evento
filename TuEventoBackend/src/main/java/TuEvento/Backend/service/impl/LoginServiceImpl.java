@@ -10,9 +10,11 @@ import TuEvento.Backend.repository.LoginRepository;
 import TuEvento.Backend.service.LoginService;
 import TuEvento.Backend.service.jwt.jwtServices;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -66,8 +68,10 @@ public class LoginServiceImpl implements LoginService {
 
             Login login = new Login();
             login.setEmail(requestLoginDTO.getEmail());
+            login.setUserID(requestLoginDTO.getUserID());
             login.setPassword(requestLoginDTO.getPassword()); 
             login.setUsername(requestLoginDTO.getUsername());
+            login.setLoginDate(LocalDateTime.now());
             loginRepository.save(login);
             return ResponseDto.ok("Usuario registrado exitosamente");
 

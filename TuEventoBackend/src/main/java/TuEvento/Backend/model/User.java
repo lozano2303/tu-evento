@@ -27,7 +27,7 @@ public class User {
     @Column(name="status", nullable=false, columnDefinition = "boolean default true")
     private boolean status;
 
-    @Column(name="activated", nullable = false, columnDefinition = "boolean default false")
+    @Column(name="activated", nullable = false)
     private boolean activated;
     
     @Enumerated(EnumType.STRING)

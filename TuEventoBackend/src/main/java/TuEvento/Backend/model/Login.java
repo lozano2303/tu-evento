@@ -27,7 +27,7 @@ public class Login implements UserDetails {
     @JoinColumn(name="userID",nullable=false)
     private User userID;
 
-    @Column(name="alias", length = 50)
+    @Column(name="alias", length = 100)
     private String username; // <--- CAMBIO AQUÍ
 
     @Column(name="password", length = 20, nullable=false)
