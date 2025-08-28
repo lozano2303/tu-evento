@@ -60,8 +60,4 @@ public class ResponseDto<T> implements Serializable {
     public void setData(T data) {
         this.data = data;
     }
-
-    // Getters y setters omitidos para brevedad
-
-    
 }
