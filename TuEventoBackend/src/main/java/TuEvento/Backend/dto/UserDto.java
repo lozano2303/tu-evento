@@ -8,16 +8,17 @@ public class UserDto {
     private String telephone;
     private Date birthDate;
     private String address;
-    
+    private boolean activated;
 
-    public UserDto(){
+    public UserDto() {
     }
 
-    public UserDto(String fullName, String telephone, Date birthDate, String address) {
+    public UserDto(String fullName, String telephone, Date birthDate, String address, boolean activated) {
         this.fullName = fullName;
         this.telephone = telephone;
         this.birthDate = birthDate;
         this.address = address;
+        this.activated = activated;
     }
 
     public String getFullName() {
@@ -52,5 +53,11 @@ public class UserDto {
         this.address = address;
     }
 
-    
+    public boolean isActivated() {
+        return activated;
+    }
+
+    public void setActivated(boolean activated) {
+        this.activated = activated;
+    }
 }

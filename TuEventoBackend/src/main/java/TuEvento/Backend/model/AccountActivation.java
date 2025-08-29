@@ -10,7 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 
-@Entity(name="acountActivation")
+@Entity(name="acount_activation")
 public class AccountActivation {
 
     @Id

@@ -124,16 +124,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseDto<UserDto> getUserById(int userId) {
         Optional<User> userOpt = userRepository.findById(userId);
-        if (!userOpt.isPresent()) {
+        if (userOpt.isEmpty()) {
             return ResponseDto.error("Usuario no encontrado");
         }
-        User user = userOpt.get();
-        UserDto userDto = new UserDto(
-            user.getFullName(),
-            user.getTelephone(),
-            user.getBirthDate(),
-            user.getAddress()
-        );
+        UserDto userDto = mapToDto(userOpt.get());
         return ResponseDto.ok("Usuario encontrado", userDto);
     }
 
@@ -141,7 +135,7 @@ public class UserServiceImpl implements UserService {
     public ResponseDto<List<UserDto>> getUsersByName(String name) {
         List<User> users = userRepository.findByFullNameContainingIgnoreCase(name);
         List<UserDto> usersDto = users.stream()
-            .map(user -> new UserDto(user.getFullName(), user.getTelephone(), user.getBirthDate(), user.getAddress()))
+            .map(this::mapToDto)
             .toList();
         return ResponseDto.ok("Usuarios encontrados", usersDto);
     }
@@ -150,15 +144,25 @@ public class UserServiceImpl implements UserService {
     public ResponseDto<List<UserDto>> getAllUsers() {
         List<User> users = userRepository.findAll();
         List<UserDto> usersDto = users.stream()
-            .map(user -> new UserDto(user.getFullName(), user.getTelephone(), user.getBirthDate(), user.getAddress()))
+            .map(this::mapToDto)
             .toList();
         return ResponseDto.ok("Usuarios encontrados", usersDto);
     }
+
     public Optional<User> findByUsername(String username) {
-        Optional<User> userOpt = userRepository.findByFullName(username) 
-            .stream()
-            .findFirst();
-        return userOpt;
+        return userRepository.findByFullName(username)
+                .stream()
+                .findFirst();
     }
 
+
+    private UserDto mapToDto(User user) {
+        return new UserDto(
+            user.getFullName(),
+            user.getTelephone(),
+            user.getBirthDate(),
+            user.getAddress(),
+            user.isActivated() 
+        );
+    }
 }
