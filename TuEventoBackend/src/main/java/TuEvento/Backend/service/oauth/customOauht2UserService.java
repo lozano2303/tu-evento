@@ -25,7 +25,7 @@ import TuEvento.Backend.service.impl.UserServiceImpl;
     @Autowired
     private LoginServiceImpl loginService;
     protected String getSaltString() {
-        String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@";
+        String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@*";
         StringBuilder salt = new StringBuilder();
         Random rnd = new Random();
         while (salt.length() < 18) { // length of the random string.
@@ -43,16 +43,8 @@ import TuEvento.Backend.service.impl.UserServiceImpl;
         Map<String, Object> attributes = oauth2User.getAttributes();
         String email = null;
         String name = null;
-        if ("Google".equalsIgnoreCase(clientName)) {
-            email = (String) attributes.get("email");
-            name = (String) attributes.get("name");
-        } else if ("Twitter".equalsIgnoreCase(clientName)) {
-            email = (String) attributes.get("login");
-            name = (String) attributes.get("name");
-        } else if ("Facebook".equalsIgnoreCase(clientName)) {
-            email = (String) attributes.get("email");
-            name = (String) attributes.get("name");
-        }
+        email = (String) attributes.get("email");
+        name = (String) attributes.get("name");
         System.out.println("clientName: "+clientName);
         System.out.println("name: "+name);
         System.out.println("email: "+email);

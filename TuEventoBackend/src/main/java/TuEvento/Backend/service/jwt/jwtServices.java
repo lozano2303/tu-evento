@@ -5,9 +5,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import TuEvento.Backend.service.LoginService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -17,7 +20,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class jwtServices {
-
+    @Autowired
+    @Lazy
+    private LoginService loginService;
     // clave secreta (sin decodificar)
     private static final String secretKey = "pCrbWA1TUFdZY0+sCHHpbJenCguvnNAGspn66f6xSbA=";
 
@@ -51,6 +56,7 @@ public class jwtServices {
     }
 
     private Claims getAllClaims(String token) {
+        
         return Jwts
                 .parserBuilder()
                 .setSigningKey(getKey())

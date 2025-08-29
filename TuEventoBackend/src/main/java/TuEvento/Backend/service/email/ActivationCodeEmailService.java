@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ActivationCodeEmailService {
-
+    
     @Autowired
     private JavaMailSender mailSender;
     public void basicEmail(String email,String user, String password) {
@@ -137,6 +137,40 @@ public class ActivationCodeEmailService {
         message.setText(body);
         mailSender.send(message);
     }
+        // Método básico para enviar un correo de prueba
+  public void passwordResetEmail(String adressMail, String token) {
+      try {
+          String subject = "Restablecimiento de Contraseña";
+
+          String bodyMail = String.format("""
+              <!DOCTYPE html>
+              <html lang="es">
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Restablecer Contraseña</title>
+              </head>
+              <body style="font-family: sans-serif; background-color: #f4f6f7; padding: 20px;">
+                <div style="max-width: 600px; margin: auto; background-color: white; border-radius: 10px; padding: 30px; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+                  <h2 style="color: #e74c3c;">¿Olvidaste tu contraseña?</h2>
+                  <p>Hola, recibimos una solicitud para restablecer tu contraseña.</p>
+                  <p style="text-align: center;">
+                    <a href="#" style="background-color: #e74c3c; color: white; padding: 10px 25px; text-decoration: none; border-radius: 4px;">
+                      Restablecer ahora con este código: <strong>%s</strong>
+                    </a>
+                  </p>
+                  <p>Si no fuiste tú, simplemente ignora este mensaje.</p>
+                  <p style="margin-top: 30px; font-size: 12px; color: #888;">Este código expirará en 15 minutos.</p>
+                </div>
+              </body>
+              </html>
+              """, token); // Inserta el token aquí
+
+          emailSender(adressMail, subject, bodyMail);
+      } catch (Exception e) {
+          e.printStackTrace();
+      }
+  }
     public boolean emailSender(String adressMail, String subject, String bodyMail) throws MessagingException {
         try {
             // Crear un mensaje MIME
