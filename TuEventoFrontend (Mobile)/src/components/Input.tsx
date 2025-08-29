@@ -12,7 +12,7 @@ export default function Input({ label, ...props }: InputProps) {
       )}
       <TextInput
         {...props}
-        className="w-full px-4 py-3 border border-gray-600 rounded-xl bg-gray-900 text-white focus:border-blue-500"
+        className=" w-full px-4 py-3 border border-gray-600 rounded-xl bg-gray-900 text-white focus:border-blue-500 " 
         placeholderTextColor="#aaa"
       />
     </View>
