@@ -33,7 +33,8 @@ public class SecurityConfig {
                                                 autRequest -> autRequest
                                                                 .requestMatchers("/api/v1/public/**").permitAll()
                                                                 .requestMatchers("/oauth2/authorization/**").permitAll()
-                                                                .requestMatchers("/login/oauth2/code/**").permitAll()           
+                                                                .requestMatchers("/login/oauth2/code/**").permitAll()
+                                                                .requestMatchers("/api/v1/**").permitAll()           
                                                                 .anyRequest().authenticated())
                                 // .formLogin(withDefaults())
                                 // .build();

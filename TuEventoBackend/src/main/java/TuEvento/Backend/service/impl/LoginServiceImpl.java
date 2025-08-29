@@ -97,4 +97,5 @@ public class LoginServiceImpl implements LoginService {
     public Optional<Login> findByUsername(String username) {
         return loginRepository.findByUsername(username);
     }
+    
 }
