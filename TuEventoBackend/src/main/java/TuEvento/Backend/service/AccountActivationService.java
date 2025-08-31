@@ -13,6 +13,12 @@ public interface AccountActivationService {
     void createActivationForUser(int userId);
 
     /**
+     * Resends a new activation code, updating the existing one and emailing the user again.
+     * @param userId the ID of the user
+     */
+    void resendActivationCode(int userId);
+
+    /**
      * Verifies an activation code and activates the account if valid and not expired.
      * @param userId the ID of the user
      * @param code the activation code to verify

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ActivationCodeEmailDto {
-    private String to;             // Recipient's email address
-    private String activationCode; // Activation code to send
-    private String userFullName;   // Name to personalize the email
+    private String to;
+    private String activationCode;
+    private String userFullName;
 }

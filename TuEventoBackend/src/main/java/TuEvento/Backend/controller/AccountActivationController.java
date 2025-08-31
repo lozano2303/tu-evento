@@ -23,6 +23,15 @@ public class AccountActivationController {
     }
 
     /**
+     * Endpoint to resend a new activation code for a user.
+     */
+    @PutMapping("/resend")
+    public String resendActivationCode(@RequestBody AccountActivationDto dto) {
+        activationService.resendActivationCode(dto.getUserID());
+        return "A new activation code was generated and sent to the user's email.";
+    }
+
+    /**
      * Endpoint to verify the activation code for a user.
      */
     @PutMapping("/verify")

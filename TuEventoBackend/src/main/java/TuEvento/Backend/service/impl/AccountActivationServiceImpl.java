@@ -40,7 +40,7 @@ public class AccountActivationServiceImpl implements AccountActivationService {
     public void createActivationForUser(int userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
-            throw new IllegalArgumentException("User with ID " + userId + " not found.");
+            throw new IllegalArgumentException("Usuario con el ID " + userId + " no fue encontrado");
         }
 
         User user = userOpt.get();
@@ -61,8 +61,39 @@ public class AccountActivationServiceImpl implements AccountActivationService {
             ActivationCodeEmailDto dto = new ActivationCodeEmailDto(email, activationCode, fullName);
             emailService.sendActivationCodeEmail(dto);
         } else {
-            throw new IllegalStateException("Login not found for user ID: " + userId);
+            throw new IllegalStateException("El correo ingresado no existe, verifica si lo escribiste correctamente");
         }
+    }
+
+    @Override
+    @Transactional
+    public void resendActivationCode(int userId) {
+        // Buscar usuario
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario con el ID " + userId + " no fue encontrado"));
+
+        // Buscar la activación existente
+        AccountActivation activation = activationRepository.findByUserID_UserID(userId)
+                .orElseThrow(() -> new IllegalStateException("No existe activación previa para el usuario con ID: " + userId));
+
+        // Generar nuevo código
+        String newActivationCode = String.format("%06d", new Random().nextInt(999999));
+        activation.setActivationCode(newActivationCode);
+        activation.setActivation(false);
+        activation.setExpirationTime(LocalDateTime.now().plusMinutes(1)); // ⏰ Cambia a más tiempo en producción
+
+        // Guardar cambios
+        activationRepository.save(activation);
+
+        // Buscar login para enviar correo
+        loginRepository.findByUserID(user).ifPresentOrElse(login -> {
+            String email = login.getEmail();
+            String fullName = user.getFullName();
+            ActivationCodeEmailDto dto = new ActivationCodeEmailDto(email, newActivationCode, fullName);
+            emailService.sendActivationCodeEmail(dto);
+        }, () -> {
+            throw new IllegalStateException("El correo ingresado no existe, verifica si lo escribiste correctamente");
+        });
     }
 
     @Override
@@ -76,21 +107,21 @@ public class AccountActivationServiceImpl implements AccountActivationService {
         Optional<AccountActivation> optActivation = activationRepository.findByUserID_UserID(userId);
 
         if (optActivation.isEmpty()) {
-            return ResponseDto.error("No activation record found for user");
+            return ResponseDto.error("No se encontró ningún registro de activación para el usuario");
         }
 
         AccountActivation activation = optActivation.get();
 
         if (activation.isExpired()) {
-            return ResponseDto.error("Activation code has expired");
+            return ResponseDto.error("El código de activación ha expirado");
         }
 
         if (activation.getActivation()) {
-            return ResponseDto.error("Account is already activated");
+            return ResponseDto.error("La cuenta ya está activada");
         }
 
         if (!activation.getActivationCode().equals(activationCode)) {
-            return ResponseDto.error("Invalid activation code");
+            return ResponseDto.error("Código de activación no válido");
         }
 
         activation.setActivation(true);
@@ -98,7 +129,7 @@ public class AccountActivationServiceImpl implements AccountActivationService {
 
         Optional<User> optUser = userRepository.findById(userId);
         if (optUser.isEmpty()) {
-            return ResponseDto.error("User not found");
+            return ResponseDto.error("Usuario no encontrado");
         }
 
         User user = optUser.get();
@@ -108,6 +139,6 @@ public class AccountActivationServiceImpl implements AccountActivationService {
             userRepository.save(user);
         }
 
-        return ResponseDto.ok("Account activated successfully");
+        return ResponseDto.ok("Cuenta activada exitosamente");
     }
 }
