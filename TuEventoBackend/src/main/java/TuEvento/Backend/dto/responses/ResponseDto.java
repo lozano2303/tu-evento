@@ -20,9 +20,13 @@ public class ResponseDto<T> implements Serializable {
         this.data = data;
     }
 
-    // Getters, setters y métodos estáticos de fábrica
+    // Métodos estáticos de fábrica
     public static <T> ResponseDto<T> ok(String message, T data) {
         return new ResponseDto<>(true, message, data);
+    }
+
+    public static <T> ResponseDto<T> ok(T data) {
+        return new ResponseDto<>(true, null, data);
     }
 
     public static <T> ResponseDto<T> ok(String message) {
@@ -37,6 +41,7 @@ public class ResponseDto<T> implements Serializable {
         return new ResponseDto<>(false, message, data);
     }
 
+    // Getters and setters
     public boolean isSuccess() {
         return success;
     }

@@ -11,6 +11,7 @@ import TuEvento.Backend.service.RegisterService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,8 +22,12 @@ public class RegisterServiceImpl implements RegisterService {
 
     @Autowired
     private UserRepository userRepository;
+    
     @Autowired
     private LoginRepository loginRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -41,25 +46,28 @@ public class RegisterServiceImpl implements RegisterService {
                 user.setBirthDate(new java.sql.Date(dto.getBirthDate().getTime()));
             }
             user.setAddress(dto.getAddress());
-            user.setRole(Role.USER); // Enum Role
+            user.setRole(Role.USER);
             user.setStatus(true);
+            user.setActivated(true);
 
             userRepository.save(user);
 
-            // 2. Crear login asociado
+            // 2. Crear login asociado CON CONTRASEÑA HASHEDA
             Login login = new Login();
             login.setEmail(dto.getEmail());
-            login.setPassword(dto.getPassword()); // Deberías hashearla antes de producción
+            login.setPassword(passwordEncoder.encode(dto.getPassword()));
             login.setLoginDate(LocalDateTime.now());
             login.setUserID(user);
+            login.setUsername(dto.getEmail());
 
             loginRepository.save(login);
 
             return ResponseDto.ok("Usuario y login creados exitosamente");
+            
         } catch (DataAccessException e) {
-            return ResponseDto.error("Error de base de datos al registrar");
+            return ResponseDto.error("Error de base de datos al registrar: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseDto.error("Error inesperado al registrar");
+            return ResponseDto.error("Error inesperado al registrar: " + e.getMessage());
         }
     }
 }

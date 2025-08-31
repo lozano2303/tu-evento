@@ -1,4 +1,5 @@
 package TuEvento.Backend.config;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,47 +14,41 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import TuEvento.Backend.service.oauth.customOauht2UserService;
 import lombok.RequiredArgsConstructor;
 
-
-
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-        private final AuthenticationProvider authProvider;
-        private final TuEvento.Backend.jwt.jwtAuthenticationFilter jwtAuthenticationFilter;
-        @Autowired
-        @Lazy
-        private customOauht2UserService customOAuth2UserService;
-        @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-                return http
-                                .csrf(csrf -> csrf.disable())
-                                .authorizeHttpRequests(
-                                                autRequest -> autRequest
-                                                                .requestMatchers("/api/v1/public/**").permitAll()
-                                                                .requestMatchers("/oauth2/authorization/**").permitAll()
-                                                                .requestMatchers("/login/oauth2/code/**").permitAll()
-                                                                .requestMatchers("/api/v1/**").permitAll() 
-                                                                .requestMatchers("/api/v1/users/**").permitAll()
-                                                                .requestMatchers("/api/v1/login/**").permitAll()
-                                                                .requestMatchers("/api/v1/account-activation/create").permitAll()
-                                                                .requestMatchers("/api/v1/account-activation/verify").permitAll()
-                                                                
-                                                                        
-                                                                .anyRequest().authenticated())
-                                // .formLogin(withDefaults())
-                                // .build();
-                                .sessionManagement(sessionManagement -> sessionManagement
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                                .oauth2Login(oauth2 -> oauth2
-                                                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                                        )
-                                                                
-                               
+    private final AuthenticationProvider authProvider;
+    private final TuEvento.Backend.jwt.jwtAuthenticationFilter jwtAuthenticationFilter;
+    @Autowired
+    @Lazy
+    private customOauht2UserService customOAuth2UserService;
 
-                                .authenticationProvider(authProvider)
-                                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                                .build();
-        }
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/v1/public/**").permitAll()
+                .requestMatchers("/api/v1/login/**").permitAll()
+                .requestMatchers("/api/v1/account-activation/**").permitAll()
+                .requestMatchers("/api/v1/register").permitAll() // ✅ Permitir registro
+                .requestMatchers("/api/v1/users/**").permitAll()
+                .requestMatchers("/oauth2/authorization/**").permitAll()
+                .requestMatchers("/login/oauth2/code/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .formLogin(form -> form.disable())
+            .oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                // ⬇️ IMPORTANTE: Deshabilitar OAuth2 para rutas públicas
+                .authorizationEndpoint(authorization -> authorization
+                    .baseUri("/oauth2/authorization") // Mantener solo para esta ruta
+                )
+            )
+            .authenticationProvider(authProvider)
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
+    }
 }

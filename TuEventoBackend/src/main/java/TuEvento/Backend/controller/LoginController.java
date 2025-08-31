@@ -4,6 +4,7 @@ import TuEvento.Backend.dto.LoginDto;
 import TuEvento.Backend.dto.requests.ChangePasswordDto;
 import TuEvento.Backend.dto.requests.RequestLoginDTO;
 import TuEvento.Backend.dto.responses.ResponseDto;
+import TuEvento.Backend.dto.responses.ResponseLogin; // Import añadido
 import TuEvento.Backend.service.LoginService;
 import TuEvento.Backend.service.impl.LoginServiceImpl;
 
@@ -29,8 +30,8 @@ public class LoginController {
     @Autowired
     private LoginServiceImpl loginServiceImpl;
 
-    @PostMapping
-    public ResponseDto<String> login(@RequestBody LoginDto loginDto) {
+    @PostMapping("/start")
+    public ResponseDto<ResponseLogin> login(@RequestBody LoginDto loginDto) { // Cambiado a ResponseLogin
         return loginService.login(loginDto);
     }
 
@@ -38,6 +39,7 @@ public class LoginController {
     public ResponseDto<String> registerLogin(@RequestBody RequestLoginDTO requestLoginDTO) {
         return loginService.save(requestLoginDTO);
     }
+    
     @PostMapping("/changePassword")
     public ResponseEntity<ResponseDto> changePassword(@RequestBody ChangePasswordDto dto) {
         // Esto lo pongo para tener el nombre del usuario XD

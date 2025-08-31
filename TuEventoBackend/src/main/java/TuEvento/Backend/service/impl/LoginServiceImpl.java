@@ -84,15 +84,16 @@ public class LoginServiceImpl implements LoginService {
                 login.getUserID().getUserID(),
                 login.getUserID().getRole().name()
             );
-            return ResponseDto.ok(responseLogin);
+            return ResponseDto.ok("Login exitoso", responseLogin);
 
         } catch (DataAccessException e) {
             return ResponseDto.error("Error de base de datos al iniciar sesión");
         } catch (Exception e) {
-            return ResponseDto.error("Error inesperado al iniciar sesión");
+            return ResponseDto.error("Error inesperado al iniciar sesión: " + e.getMessage());
         }
     }
 
+    @Override
     public ResponseDto<String> save(RequestLoginDTO requestLoginDTO) {
         try {
             // Validar si el email ya existe
@@ -112,27 +113,8 @@ public class LoginServiceImpl implements LoginService {
         } catch (DataAccessException e) {
             return ResponseDto.error("Error de base de datos al guardar el usuario");
         } catch (Exception e) {
-            return ResponseDto.error("Error inesperado al guardar el usuario");
+            return ResponseDto.error("Error inesperado al guardar el usuario: " + e.getMessage());
         }
-    }
-
-    // Este método se puede eliminar si ya usas el de arriba con ResponseDto<ResponseLogin>
-    public ResponseLogin login(RequestLoginDTO loginDTO) {
-        authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                loginDTO.getUsername(),
-                loginDTO.getPassword()
-            )
-        );
-
-        Login userEntity = loginRepository.findByEmail(loginDTO.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
-        String token = jwtService.generateToken(userEntity);
-        return new ResponseLogin(
-            token,
-            userEntity.getUserID().getUserID(),
-            userEntity.getUserID().getRole().name()
-        );
     }
 
     public Optional<Login> findByUsername(String username) {

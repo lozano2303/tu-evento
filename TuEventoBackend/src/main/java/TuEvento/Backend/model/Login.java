@@ -25,7 +25,7 @@ public class Login implements UserDetails {
     @Column(name="alias", length = 100)
     private String username;
 
-    @Column(name="password", length = 20, nullable=false)
+    @Column(name="password", length = 100, nullable=false)
     private String password;
 
     @Column(name="email", length=100, nullable=false)
