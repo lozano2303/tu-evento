@@ -28,6 +28,11 @@ public class RegisterServiceImpl implements RegisterService {
     @Transactional
     public ResponseDto<String> register(RegisterRequestDto dto) {
         try {
+            // Validar si el correo ya existe en Login
+            if (loginRepository.findByEmail(dto.getEmail()).isPresent()) {
+                return ResponseDto.error("Correo electrónico existente");
+            }
+
             // 1. Crear usuario
             User user = new User();
             user.setFullName(dto.getFullName());

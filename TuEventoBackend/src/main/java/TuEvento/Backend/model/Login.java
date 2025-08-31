@@ -4,16 +4,11 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 
-
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+
+import jakarta.persistence.*;
 
 @Entity(name="login")
 public class Login implements UserDetails {
@@ -28,7 +23,7 @@ public class Login implements UserDetails {
     private User userID;
 
     @Column(name="alias", length = 100)
-    private String username; // <--- CAMBIO AQUÍ
+    private String username;
 
     @Column(name="password", length = 20, nullable=false)
     private String password;
@@ -41,14 +36,49 @@ public class Login implements UserDetails {
 
     public Login() {}
 
-    public Login(String email, LocalDateTime loginDate, int loginID, String username, String password, User userID) {
-        this.email = email;
-        this.loginDate = loginDate;
-        this.loginID = loginID;
-        this.username = username; // <--- CAMBIO AQUÍ
-        this.password = password;
-        this.userID = userID;
+    // Implementación de métodos UserDetails
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // El rol viene de User y es un enum
+        if (userID != null && userID.getRole() != null) {
+            return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + userID.getRole().name()));
+        }
+        return Collections.emptyList();
     }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return username; // O puedes usar email si lo prefieres
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true; // Puedes agregar lógica si tienes campos para esto
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true; // Puedes agregar lógica si tienes campos para esto
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true; // Puedes agregar lógica si tienes campos para esto
+    }
+
+    @Override
+    public boolean isEnabled() {
+        // Puedes usar el campo activated de User o status
+        return userID != null && userID.isActivated();
+    }
+
+    // Getters y setters propios de la entidad...
 
     public int getLoginID() {
         return loginID;
@@ -66,16 +96,10 @@ public class Login implements UserDetails {
         this.userID = userID;
     }
 
-    public String getUsername() {
-        return username;
-    }
     public void setUsername(String username) {
         this.username = username;
     }
 
-    public String getPassword() {
-        return password;
-    }
     public void setPassword(String password) {
         this.password = password;
     }
@@ -83,6 +107,7 @@ public class Login implements UserDetails {
     public String getEmail() {
         return email;
     }
+
     public void setEmail(String email) {
         this.email = email;
     }
@@ -90,12 +115,8 @@ public class Login implements UserDetails {
     public LocalDateTime getLoginDate() {
         return loginDate;
     }
+
     public void setLoginDate(LocalDateTime loginDate) {
         this.loginDate = loginDate;
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
     }
 }
