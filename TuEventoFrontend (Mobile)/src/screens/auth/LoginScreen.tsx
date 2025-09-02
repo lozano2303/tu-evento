@@ -1,16 +1,28 @@
-import { View, Text, Image } from "react-native";
+import { View, Text, Image, TouchableOpacity  } from "react-native";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import RedSocialButton from "../../components/RedSocialButton";
+import { useNavigation } from "@react-navigation/native";
 
 export default function LoginScreen() {
+
+   const navigation = useNavigation();
+    
+    const handleGoToRegister = () => {
+      navigation.navigate("RegisterScreen" as never); 
+    };
+
+    const handleGoToForgotPassword = () => {
+      navigation.navigate("ForgotPasswordScreen" as never);
+    };
+
   return (
     <View className="flex-1 bg-[#1a0033] items-center px-6 w-full h-full relative ">
-
+      
      <View className="w-full top-12 ">
          {/* Título */}
       <Text className="text-white text-2xl font-bold mb-4 text-center">
-          Iniciar Sesión 
+          Iniciar Sesión  
       </Text>
 
       {/* Inputs */}
@@ -28,15 +40,16 @@ export default function LoginScreen() {
       <Button label="Iniciar" />
 
       {/* Texto inferior */}
-      <Text className="text-white mt-4 text-left">
-        ¿No tienes una cuenta?{" "}
-        <Text className="text-blue-400 underline">Crea tu cuenta</Text>
-      </Text>
+      <TouchableOpacity onPress={handleGoToRegister}>
+      <Text className="text-blue-400 underline">Crea tu cuenta</Text>
+      </TouchableOpacity>
 
       {/*Recuperar contraseña */}
       <Text className="text-white mt-2 text-left">
         ¿Olvidaste tu contraseña?{" "}
-        <Text className="text-blue-400 underline">Recuperar contraseña</Text>
+          <TouchableOpacity onPress={handleGoToForgotPassword}>
+              <Text className="text-blue-400 underline">Recuperar contraseña</Text>
+          </TouchableOpacity>
       </Text>
 
       {/* Línea divisoria */}
