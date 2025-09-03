@@ -40,15 +40,19 @@ export default function LoginScreen() {
       <Button label="Iniciar" />
 
       {/* Texto inferior */}
+      <Text className="text-white mt-6 text-left mt-2">
+        ¿No tienes una cuenta?
+      </Text>
+      {/* Navegar a RegisterScreen */}
       <TouchableOpacity onPress={handleGoToRegister}>
-      <Text className="text-blue-400 underline">Crea tu cuenta</Text>
+      <Text className="text-blue-400 ">Crea tu cuenta</Text>
       </TouchableOpacity>
 
       {/*Recuperar contraseña */}
       <Text className="text-white mt-2 text-left">
-        ¿Olvidaste tu contraseña?{" "}
+        ¿Olvidaste tu contraseña?{"  "}
           <TouchableOpacity onPress={handleGoToForgotPassword}>
-              <Text className="text-blue-400 underline">Recuperar contraseña</Text>
+              <Text className="text-blue-400 ">Recuperar contraseña</Text>
           </TouchableOpacity>
       </Text>
 
@@ -57,13 +61,20 @@ export default function LoginScreen() {
               __________________________O____________________________
             </Text>
            {/* Texto "Inicia sesión con:" */}
-          <Text className="text-gray-300 text-sm text-center mb-3">
+          <Text className="text-gray-300 text-lg text-left mb-3 font-semibold">
              Inicia sesión con:
           </Text>
 
         {/* Botones de redes sociales */}
       <RedSocialButton social="google" onPress={() => {}} />
       <RedSocialButton social="facebook" onPress={() => {}} />
+
+        {/* Terminos y condiciones */}
+      <Text className="text-white text-base text-center mt-4 px-4">
+        Al iniciar sesión, aceptas nuestros{" "}
+        <Text className="text-blue-400 font-semibold">Términos y condiciones</Text>
+      </Text>
+
 
     </View>
     

@@ -8,7 +8,7 @@ export default function Input({ label, ...props }: InputProps) {
   return (
     <View className="w-full mb-4">
       {label && (
-        <Text className="text-gray-300 text-sm font-medium mb-1">{label}</Text>
+        <Text className="text-gray-300 text-xl font-medium mb-1">{label}</Text>
       )}
       <TextInput
         {...props}
