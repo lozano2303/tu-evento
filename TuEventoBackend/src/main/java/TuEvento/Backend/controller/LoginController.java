@@ -2,7 +2,9 @@ package TuEvento.Backend.controller;
 
 import TuEvento.Backend.dto.LoginDto;
 import TuEvento.Backend.dto.requests.ChangePasswordDto;
+import TuEvento.Backend.dto.requests.ForgotPasswordDto;
 import TuEvento.Backend.dto.requests.RequestLoginDTO;
+import TuEvento.Backend.dto.requests.ResetPasswordDTO;
 import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.dto.responses.ResponseLogin; // Import añadido
 import TuEvento.Backend.service.LoginService;
@@ -43,8 +45,19 @@ public class LoginController {
     @PostMapping("/changePassword")
     public ResponseEntity<ResponseDto> changePassword(@RequestBody ChangePasswordDto dto) {
         // Esto lo pongo para tener el nombre del usuario XD
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        ResponseDto response = loginServiceImpl.changePassword(username, dto);
+        String email = SecurityContextHolder.getContext().getAuthentication().getName(); 
+        System.out.println("Correo de usuario: " + email);
+        ResponseDto response = loginServiceImpl.changePassword(email, dto);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @PostMapping("/forgot")
+    public ResponseEntity<Object> forgotPassword(@RequestBody ForgotPasswordDto dto) {
+        ResponseDto response = loginServiceImpl.forgotPassword(dto.getEmail());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    @PostMapping("/resetPassword")
+    public ResponseEntity<Object> resetPassword(@RequestBody ResetPasswordDTO dto) {
+        ResponseDto response = loginServiceImpl.resetPassword(dto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

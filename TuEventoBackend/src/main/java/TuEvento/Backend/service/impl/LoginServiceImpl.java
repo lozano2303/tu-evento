@@ -120,7 +120,7 @@ public class LoginServiceImpl implements LoginService {
     public Optional<Login> findByUsername(String username) {
         return loginRepository.findByUsername(username);
     }
-
+    
     // Metodos para enviar un token para cambiar la contraseña
     public ResponseDto<String> forgotPassword(String email) {
         Optional<Login> optionalUser = loginRepository.findByEmail(email);
@@ -168,7 +168,7 @@ public class LoginServiceImpl implements LoginService {
         return ResponseDto.ok("Contraseña actualizada correctamente");
     }
 
-    // eliminar tokens expirados cada 5 minutos
+    // eliminar tokens expirados cada 15 minutos 
     @Scheduled(fixedRate = 300000)
     public void eliminarTokensExpirados() {
         LocalDateTime ahora = LocalDateTime.now();
@@ -176,8 +176,8 @@ public class LoginServiceImpl implements LoginService {
         System.out.println("Tokens expirados eliminados.");
     }
 
-    public ResponseDto<String> changePassword(String username, ChangePasswordDto dto) {
-        Optional<Login> optionalUser = loginRepository.findByUsername(username);
+    public ResponseDto<String> changePassword(String email, ChangePasswordDto dto) {
+        Optional<Login> optionalUser = loginRepository.findByEmail(email);
 
         if (!optionalUser.isPresent()) {
             return ResponseDto.error("Usuario no encontrado");
