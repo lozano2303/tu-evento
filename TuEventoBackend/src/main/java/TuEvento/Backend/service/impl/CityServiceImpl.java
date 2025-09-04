@@ -36,19 +36,35 @@ public class CityServiceImpl implements CityService {
         try {
             City city = new City();
             city.setName(cityDto.getName());
-            city.setPostalCode(cityDto.getPostalCode());
             city.setDepartment(departmentOpt.get());
 
             cityRepository.save(city);
 
-            // Retornar la ciudad creada (sin cityID ya que se generará automáticamente)
-            return ResponseDto.ok("Ciudad insertada correctamente", new CityDto(cityDto.getDepartmentID(), city.getName(), city.getPostalCode()));
+            return ResponseDto.ok("Ciudad insertada correctamente", new CityDto(cityDto.getDepartmentID(), city.getName()));
         } catch (DataAccessException e) {
             return ResponseDto.error("Error de la base de datos");
         } catch (Exception e) {
             return ResponseDto.error("Error inesperado al insertar la ciudad");
         }
     }
+
+    @Override
+        @Transactional
+        public ResponseDto<String> deleteCity(int cityID) {
+            Optional<City> cityOpt = cityRepository.findById(cityID);
+            if (!cityOpt.isPresent()) {
+                return ResponseDto.error("Ciudad no encontrada");
+            }
+
+            try {
+                cityRepository.deleteById(cityID);
+                return ResponseDto.ok("Ciudad eliminada correctamente");
+            } catch (DataAccessException e) {
+                return ResponseDto.error("Error de la base de datos al eliminar la ciudad");
+            } catch (Exception e) {
+                return ResponseDto.error("Error inesperado al eliminar la ciudad");
+            }
+        }
 
     @Override
     @Transactional
@@ -66,7 +82,6 @@ public class CityServiceImpl implements CityService {
         try {
             City city = cityOpt.get();
             city.setName(cityDto.getName());
-            city.setPostalCode(cityDto.getPostalCode());
             city.setDepartment(departmentOpt.get());
 
             cityRepository.save(city);
@@ -79,28 +94,10 @@ public class CityServiceImpl implements CityService {
     }
 
     @Override
-    @Transactional
-    public ResponseDto<String> deleteCity(int cityID) {
-        Optional<City> cityOpt = cityRepository.findById(cityID);
-        if (!cityOpt.isPresent()) {
-            return ResponseDto.error("Ciudad no encontrada");
-        }
-
-        try {
-            cityRepository.deleteById(cityID);
-            return ResponseDto.ok("Ciudad eliminada correctamente");
-        } catch (DataAccessException e) {
-            return ResponseDto.error("Error de la base de datos al eliminar la ciudad");
-        } catch (Exception e) {
-            return ResponseDto.error("Error inesperado al eliminar la ciudad");
-        }
-    }
-
-    @Override
     public ResponseDto<List<CityDto>> getAllCities() {
         List<City> cities = cityRepository.findAll();
         List<CityDto> citiesDto = cities.stream()
-            .map(city -> new CityDto(city.getDepartment().getDepartmentID(), city.getName(), city.getPostalCode()))
+            .map(city -> new CityDto(city.getDepartment().getDepartmentID(), city.getName()))
             .collect(Collectors.toList());
 
         return ResponseDto.ok("Ciudades encontradas", citiesDto);
@@ -114,7 +111,7 @@ public class CityServiceImpl implements CityService {
         }
 
         City city = cityOpt.get();
-        CityDto cityDto = new CityDto(city.getDepartment().getDepartmentID(), city.getName(), city.getPostalCode());
+        CityDto cityDto = new CityDto(city.getDepartment().getDepartmentID(), city.getName());
 
         return ResponseDto.ok("Ciudad encontrada", cityDto);
     }

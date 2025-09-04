@@ -4,15 +4,13 @@ public class CityDto {
 
     private int departmentID;
     private String name;
-    private String postalCode;
 
     // Constructor
     public CityDto() {}
 
-    public CityDto(int departmentID, String name, String postalCode) {
+    public CityDto(int departmentID, String name) {
         this.departmentID = departmentID;
         this.name = name;
-        this.postalCode = postalCode;
     }
 
     // Getters and setters
@@ -30,13 +28,5 @@ public class CityDto {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
     }
 }

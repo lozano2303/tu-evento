@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import TuEvento.Backend.dto.UserDto;
-
 import TuEvento.Backend.dto.responses.ResponseDto;
-
+import TuEvento.Backend.model.Address;
 import TuEvento.Backend.model.Role;
 import TuEvento.Backend.model.User;
+import TuEvento.Backend.repository.AddressRepository;
 import TuEvento.Backend.repository.UserRepository;
 import TuEvento.Backend.service.UserService;
 
@@ -23,15 +23,23 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AddressRepository addressRepository;
+
     @Override
     @Transactional
     public ResponseDto<UserDto> createUser(UserDto userDto) {
+        Optional<Address> addressOpt = addressRepository.findById(userDto.getAddressID());
+        if (addressOpt.isEmpty()) {
+            return ResponseDto.error("Dirección no encontrada");
+        }
+
         try {
             User user = new User();
             user.setFullName(userDto.getFullName());
             user.setTelephone(userDto.getTelephone());
             user.setBirthDate(userDto.getBirthDate());
-            user.setAddress(userDto.getAddress());
+            user.setAddress(addressOpt.get());
             user.setRole(Role.USER);
             user.setStatus(true);
             user.setActivated(false);
@@ -44,13 +52,19 @@ public class UserServiceImpl implements UserService {
             return ResponseDto.error("Error inesperado al crear el usuario");
         }
     }
+
     public ResponseDto<UserDto> createUserSocialMedia(UserDto userDto) {
+        Optional<Address> addressOpt = addressRepository.findById(userDto.getAddressID());
+        if (addressOpt.isEmpty()) {
+            return ResponseDto.error("Dirección no encontrada");
+        }
+
         try {
             User user = new User();
             user.setFullName(userDto.getFullName());
             user.setTelephone(userDto.getTelephone());
             user.setBirthDate(userDto.getBirthDate());
-            user.setAddress(userDto.getAddress());
+            user.setAddress(addressOpt.get());
             user.setRole(Role.USER);
             user.setStatus(true);
             user.setActivated(true);
@@ -68,9 +82,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public ResponseDto<String> updateTelephone(int userId, String newTelephone) {
         Optional<User> userOpt = userRepository.findById(userId);
-        if (!userOpt.isPresent()) {
+        if (userOpt.isEmpty()) {
             return ResponseDto.error("Usuario no encontrado");
         }
+
         try {
             User user = userOpt.get();
             user.setTelephone(newTelephone);
@@ -87,9 +102,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public ResponseDto<String> deactivateUser(int userId) {
         Optional<User> userOpt = userRepository.findById(userId);
-        if (!userOpt.isPresent()) {
+        if (userOpt.isEmpty()) {
             return ResponseDto.error("Usuario no encontrado");
         }
+
         try {
             User user = userOpt.get();
             user.setStatus(false);
@@ -106,9 +122,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public ResponseDto<String> reactivateUser(int userId) {
         Optional<User> userOpt = userRepository.findById(userId);
-        if (!userOpt.isPresent()) {
+        if (userOpt.isEmpty()) {
             return ResponseDto.error("Usuario no encontrado");
         }
+
         try {
             User user = userOpt.get();
             user.setStatus(true);
@@ -127,6 +144,7 @@ public class UserServiceImpl implements UserService {
         if (userOpt.isEmpty()) {
             return ResponseDto.error("Usuario no encontrado");
         }
+
         UserDto userDto = mapToDto(userOpt.get());
         return ResponseDto.ok("Usuario encontrado", userDto);
     }
@@ -155,14 +173,14 @@ public class UserServiceImpl implements UserService {
                 .findFirst();
     }
 
-
     private UserDto mapToDto(User user) {
         return new UserDto(
             user.getFullName(),
             user.getTelephone(),
             user.getBirthDate(),
-            user.getAddress(),
-            user.isActivated() 
+            user.getAddress().getAddressID(),
+            user.isActivated()
         );
     }
+
 }

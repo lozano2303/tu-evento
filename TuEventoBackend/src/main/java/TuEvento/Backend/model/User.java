@@ -1,14 +1,7 @@
 package TuEvento.Backend.model;
 
 import java.sql.Date;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity(name = "app_user")
 public class User {
@@ -18,33 +11,37 @@ public class User {
     @Column(name = "userID")
     private int userID;
 
-    @Column(name="fullName", length=70, nullable = false)
+    @Column(name = "fullName", length = 70, nullable = false)
     private String fullName;
 
-    @Column(name="telephone", length=11)
+    @Column(name = "telephone", length = 11)
     private String telephone;
 
-    @Column(name="status", nullable=false, columnDefinition = "boolean default true")
+    @Column(name = "status", nullable = false, columnDefinition = "boolean default true")
     private boolean status;
 
-    @Column(name="activated", nullable = false )
+    @Column(name = "activated", nullable = false)
     private boolean activated;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Role role;
 
-    @Column(name="birthDate")
+    @Column(name = "birthDate")
     private Date birthDate;
 
-    @Column(name="address", length=100)
-    private String address;
+    @ManyToOne
+    @JoinColumn(name = "addressID", nullable = false)
+    private Address address;
+
+    @Column(name = "organicer", nullable = false)
+    private boolean organicer;
 
     public User() {
     }
 
     public User(int userID, String fullName, String telephone, boolean status, boolean activated, Role role,
-            Date birthDate, String address) {
+                Date birthDate, Address address, boolean organicer) {
         this.userID = userID;
         this.fullName = fullName;
         this.telephone = telephone;
@@ -53,8 +50,10 @@ public class User {
         this.role = role;
         this.birthDate = birthDate;
         this.address = address;
+        this.organicer = organicer;
     }
 
+    // Getters and setters
     public int getUserID() {
         return userID;
     }
@@ -111,11 +110,19 @@ public class User {
         this.birthDate = birthDate;
     }
 
-    public String getAddress() {
+    public Address getAddress() {
         return address;
     }
 
-    public void setAddress(String address) {
+    public void setAddress(Address address) {
         this.address = address;
+    }
+
+    public boolean isOrganicer() {
+        return organicer;
+    }
+
+    public void setOrganicer(boolean organicer) {
+        this.organicer = organicer;
     }
 }

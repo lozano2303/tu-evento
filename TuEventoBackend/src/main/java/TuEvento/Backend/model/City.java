@@ -14,7 +14,15 @@ public class City {
     private Department department;
 
     private String name;
-    private String postalCode;
+
+    public City() {
+    }
+
+    public City(int cityID, Department department, String name) {
+        this.cityID = cityID;
+        this.department = department;
+        this.name = name;
+    }
 
     // Getters and setters
     public int getCityID() {
@@ -39,13 +47,5 @@ public class City {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
     }
 }

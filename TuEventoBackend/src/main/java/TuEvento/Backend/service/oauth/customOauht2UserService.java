@@ -56,7 +56,7 @@ import TuEvento.Backend.service.impl.UserServiceImpl;
               userDto.setFullName(name);
               userDto.setTelephone(null);
               userDto.setBirthDate(null);
-              userDto.setAddress(null);
+              userDto.setAddressID(null);
               userService.createUserSocialMedia(userDto);
               User user = userService.findByUsername(name)
                         .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));

@@ -22,7 +22,7 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class jwtService {
 
-    private static final String SECRET_KEY = ""; // Cambia esto por tu clave segura en base64
+    private static final String SECRET_KEY = "pCrbWA1TUFdZY0+sCHHpbJenCguvnNAGspn66f6xSbA="; // Cambia esto por tu clave segura en base64
 
     // Genera un token JWT que incluye userID, fullName, email y rol (enum)
     public String generateToken(Login login) {

@@ -49,7 +49,7 @@ public class AccountActivationServiceImpl implements AccountActivationService {
         AccountActivation activation = new AccountActivation();
         activation.setUserID(user);
         activation.setActivationCode(activationCode);
-        activation.setActivation(false);
+        activation.setActivation(true);
         activation.setExpirationTime(LocalDateTime.now().plusMinutes(1)); // 1 minute for test
 
         activationRepository.save(activation);

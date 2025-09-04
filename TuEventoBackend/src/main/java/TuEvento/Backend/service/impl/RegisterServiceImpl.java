@@ -5,8 +5,10 @@ import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.model.User;
 import TuEvento.Backend.model.Login;
 import TuEvento.Backend.model.Role;
+import TuEvento.Backend.model.Address;
 import TuEvento.Backend.repository.UserRepository;
 import TuEvento.Backend.repository.LoginRepository;
+import TuEvento.Backend.repository.AddressRepository;
 import TuEvento.Backend.service.RegisterService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,16 +18,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class RegisterServiceImpl implements RegisterService {
 
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private LoginRepository loginRepository;
-    
+
+    @Autowired
+    private AddressRepository addressRepository;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -38,6 +44,12 @@ public class RegisterServiceImpl implements RegisterService {
                 return ResponseDto.error("Correo electrónico existente");
             }
 
+            // Validar si la dirección existe
+            Optional<Address> addressOpt = addressRepository.findById(dto.getAddressID());
+            if (addressOpt.isEmpty()) {
+                return ResponseDto.error("Dirección no encontrada");
+            }
+
             // 1. Crear usuario
             User user = new User();
             user.setFullName(dto.getFullName());
@@ -45,10 +57,10 @@ public class RegisterServiceImpl implements RegisterService {
             if (dto.getBirthDate() != null) {
                 user.setBirthDate(new java.sql.Date(dto.getBirthDate().getTime()));
             }
-            user.setAddress(dto.getAddress());
+            user.setAddress(addressOpt.get());
             user.setRole(Role.USER);
             user.setStatus(true);
-            user.setActivated(true);
+            user.setActivated(false);
 
             userRepository.save(user);
 
@@ -63,7 +75,7 @@ public class RegisterServiceImpl implements RegisterService {
             loginRepository.save(login);
 
             return ResponseDto.ok("Usuario y login creados exitosamente");
-            
+
         } catch (DataAccessException e) {
             return ResponseDto.error("Error de base de datos al registrar: " + e.getMessage());
         } catch (Exception e) {
