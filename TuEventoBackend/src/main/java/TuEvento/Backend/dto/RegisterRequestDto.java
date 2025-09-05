@@ -7,17 +7,17 @@ public class RegisterRequestDto {
     private String fullName;
     private String telephone;
     private Date birthDate;
-    private Integer addressID; // Puede ser null
+    private Integer address;
     private String email;
     private String password;
 
     public RegisterRequestDto() {}
 
-    public RegisterRequestDto(String fullName, String telephone, Date birthDate, Integer addressID, String email, String password) {
+    public RegisterRequestDto(String fullName, String telephone, Date birthDate, Integer address, String email, String password) {
         this.fullName = fullName;
         this.telephone = telephone;
         this.birthDate = birthDate;
-        this.addressID = addressID;
+        this.address = address;
         this.email = email;
         this.password = password;
     }
@@ -46,12 +46,12 @@ public class RegisterRequestDto {
         this.birthDate = birthDate;
     }
 
-    public Integer getAddressID() {
-        return addressID;
+    public Integer getAddress() {
+        return address;
     }
 
-    public void setAddressID(Integer addressID) {
-        this.addressID = addressID;
+    public void setAddress(Integer address) {
+        this.address = address;
     }
 
     public String getEmail() {

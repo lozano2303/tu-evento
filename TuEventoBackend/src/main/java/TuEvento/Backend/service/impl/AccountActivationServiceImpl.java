@@ -116,29 +116,30 @@ public class AccountActivationServiceImpl implements AccountActivationService {
             return ResponseDto.error("El código de activación ha expirado");
         }
 
-        if (activation.getActivation()) {
-            return ResponseDto.error("La cuenta ya está activada");
-        }
-
         if (!activation.getActivationCode().equals(activationCode)) {
             return ResponseDto.error("Código de activación no válido");
         }
 
-        activation.setActivation(true);
-        activationRepository.save(activation);
-
+        // ✅ Verificar al usuario, no al estado de la tabla account_activation
         Optional<User> optUser = userRepository.findById(userId);
         if (optUser.isEmpty()) {
             return ResponseDto.error("Usuario no encontrado");
         }
 
         User user = optUser.get();
-
-        if (!user.isActivated()) {
-            user.setActivated(true);
-            userRepository.save(user);
+        if (user.isActivated()) {
+            return ResponseDto.error("La cuenta ya está activada");
         }
+
+        // ✅ Marcar la activación como usada
+        activation.setActivation(true);
+        activationRepository.save(activation);
+
+        // ✅ Activar usuario
+        user.setActivated(true);
+        userRepository.save(user);
 
         return ResponseDto.ok("Cuenta activada exitosamente");
     }
+
 }

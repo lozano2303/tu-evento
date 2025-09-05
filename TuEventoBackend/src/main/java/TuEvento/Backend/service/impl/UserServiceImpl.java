@@ -29,9 +29,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public ResponseDto<UserDto> createUser(UserDto userDto) {
-        Optional<Address> addressOpt = addressRepository.findById(userDto.getAddressID());
-        if (addressOpt.isEmpty()) {
-            return ResponseDto.error("Dirección no encontrada");
+        Address address = null;
+
+        if (userDto.getAddress() != null) {
+            Optional<Address> addressOpt = addressRepository.findById(userDto.getAddress());
+            if (addressOpt.isEmpty()) {
+                return ResponseDto.error("Dirección no encontrada");
+            }
+            address = addressOpt.get();
         }
 
         try {
@@ -39,13 +44,15 @@ public class UserServiceImpl implements UserService {
             user.setFullName(userDto.getFullName());
             user.setTelephone(userDto.getTelephone());
             user.setBirthDate(userDto.getBirthDate());
-            user.setAddress(addressOpt.get());
+            user.setAddress(address); // Puede ser null y eso está OK
             user.setRole(Role.USER);
             user.setStatus(true);
             user.setActivated(false);
+
             userRepository.save(user);
 
             return ResponseDto.ok("Usuario creado exitosamente");
+
         } catch (DataAccessException e) {
             return ResponseDto.error("Error de base de datos al crear el usuario");
         } catch (Exception e) {
@@ -53,10 +60,15 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+
     public ResponseDto<UserDto> createUserSocialMedia(UserDto userDto) {
-        Optional<Address> addressOpt = addressRepository.findById(userDto.getAddressID());
-        if (addressOpt.isEmpty()) {
-            return ResponseDto.error("Dirección no encontrada");
+        Address address = null;
+        if (userDto.getAddress() != null) {
+            Optional<Address> addressOpt = addressRepository.findById(userDto.getAddress());
+            if (addressOpt.isEmpty()) {
+                return ResponseDto.error("Dirección no encontrada");
+            }
+            address = addressOpt.get();
         }
 
         try {
@@ -64,7 +76,7 @@ public class UserServiceImpl implements UserService {
             user.setFullName(userDto.getFullName());
             user.setTelephone(userDto.getTelephone());
             user.setBirthDate(userDto.getBirthDate());
-            user.setAddress(addressOpt.get());
+            user.setAddress(address);
             user.setRole(Role.USER);
             user.setStatus(true);
             user.setActivated(true);
@@ -174,13 +186,14 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserDto mapToDto(User user) {
+        Integer addressId = (user.getAddress() != null) ? user.getAddress().getAddressID() : null;
+
         return new UserDto(
             user.getFullName(),
             user.getTelephone(),
             user.getBirthDate(),
-            user.getAddress().getAddressID(),
+            addressId,
             user.isActivated()
         );
     }
-
 }

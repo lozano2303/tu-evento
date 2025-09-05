@@ -31,7 +31,7 @@ public class User {
     private Date birthDate;
 
     @ManyToOne
-    @JoinColumn(name = "addressID", nullable = false)
+    @JoinColumn(name = "addressID", nullable = true)
     private Address address;
 
     @Column(name = "organicer", nullable = false)
