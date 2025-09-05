@@ -36,8 +36,8 @@ public class RegisterServiceImpl implements RegisterService {
     private PasswordEncoder passwordEncoder;
 
     @Override
-//@Transactional
-public ResponseDto<String> register(RegisterRequestDto dto) {
+    @Transactional
+    public ResponseDto<String> register(RegisterRequestDto dto) {
     try {
         // Validar si el correo ya existe en Login
         if (loginRepository.findByEmail(dto.getEmail()).isPresent()) {

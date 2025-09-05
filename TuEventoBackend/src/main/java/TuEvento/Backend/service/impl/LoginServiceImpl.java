@@ -147,18 +147,16 @@ public class LoginServiceImpl implements LoginService {
             return ResponseDto.error("Usuario no encontrado");
         }
         String oldPasswordHash = optionalUser.get().getPassword();
-        int userID= optionalUser.get().getUserID().getUserID();
-        String token = UUID.randomUUID().toString();
+        String token = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 6);
         LocalDateTime expiry = LocalDateTime.now().plusMinutes(15);
 
         resetTokens.put(token, new TokenInfo(email, expiry));
         RecoverPasswordDto recoverPasswordDto = new RecoverPasswordDto();
-        recoverPasswordDto.setUserID(userID);
-         recoverPasswordDto.setUserID(optionalUser.get().getUserID().getUserID());
+        recoverPasswordDto.setUserID(optionalUser.get().getUserID());
         recoverPasswordDto.setCode(token);
         recoverPasswordDto.setCodeStatus(false); 
         recoverPasswordDto.setExpieres(expiry);
-        recoverPasswordDto.setLastPasswordChange(oldPasswordHash);
+        recoverPasswordDto.setLastPasswordChange(oldPasswordHash);  
 
     // Guardar en base de datos con tu servicio
     recoverPasswordService.insertRecoverPassword(recoverPasswordDto);
@@ -190,14 +188,18 @@ public class LoginServiceImpl implements LoginService {
         Login usuario = optionalUser.get();
         usuario.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         loginRepository.save(usuario);
-
+        RecoverPasswordDto recoverPasswordDto = new RecoverPasswordDto();
+        recoverPasswordDto.setCodeStatus(true); 
+        
+    // Guardar en base de datos con tu servicio
+    recoverPasswordService.updateRecoverPassword(dto.getToken(), recoverPasswordDto);
         resetTokens.remove(dto.getToken()); // token usado token eliminado
 
         return ResponseDto.ok("Contraseña actualizada correctamente");
     }
 
     // eliminar tokens expirados cada 15 minutos 
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 900000)
     public void eliminarTokensExpirados() {
         LocalDateTime ahora = LocalDateTime.now();
         resetTokens.entrySet().removeIf(entry -> entry.getValue().getExpiry().isBefore(ahora));

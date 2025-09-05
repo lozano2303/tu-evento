@@ -2,11 +2,13 @@ package TuEvento.Backend.dto;
 
 import java.time.LocalDateTime;
 
+import TuEvento.Backend.model.User;
+
 public class RecoverPasswordDto {
 
     private int recoverPasswordID;
 
-    private int userID;
+    private User userID;
 
     private String code;
 
@@ -16,7 +18,7 @@ public class RecoverPasswordDto {
 
     private String lastPasswordChange;
     public RecoverPasswordDto() {}
-    public RecoverPasswordDto(int recoverPasswordID, int userID, String code, boolean codeStatus, LocalDateTime expieres,String lastPasswordChange) {
+    public RecoverPasswordDto(int recoverPasswordID, User userID, String code, boolean codeStatus, LocalDateTime expieres,String lastPasswordChange) {
         this.recoverPasswordID = recoverPasswordID;
         this.userID = userID;
         this.code = code;
@@ -30,10 +32,10 @@ public class RecoverPasswordDto {
     public void setRecoverPasswordID(int recoverPasswordID) {
         this.recoverPasswordID = recoverPasswordID;
     }
-    public int getUserID() {
+    public User getUserID() {
         return userID;
     }
-    public void setUserID(int userID) {
+    public void setUserID(User userID) {
         this.userID = userID;
     }
     public String getCode() {

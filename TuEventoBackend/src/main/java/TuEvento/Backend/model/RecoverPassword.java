@@ -10,7 +10,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+
+import jakarta.persistence.ManyToOne;
+
 
 
 @Entity(name = "recover_password")
@@ -19,7 +21,7 @@ public class RecoverPassword {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="recoverPasswordID", nullable=false)
     private int recoverPasswordID;
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name="userID",nullable=false)
     private User userID;
     @Column(name = "code", nullable = false, length = 6)

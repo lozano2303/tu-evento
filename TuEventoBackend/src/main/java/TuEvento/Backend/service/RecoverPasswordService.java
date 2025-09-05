@@ -8,6 +8,6 @@ import TuEvento.Backend.dto.responses.ResponseDto;
 public interface RecoverPasswordService {
     ResponseDto<String> insertRecoverPassword(RecoverPasswordDto recoverPasswordDto);
 
-    ResponseDto<String> updateRecoverPassword(int recoverPasswordID, RecoverPasswordDto recoverPasswordDto);
+    ResponseDto<String> updateRecoverPassword(String recoverPasswordID, RecoverPasswordDto recoverPasswordDto);
 
 }

@@ -17,11 +17,12 @@ public class RecoverPasswordServiceImpl implements RecoverPasswordService {
     @Autowired
     private RecoverPasswordRepository recoverPasswordRepository;
 
-    @Override
-        @Transactional
+        @Override
+        //@Transactional
         public ResponseDto<String> insertRecoverPassword(RecoverPasswordDto recoverPasswordDto) {
             try {
                 RecoverPassword entity = new RecoverPassword();
+                entity.setUserID(recoverPasswordDto.getUserID());
                 entity.setCode(recoverPasswordDto.getCode());
                 entity.setCodeStatus(recoverPasswordDto.isCodeStatus());
                 entity.setExpieres(recoverPasswordDto.getExpieres());
@@ -29,29 +30,26 @@ public class RecoverPasswordServiceImpl implements RecoverPasswordService {
 
                 recoverPasswordRepository.save(entity);
 
-                return ResponseDto.ok("Recover_password inserted successfully");
+                return ResponseDto.ok("Recover_password insertada exitosamente");
             } catch (DataAccessException e) {
                 return ResponseDto.error("Error de la base de datos");
             } catch (Exception e) {
                 return ResponseDto.error("Error inesperado al insertar Recover_password");
             }
-        }
+    }
 
     @Override
     @Transactional
-    public ResponseDto<String> updateRecoverPassword(int recoverPasswordID, RecoverPasswordDto recoverPasswordDto) {
+    public ResponseDto<String> updateRecoverPassword(String code, RecoverPasswordDto recoverPasswordDto) {
         try {
-            RecoverPassword entity = recoverPasswordRepository.findById(recoverPasswordID)
-                    .orElseThrow(() -> new RuntimeException("Recover_password no encontrado"));
+            RecoverPassword entity = recoverPasswordRepository.findByCode(code)
+                .orElseThrow(() -> new RuntimeException("Código no encontrado"));
 
-            entity.setCode(recoverPasswordDto.getCode());
-            entity.setLastPasswordChange(recoverPasswordDto.getLastPasswordChange());
             entity.setCodeStatus(recoverPasswordDto.isCodeStatus());
-            entity.setExpieres(recoverPasswordDto.getExpieres());
 
             recoverPasswordRepository.save(entity);
 
-            return ResponseDto.ok("Recover_password updated successfully");
+            return ResponseDto.ok("Recover_password actualizado exitosamente");
         } catch (DataAccessException e) {
             return ResponseDto.error("Error de la base de datos");
         } catch (Exception e) {
