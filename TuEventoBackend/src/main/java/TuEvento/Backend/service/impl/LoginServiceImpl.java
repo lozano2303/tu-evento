@@ -5,13 +5,15 @@ import TuEvento.Backend.dto.requests.ChangePasswordDto;
 import TuEvento.Backend.dto.requests.RequestLoginDTO;
 import TuEvento.Backend.dto.requests.ResetPasswordDTO;
 import TuEvento.Backend.dto.responses.ResponseDto;
-import TuEvento.Backend.dto.responses.ResponseLogin;
+
 import TuEvento.Backend.model.Login;
 import TuEvento.Backend.repository.LoginRepository;
 import TuEvento.Backend.service.LoginService;
 import TuEvento.Backend.service.email.ActivationCodeEmailService;
 import TuEvento.Backend.service.jwt.jwtService;
 import TuEvento.Backend.dto.requests.TokenInfo;
+import TuEvento.Backend.dto.responses.ResponseLogin;
+import TuEvento.Backend.dto.responses.ResponseLoginSm;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -119,6 +121,19 @@ public class LoginServiceImpl implements LoginService {
 
     public Optional<Login> findByUsername(String username) {
         return loginRepository.findByUsername(username);
+    }
+    public ResponseLoginSm LoginSM(RequestLoginDTO loginDTO) {
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                loginDTO.getEmail(),
+                loginDTO.getPassword()
+            )
+        );
+
+        Login userEntity = loginRepository.findByEmail(loginDTO.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+        String token = jwtService.generateToken(userEntity);
+        return new ResponseLoginSm(token);
     }
     
     // Metodos para enviar un token para cambiar la contraseña

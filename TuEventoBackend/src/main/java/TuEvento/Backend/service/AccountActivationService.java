@@ -1,6 +1,6 @@
 package TuEvento.Backend.service;
 
-import TuEvento.Backend.dto.UserDto;
+
 import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.model.User;
 
