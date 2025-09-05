@@ -16,7 +16,7 @@ export default function RedSocialButton({ social, onPress }: RedSocialButtonProp
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-      <View className="mt-4 flex-row items-center border border-gray-200 rounded-full px-4 py-2">
+      <View className="mt-6 flex-row items-center border border-gray-200 rounded-full px-4 py-2">
         <FontAwesome name={name as any} size={20} color={color} />
         <Text className="ml-2 text-gray-800 font-semibold text-white ">{label}</Text>
       </View>

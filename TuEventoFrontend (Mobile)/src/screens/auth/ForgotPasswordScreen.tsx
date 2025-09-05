@@ -9,23 +9,22 @@ export default function RegisterScreen() {
       <View className="px-6 w-full  h-full relative top-12">
 
         <Text className="text-white text-2xl font-bold text-center">Recuperación de contraseña </Text>
-        <Text className="text-white text-lg mt-4 px-4  text-left">
+        <Text className="text-white text-lg mt-4 px-4 text-left">
           Ingresa el correo electrónico asociado a tu cuenta y te enviaremos un enlace para restablecer tu contraseña.
         </Text> 
         {/* Inputs */}
         <Input
         label="Ingresa tu correo electronico"
         placeholder="Correo elctronico"
-        className='mt-6'
         />
         {/* Botón */}
         <Button label="Siguiente" />
 
         {/* Ícono del candado centrado */}
-        <View className="flex-1 justify-center items-center mt-8">
+        <View className="flex-1 justify-center items-center ">
           <Image
             source={require("assets/images/lock.png")}
-            className="w-24 h-24"
+            className="w-full h-full "
             resizeMode="contain"
           />
         </View>

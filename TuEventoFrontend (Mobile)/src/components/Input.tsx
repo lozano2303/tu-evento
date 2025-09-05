@@ -6,7 +6,7 @@ interface InputProps extends TextInputProps {
 
 export default function Input({ label, ...props }: InputProps) {
   return (
-    <View className="w-full mb-4">
+    <View className="w-full mb-4 mt-2">
       {label && (
         <Text className="text-gray-300 text-xl font-medium mb-1">{label}</Text>
       )}
