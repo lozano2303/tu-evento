@@ -4,6 +4,7 @@ package TuEvento.Backend.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.stereotype.Service;
 
 import TuEvento.Backend.dto.RecoverPasswordDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
@@ -11,7 +12,7 @@ import TuEvento.Backend.model.RecoverPassword;
 import TuEvento.Backend.repository.RecoverPasswordRepository;
 import TuEvento.Backend.service.RecoverPasswordService;
 import jakarta.transaction.Transactional;
-
+@Service
 public class RecoverPasswordServiceImpl implements RecoverPasswordService {
     @Autowired
     private RecoverPasswordRepository recoverPasswordRepository;

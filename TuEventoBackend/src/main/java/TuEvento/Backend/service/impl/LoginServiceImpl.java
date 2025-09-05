@@ -1,6 +1,7 @@
 package TuEvento.Backend.service.impl;
 
 import TuEvento.Backend.dto.LoginDto;
+import TuEvento.Backend.dto.RecoverPasswordDto;
 import TuEvento.Backend.dto.requests.ChangePasswordDto;
 import TuEvento.Backend.dto.requests.RequestLoginDTO;
 import TuEvento.Backend.dto.requests.ResetPasswordDTO;
@@ -9,6 +10,7 @@ import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.model.Login;
 import TuEvento.Backend.repository.LoginRepository;
 import TuEvento.Backend.service.LoginService;
+import TuEvento.Backend.service.RecoverPasswordService;
 import TuEvento.Backend.service.email.ActivationCodeEmailService;
 import TuEvento.Backend.service.jwt.jwtService;
 import TuEvento.Backend.dto.requests.TokenInfo;
@@ -51,6 +53,8 @@ public class LoginServiceImpl implements LoginService {
 
     @Autowired
     private LoginRepository loginRepository;
+    @Autowired
+    private RecoverPasswordService recoverPasswordService; 
 
     public Optional<Login> findByEmail(String email) {
         return loginRepository.findByEmail(email);
@@ -139,16 +143,25 @@ public class LoginServiceImpl implements LoginService {
     // Metodos para enviar un token para cambiar la contraseña
     public ResponseDto<String> forgotPassword(String email) {
         Optional<Login> optionalUser = loginRepository.findByEmail(email);
-
         if (!optionalUser.isPresent()) {
             return ResponseDto.error("Usuario no encontrado");
         }
-
+        String oldPasswordHash = optionalUser.get().getPassword();
+        int userID= optionalUser.get().getUserID().getUserID();
         String token = UUID.randomUUID().toString();
         LocalDateTime expiry = LocalDateTime.now().plusMinutes(15);
 
         resetTokens.put(token, new TokenInfo(email, expiry));
+        RecoverPasswordDto recoverPasswordDto = new RecoverPasswordDto();
+        recoverPasswordDto.setUserID(userID);
+         recoverPasswordDto.setUserID(optionalUser.get().getUserID().getUserID());
+        recoverPasswordDto.setCode(token);
+        recoverPasswordDto.setCodeStatus(false); 
+        recoverPasswordDto.setExpieres(expiry);
+        recoverPasswordDto.setLastPasswordChange(oldPasswordHash);
 
+    // Guardar en base de datos con tu servicio
+    recoverPasswordService.insertRecoverPassword(recoverPasswordDto);
         System.out.println("Token generado para " + email + ": " + token);
         emailService.passwordResetEmail(email, token);
 

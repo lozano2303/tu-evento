@@ -1,6 +1,6 @@
 package TuEvento.Backend.service.impl;
 
-import TuEvento.Backend.dto.UserDto;
+
 import TuEvento.Backend.dto.email.ActivationCodeEmailDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.model.AccountActivation;
@@ -12,7 +12,7 @@ import TuEvento.Backend.repository.LoginRepository;
 import TuEvento.Backend.service.AccountActivationService;
 import TuEvento.Backend.service.email.ActivationCodeEmailService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

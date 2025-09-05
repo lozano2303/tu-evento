@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import TuEvento.Backend.model.Login;
 import TuEvento.Backend.model.User;
-import TuEvento.Backend.model.Role;
+
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
