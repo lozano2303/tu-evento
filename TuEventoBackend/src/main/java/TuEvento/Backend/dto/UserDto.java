@@ -7,17 +7,17 @@ public class UserDto {
     private String fullName;
     private String telephone;
     private Date birthDate;
-    private Integer addressID; // Ahora puede ser null
+    private Integer address;
     private boolean activated;
 
     public UserDto() {
     }
 
-    public UserDto(String fullName, String telephone, Date birthDate, Integer addressID, boolean activated) {
+    public UserDto(String fullName, String telephone, Date birthDate, Integer address, boolean activated) {
         this.fullName = fullName;
         this.telephone = telephone;
         this.birthDate = birthDate;
-        this.addressID = addressID;
+        this.address = address;
         this.activated = activated;
     }
 
@@ -45,12 +45,12 @@ public class UserDto {
         this.birthDate = birthDate;
     }
 
-    public Integer getAddressID() {
-        return addressID;
+    public Integer getAddress() {
+        return address;
     }
 
-    public void setAddressID(Integer addressID) {
-        this.addressID = addressID;
+    public void setAddress(Integer address) {
+        this.address = address;
     }
 
     public boolean isActivated() {
