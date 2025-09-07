@@ -54,7 +54,7 @@ public class DepartmentServiceImpl implements DepartmentService{
         } catch (Exception e) {
             return ResponseDto.error("Error inesperado al actualizar el departamento");
         }
-    } 
+    }
 
     @Override
     @Transactional
@@ -88,9 +88,15 @@ public class DepartmentServiceImpl implements DepartmentService{
     @Override
     public ResponseDto<List<DepartmentDto>> getAllDepartments() {
         List<Department> departments = departmentRepository.findAll();
+
+        if (departments.isEmpty()) {
+            return ResponseDto.error("No hay departamentos registrados");
+        }
+
         List<DepartmentDto> departmentsDto = departments.stream()
             .map(dept -> new DepartmentDto(dept.getName()))
             .toList();
+
         return ResponseDto.ok("Departamentos encontrados", departmentsDto);
     }
 }

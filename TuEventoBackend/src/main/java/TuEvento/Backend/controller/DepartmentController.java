@@ -25,12 +25,14 @@ public class DepartmentController {
 
     @PutMapping("/{departmentID}")
     public ResponseEntity<ResponseDto<String>> updateDepartment(
-            @PathVariable int departmentID, 
-            @RequestParam String newName) {
-        ResponseDto<String> response = departmentService.updateDepartment(departmentID, newName);
-        
+            @PathVariable int departmentID,
+            @RequestBody DepartmentDto dto) {
+
+        ResponseDto<String> response = departmentService.updateDepartment(departmentID, dto.getName());
+
         return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
+
 
     @DeleteMapping("/{departmentID}")
     public ResponseEntity<ResponseDto<String>> deleteDepartment(@PathVariable int departmentID) {

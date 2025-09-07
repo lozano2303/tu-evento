@@ -96,13 +96,18 @@ public class CityServiceImpl implements CityService {
     @Override
     public ResponseDto<List<CityDto>> getAllCities() {
         List<City> cities = cityRepository.findAll();
+
+        if (cities.isEmpty()) {
+            return ResponseDto.error("No hay ciudades registradas");
+        }
+
         List<CityDto> citiesDto = cities.stream()
             .map(city -> new CityDto(city.getDepartment().getDepartmentID(), city.getName()))
             .collect(Collectors.toList());
 
         return ResponseDto.ok("Ciudades encontradas", citiesDto);
     }
-
+    
     @Override
     public ResponseDto<CityDto> getCityById(int cityID) {
         Optional<City> cityOpt = cityRepository.findById(cityID);
