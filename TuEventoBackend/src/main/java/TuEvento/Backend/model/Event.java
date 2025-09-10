@@ -28,9 +28,9 @@ public class Event {
     @Column(name="finishDate", nullable = false)
     private LocalDate finishDate;
     @Column(name="status", nullable = false)
-    private boolean status;
+    private int status;
     public Event() {}
-    public Event(int id, Location locationID, String eventName, String description, LocalDate startDate, LocalDate finishDate, boolean status) {
+    public Event(int id, Location locationID, String eventName, String description, LocalDate startDate, LocalDate finishDate, int status) {
         this.id = id;
         this.locationID = locationID;
         this.eventName = eventName;
@@ -75,10 +75,10 @@ public class Event {
     public void setFinishDate(LocalDate finishDate) {
         this.finishDate = finishDate;
     }
-    public boolean getStatus() {
+    public int getStatus() {
         return status;
     }
-    public void setStatus(boolean status) {
+    public void setStatus(int status) {
         this.status = status;
     }
 }   
