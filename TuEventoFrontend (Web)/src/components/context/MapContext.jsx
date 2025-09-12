@@ -1,52 +1,46 @@
-import React, { createContext, useContext, useReducer } from "react";
+"use client"
 
-const MapContext = createContext();
+import { createContext, useContext, useReducer } from "react"
 
-const initialState = {
-  elements: [],
-  selectedId: null,
-};
+const MapStateContext = createContext()
+const MapDispatchContext = createContext()
 
-function reducer(state, action) {
+const mapReducer = (state, action) => {
   switch (action.type) {
     case "SET_ELEMENTS":
-      return { ...state, elements: action.payload };
-    case "ADD_ELEMENT":
-      return { ...state, elements: [...state.elements, action.payload] };
-    case "UPDATE_ELEMENT":
-      return {
-        ...state,
-        elements: state.elements.map(el =>
-          el.id === action.payload.id ? { ...el, ...action.payload.props } : el
-        ),
-      };
-    case "DELETE_ELEMENT":
-      return {
-        ...state,
-        elements: state.elements.filter(el => el.id !== action.payload),
-        selectedId: state.selectedId === action.payload ? null : state.selectedId,
-      };
+      return { ...state, elements: action.payload }
     case "SET_SELECTED":
-      return { ...state, selectedId: action.payload };
+      return { ...state, selectedId: action.payload }
     default:
-      return state;
+      return state
   }
 }
 
-export function MapProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+export const MapProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(mapReducer, {
+    elements: [],
+    selectedId: null,
+  })
 
   return (
-    <MapContext.Provider value={{ state, dispatch }}>
-      {children}
-    </MapContext.Provider>
-  );
+    <MapStateContext.Provider value={state}>
+      <MapDispatchContext.Provider value={dispatch}>{children}</MapDispatchContext.Provider>
+    </MapStateContext.Provider>
+  )
 }
 
-export function useMapState() {
-  return useContext(MapContext).state;
+export const useMapState = () => {
+  const context = useContext(MapStateContext)
+  if (!context) {
+    throw new Error("useMapState must be used within MapProvider")
+  }
+  return context
 }
 
-export function useMapDispatch() {
-  return useContext(MapContext).dispatch;
+export const useMapDispatch = () => {
+  const context = useContext(MapDispatchContext)
+  if (!context) {
+    throw new Error("useMapDispatch must be used within MapProvider")
+  }
+  return context
 }

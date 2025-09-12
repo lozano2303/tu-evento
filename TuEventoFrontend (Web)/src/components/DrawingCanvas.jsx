@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
-import CanvasElement from './CanvasElement';
+import { useRef, useState, useEffect } from "react"
+import CanvasElement from "./CanvasElement"
 
 const DrawingCanvas = ({
   elements = [],
@@ -8,268 +8,277 @@ const DrawingCanvas = ({
   onCreate,
   onUpdate,
   onDelete,
-  activeTool
+  activeTool,
 }) => {
-  const svgRef = useRef(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [currentElement, setCurrentElement] = useState(null);
+  const svgRef = useRef(null)
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [currentElement, setCurrentElement] = useState(null)
+  const [startPoint, setStartPoint] = useState(null)
 
-  // viewBox / zoom/pan
-  const viewWidth = 2000;
-  const viewHeight = 1200;
-  const [zoom, setZoom] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const panOrigin = useRef({ x: 0, y: 0 });
+  const viewWidth = 2000
+  const viewHeight = 1200
+  const [zoom, setZoom] = useState(1)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [isPanning, setIsPanning] = useState(false)
+  const panOrigin = useRef({ x: 0, y: 0, offset: { x: 0, y: 0 } })
 
   useEffect(() => {
-    const svg = svgRef.current;
-    if (!svg) return;
-    svg.style.touchAction = 'none';
-  }, []);
+    const svg = svgRef.current
+    if (!svg) return
+    svg.style.touchAction = "none"
+  }, [])
 
   const toViewCoords = (clientX, clientY) => {
-    const rect = svgRef.current.getBoundingClientRect();
-    const x = (clientX - rect.left) * (viewWidth / rect.width) + offset.x;
-    const y = (clientY - rect.top) * (viewHeight / rect.height) + offset.y;
-    return { x, y };
-  };
+    const svg = svgRef.current
+    if (!svg) return { x: 0, y: 0 }
+
+    const rect = svg.getBoundingClientRect()
+    const scaleX = viewWidth / zoom / rect.width
+    const scaleY = viewHeight / zoom / rect.height
+
+    const x = offset.x + (clientX - rect.left) * scaleX
+    const y = offset.y + (clientY - rect.top) * scaleY
+
+    return { x, y }
+  }
 
   const handleMouseDown = (e) => {
+    e.preventDefault()
+
     if (e.button === 2) {
-      setIsPanning(true);
-      panOrigin.current = { x: e.clientX, y: e.clientY, offset: { ...offset } };
-      return;
+      setIsPanning(true)
+      panOrigin.current = {
+        x: e.clientX,
+        y: e.clientY,
+        offset: { ...offset },
+      }
+      return
     }
 
-    const pos = toViewCoords(e.clientX, e.clientY);
+    if (e.button !== 0) return
 
-    // 👉 Herramientas con arrastre
-    if (activeTool === 'zone') {
-      setIsDrawing(true);
+    const pos = toViewCoords(e.clientX, e.clientY)
+    setStartPoint(pos)
+
+    if (["zone", "seatRow", "chair", "door", "exit", "stage"].includes(activeTool)) {
+      setIsDrawing(true)
+      const fillColors = {
+        zone: "rgba(22, 78, 99, 0.1)",
+        seatRow: "rgba(29, 78, 216, 0.1)",
+        chair: "#f59e0b",
+        door: "#64748b",
+        exit: "#dc2626",
+        stage: "rgba(147, 51, 234, 0.2)",
+      }
+      const strokeColors = {
+        zone: "#164e63",
+        seatRow: "#1d4ed8",
+        chair: "#d97706",
+        door: "#475569",
+        exit: "#dc2626",
+        stage: "#9333ea",
+      }
+      const labels = {
+        zone: "Zona",
+        seatRow: "Fila de sillas",
+        chair: "Silla",
+        door: "Puerta",
+        exit: "Salida",
+        stage: "Escenario",
+      }
       const newEl = {
         id: Date.now(),
-        type: 'zone',
+        type: activeTool,
         x: pos.x,
         y: pos.y,
         width: 0,
         height: 0,
-        fill: 'none',
-        stroke: '#16a34a',
-        meta: { label: 'Zona' }
-      };
-      setCurrentElement(newEl);
-
-    } else if (activeTool === 'seatRow') {
-      setIsDrawing(true);
-      const newEl = {
+        fill: fillColors[activeTool],
+        stroke: strokeColors[activeTool],
+        meta: { label: labels[activeTool] },
+      }
+      setCurrentElement(newEl)
+    } else if (activeTool === "wall") {
+      setIsDrawing(true)
+      setCurrentElement({
         id: Date.now(),
-        type: 'seatRow',
+        type: "wall",
+        x1: pos.x,
+        y1: pos.y,
+        x2: pos.x,
+        y2: pos.y,
+        stroke: "#475569",
+        strokeWidth: 3,
+      })
+    } else if (activeTool === "curvedWall") {
+      setIsDrawing(true)
+      setCurrentElement({
+        id: Date.now(),
+        type: "curvedWall",
         x: pos.x,
         y: pos.y,
-        width: 0,
-        height: 40,
-        fill: 'none',
-        stroke: '#1d4ed8',
-        meta: { label: 'Fila de sillas' }
-      };
-      setCurrentElement(newEl);
-
-    } else if (activeTool === 'curvedWall') {
-      setIsDrawing(true);
-      const newEl = {
-        id: Date.now(),
-        type: 'curvedWall',
-        x: pos.x,
-        y: pos.y,
-        points: [{ x: pos.x, y: pos.y }], // guarda puntos para curva
-        stroke: '#7f1d1d',
-      };
-      setCurrentElement(newEl);
-
-    // 👉 Herramientas con click directo
-    } else if (activeTool === 'stage') {
-      const newEl = {
-        id: Date.now(),
-        type: 'stage',
-        x: pos.x,
-        y: pos.y,
-        width: 200,
-        height: 100,
-        fill: 'gray',
-        stroke: '#000'
-      };
-      onCreate && onCreate(newEl);
-
-    } else if (activeTool === 'door') {
-      const newEl = {
-        id: Date.now(),
-        type: 'door',
-        x: pos.x,
-        y: pos.y,
-        width: 40,
-        height: 10,
-        fill: 'brown'
-      };
-      onCreate && onCreate(newEl);
-
-    } else if (activeTool === 'exit') {
-      const newEl = {
-        id: Date.now(),
-        type: 'exit',
-        x: pos.x,
-        y: pos.y,
-        width: 40,
-        height: 10,
-        fill: 'green'
-      };
-      onCreate && onCreate(newEl);
-
-    } else if (activeTool === 'chair') {
-      const newEl = {
-        id: Date.now(),
-        type: 'chair',
-        x: pos.x,
-        y: pos.y,
-        width: 20,
-        height: 20,
-        fill: 'blue'
-      };
-      onCreate && onCreate(newEl);
-
-    } else {
-      onSelect && onSelect(null);
+        points: [{ x: pos.x, y: pos.y }],
+        stroke: "#dc2626",
+        strokeWidth: 3,
+      })
     }
-  };
+  }
 
   const handleMouseMove = (e) => {
+    e.preventDefault()
     if (isPanning) {
-      const dx = (panOrigin.current.x - e.clientX) * (viewWidth / svgRef.current.getBoundingClientRect().width);
-      const dy = (panOrigin.current.y - e.clientY) * (viewHeight / svgRef.current.getBoundingClientRect().height);
+      const dx = (panOrigin.current.x - e.clientX) * (viewWidth / (zoom * svgRef.current.clientWidth))
+      const dy = (panOrigin.current.y - e.clientY) * (viewHeight / (zoom * svgRef.current.clientHeight))
       setOffset({
         x: panOrigin.current.offset.x + dx,
-        y: panOrigin.current.offset.y + dy
-      });
+        y: panOrigin.current.offset.y + dy,
+      })
+      return
     }
 
-    if (isDrawing && currentElement) {
-      const pos = toViewCoords(e.clientX, e.clientY);
+    if (!isDrawing || !currentElement || !startPoint) return
 
-      // 👉 dibujar curvas
-      if (currentElement.type === 'curvedWall') {
-        setCurrentElement(prev => ({
-          ...prev,
-          points: [...prev.points, { x: pos.x, y: pos.y }]
-        }));
+    const pos = toViewCoords(e.clientX, e.clientY)
+    const updated = { ...currentElement }
+
+    if (["zone", "seatRow", "chair", "door", "exit", "stage"].includes(activeTool)) {
+      updated.width = pos.x - startPoint.x
+      updated.height = pos.y - startPoint.y
+      if (updated.width < 0) {
+        updated.x = pos.x
+        updated.width = startPoint.x - pos.x
       } else {
-        // rectángulos o filas
-        const width = Math.abs(pos.x - currentElement.x);
-        const height = Math.abs(pos.y - currentElement.y);
-        const newX = Math.min(currentElement.x, pos.x);
-        const newY = Math.min(currentElement.y, pos.y);
-        setCurrentElement(prev => ({ ...prev, x: newX, y: newY, width, height }));
+        updated.x = startPoint.x
       }
+      if (updated.height < 0) {
+        updated.y = pos.y
+        updated.height = startPoint.y - pos.y
+      } else {
+        updated.y = startPoint.y
+      }
+    } else if (activeTool === "wall") {
+      updated.x2 = pos.x
+      updated.y2 = pos.y
+    } else if (activeTool === "curvedWall") {
+      updated.points = [...(updated.points || []), { x: pos.x, y: pos.y }]
     }
-  };
 
-  const handleMouseUp = () => {
+    setCurrentElement(updated)
+  }
+
+  const handleMouseUp = (e) => {
+    e.preventDefault()
+
     if (isPanning) {
-      setIsPanning(false);
-      return;
+      setIsPanning(false)
+      return
     }
-    if (isDrawing && currentElement) {
-      if (currentElement.type === 'curvedWall' || (currentElement.width > 6 && currentElement.height > 6)) {
-        onCreate && onCreate(currentElement);
-      }
-      setCurrentElement(null);
-      setIsDrawing(false);
+
+    if (!isDrawing || !currentElement) return
+
+    if (activeTool === "curvedWall") {
+      return
     }
-  };
+
+    setIsDrawing(false)
+    onCreate && onCreate(currentElement)
+    setCurrentElement(null)
+    setStartPoint(null)
+  }
 
   const handleWheel = (e) => {
-    e.preventDefault();
-    const coef = e.deltaY > 0 ? 0.9 : 1.1;
-    setZoom(prev => Math.max(0.2, Math.min(3, prev * coef)));
-  };
+    e.preventDefault()
+    const delta = -e.deltaY
+    const zoomFactor = 0.001
+    let newZoom = zoom + delta * zoomFactor
+    if (newZoom < 0.2) newZoom = 0.2
+    if (newZoom > 4) newZoom = 4
 
-  const GridPattern = () => (
-    <defs>
-      <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e6e6e6" strokeWidth="0.5" />
-      </pattern>
-    </defs>
-  );
+    const svg = svgRef.current
+    const rect = svg.getBoundingClientRect()
+    const cursorX = e.clientX - rect.left
+    const cursorY = e.clientY - rect.top
 
-  const viewBox = `${offset.x} ${offset.y} ${viewWidth / zoom} ${viewHeight / zoom}`;
+    const scaleX = viewWidth / zoom / rect.width
+    const scaleY = viewHeight / zoom / rect.height
+
+    const cursorViewX = offset.x + cursorX * scaleX
+    const cursorViewY = offset.y + cursorY * scaleY
+
+    const newScaleX = viewWidth / newZoom / rect.width
+    const newScaleY = viewHeight / newZoom / rect.height
+
+    const newOffsetX = cursorViewX - cursorX * newScaleX
+    const newOffsetY = cursorViewY - cursorY * newScaleY
+
+    setZoom(newZoom)
+    setOffset({ x: newOffsetX, y: newOffsetY })
+  }
+
+  const handleClickCanvas = () => {
+    if (!isDrawing) onSelect && onSelect(null)
+  }
 
   return (
-    <div className="flex-1 bg-white">
-      <div className="bg-gray-50 border-b border-gray-200 p-4">
-        <h2 className="text-xl font-bold text-gray-800">Plano Biblioteca</h2>
-        <p className="text-gray-600">
-          Usa la barra de herramientas para seleccionar el tipo de elemento.  
-          Click derecho = pan | Rueda = zoom
-        </p>
-      </div>
+    <div className="w-full h-full relative bg-background">
+      <div className="absolute inset-0 bg-gradient-to-br from-muted/20 to-muted/40" />
+      <svg
+        ref={svgRef}
+        width="100%"
+        height="100%"
+        viewBox={`${offset.x} ${offset.y} ${viewWidth / zoom} ${viewHeight / zoom}`}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onWheel={handleWheel}
+        onClick={handleClickCanvas}
+        className="relative z-10 bg-white shadow-inner border border-border/50"
+        style={{
+          backgroundImage: `
+            radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0)
+          `,
+          backgroundSize: "20px 20px",
+        }}
+      >
+        <defs>
+          <pattern id="zonePattern" patternUnits="userSpaceOnUse" width="8" height="8">
+            <rect width="8" height="8" fill="rgba(22, 78, 99, 0.05)" />
+            <path d="M0,8 L8,0 M-2,2 L2,-2 M6,10 L10,6" stroke="rgba(22, 78, 99, 0.2)" strokeWidth="1" />
+          </pattern>
+          <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="2" dy="2" stdDeviation="2" floodColor="rgba(0,0,0,0.1)" />
+          </filter>
+        </defs>
 
-      <div className="relative overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
-        <svg
-          ref={svgRef}
-          width="100%"
-          height="100%"
-          viewBox={viewBox}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onWheel={handleWheel}
-          className="bg-white cursor-crosshair"
-        >
-          <GridPattern />
-          <rect width={viewWidth} height={viewHeight} fill="url(#grid)" />
+        {elements.map((el) => (
+          <CanvasElement
+            key={el.id}
+            element={el}
+            isSelected={selectedElementId === el.id}
+            onSelect={onSelect}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+          />
+        ))}
+        {currentElement && (
+          <CanvasElement
+            element={currentElement}
+            isSelected={true}
+            onSelect={() => {}}
+            onUpdate={() => {}}
+            onDelete={() => {}}
+          />
+        )}
+      </svg>
 
-          {elements.map(el => (
-            <CanvasElement
-              key={el.id}
-              element={el}
-              isSelected={selectedElementId === el.id}
-              onSelect={onSelect}
-              onUpdate={onUpdate}
-              onDelete={onDelete}
-            />
-          ))}
-
-          {currentElement && (
-            <>
-              {(currentElement.type === 'zone' || currentElement.type === 'seatRow') && (
-                <rect
-                  x={currentElement.x}
-                  y={currentElement.y}
-                  width={currentElement.width}
-                  height={currentElement.height}
-                  fill="rgba(34,197,94,0.06)"
-                  stroke="#22c55e"
-                  strokeDasharray="4 3"
-                />
-              )}
-              {currentElement.type === 'curvedWall' && (
-                <polyline
-                  points={currentElement.points.map(p => `${p.x},${p.y}`).join(' ')}
-                  fill="none"
-                  stroke="#7f1d1d"
-                  strokeWidth="2"
-                />
-              )}
-            </>
-          )}
-        </svg>
-
-        <div className="absolute bottom-4 left-4 bg-white border border-gray-300 px-3 py-1 text-sm">
-          Escala: {Math.round(zoom * 100)}%
+      <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
+        <div className="bg-card border border-border rounded-lg p-2 shadow-lg">
+          <div className="text-xs text-muted-foreground text-center mb-2">Zoom: {Math.round(zoom * 100)}%</div>
+          <div className="text-xs text-muted-foreground text-center">Click derecho + arrastrar para mover</div>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default DrawingCanvas;
+export default DrawingCanvas
