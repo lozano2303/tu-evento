@@ -16,6 +16,7 @@ import TuEvento.Backend.service.EventService;
 @RestController
 @RequestMapping("/api/v1/event")
 public class EventController {
+
     @Autowired
     private EventService eventService;
     @PostMapping("/insert")

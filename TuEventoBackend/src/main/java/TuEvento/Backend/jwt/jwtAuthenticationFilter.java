@@ -15,7 +15,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import TuEvento.Backend.model.Login;
-import TuEvento.Backend.model.User;
+
 import TuEvento.Backend.repository.LoginRepository;
 import TuEvento.Backend.service.jwt.jwtService;
 

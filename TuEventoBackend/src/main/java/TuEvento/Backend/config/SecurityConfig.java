@@ -40,6 +40,17 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/cities/**").permitAll()
                 .requestMatchers("/api/v1/addresses/**").permitAll()
                 .requestMatchers("/api/v1/locations/**").permitAll()
+                .requestMatchers("/api/v1/event/**").permitAll()
+                .requestMatchers(
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs",
+                        "/v3/api-docs/**",
+                        "/v3/api-docs.yaml",
+                        "/swagger-resources/**",
+                        "/webjars/**"
+                    ).permitAll()
+
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -54,5 +65,5 @@ public class SecurityConfig {
             .authenticationProvider(authProvider)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
-    }
+    } 
 }
