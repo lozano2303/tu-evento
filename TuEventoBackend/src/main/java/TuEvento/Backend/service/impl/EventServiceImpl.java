@@ -17,7 +17,7 @@ public class EventServiceImpl implements EventService {
     private EventRepository eventRepository;
 
     @Override
-    @Transactional
+    //@Transactional
     public ResponseDto<EventDto> insertEvent(EventDto eventDto) {
             try {
                 Event entity = new Event();
@@ -31,7 +31,7 @@ public class EventServiceImpl implements EventService {
 
                 return ResponseDto.ok("Evento insertado exitosamente");
             } catch (DataAccessException e) {
-                return ResponseDto.error("Error de la base de datos");
+                return ResponseDto.error("Error de la base de datos");    
             } catch (Exception e) {
                 return ResponseDto.error("Error inesperado al insertar Recover_password");
             }
