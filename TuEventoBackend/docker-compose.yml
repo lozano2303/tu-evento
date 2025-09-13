@@ -1,0 +1,50 @@
+services:
+  postgres:
+    container_name: serve-postgres-sena
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: capysoft12345
+      POSTGRES_USER: postgres
+      POSTGRES_DB: tu-evento
+    ports:
+      - "5433:5432"
+    networks:
+      - network_local_server
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - "/home/ubuntu/db_backups:/backups/postgres"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    labels:
+      - com.sena.group=databases
+
+  backend:
+    container_name: backend-tu-evento
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tu-evento?connectTimeout=10&sslmode=prefer
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: capysoft12345
+    ports:
+      - "8080:8080"
+    networks:
+      - network_local_server
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  network_local_server:
+    driver: bridge
+    name: network_local_server
