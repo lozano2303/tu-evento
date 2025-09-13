@@ -1,8 +1,10 @@
 package TuEvento.Backend.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.method.P;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,16 +25,17 @@ public class EventLayoutController {
         public ResponseDto<EventLayoutDto> Event(@RequestBody EventLayoutDto EventLayoutDto) {
         return eventLayoutService.createEventLayout(EventLayoutDto);
     }
-    @PutMapping("/update")
-    public ResponseDto<EventLayoutDto> updateEvent(@RequestBody String name,@RequestBody EventLayoutDto eventLayoutDto) {
-        return eventLayoutService.updateEventLayout(name,eventLayoutDto);
+    @PutMapping("/update/{name}")
+    public ResponseDto<EventLayoutDto> updateEvent(@PathVariable("name") String name,@RequestBody EventLayoutDto eventLayoutDto) {
+        return eventLayoutService.updateEventLayout(name, eventLayoutDto);
     }
+
     @DeleteMapping("/delete")
-    public ResponseDto<EventLayoutDto> deleteEvent(@RequestBody String name,EventLayoutDto eventLayoutDto) {
-        return eventLayoutService.deleteEventLayout(name,eventLayoutDto);
+    public ResponseDto<EventLayoutDto> deleteEvent(@RequestBody EventLayoutDto eventLayoutDto) {
+        return eventLayoutService.deleteEventLayout(eventLayoutDto);
     }
-    @GetMapping("/get")
-    public ResponseDto<EventLayoutDto> getEvent(@RequestBody String name,EventLayoutDto eventLayoutDto) {
+    @PostMapping("/get/{name}")
+    public ResponseDto<EventLayoutDto> getEvent(@PathVariable("name") String name, @RequestBody EventLayoutDto eventLayoutDto) {
         return eventLayoutService.getEventLayout(name,eventLayoutDto);
     }
 

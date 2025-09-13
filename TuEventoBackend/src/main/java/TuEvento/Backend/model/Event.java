@@ -14,8 +14,11 @@ import jakarta.persistence.ManyToOne;
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column(name = "eventID", unique = true, nullable = false)
     private int id;
+    @ManyToOne
+    @JoinColumn(name="userID",nullable=false)
+    private User userID;
     @ManyToOne
     @JoinColumn(name="locationID",nullable=false)
     private Location locationID;
@@ -30,8 +33,9 @@ public class Event {
     @Column(name="status", nullable = false)
     private int status;
     public Event() {}
-    public Event(int id, Location locationID, String eventName, String description, LocalDate startDate, LocalDate finishDate, int status) {
+    public Event(int id,User userID, Location locationID, String eventName, String description, LocalDate startDate, LocalDate finishDate, int status) {
         this.id = id;
+        this.userID = userID;
         this.locationID = locationID;
         this.eventName = eventName;
         this.description = description;
@@ -44,6 +48,12 @@ public class Event {
     }
     public void setId(int id) {
         this.id = id;
+    }
+    public User getUserID() {
+        return userID;
+    }
+    public void setUserID(User userID) {
+        this.userID = userID;
     }
     public Location getLocationID() {
         return locationID;

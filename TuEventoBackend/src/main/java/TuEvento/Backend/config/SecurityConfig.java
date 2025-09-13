@@ -50,7 +50,7 @@ public class SecurityConfig {
                         "/swagger-resources/**",
                         "/webjars/**"
                     ).permitAll()
-
+                .requestMatchers("/api/v1/eventLayout/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

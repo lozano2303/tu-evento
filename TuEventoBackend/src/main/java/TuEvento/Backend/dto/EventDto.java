@@ -3,8 +3,10 @@ package TuEvento.Backend.dto;
 import java.time.LocalDate;
 
 import TuEvento.Backend.model.Location;
+import TuEvento.Backend.model.User;
 
 public class EventDto {
+    private User userID;
     private Location locationID;
     private String eventName;
     private String description;
@@ -12,13 +14,20 @@ public class EventDto {
     private LocalDate finishDate;
     private int status;
     public EventDto() {}
-    public EventDto(Location locationID, String eventName, String description, LocalDate startDate, LocalDate finishDate, int status) {
+    public EventDto(User userID, Location locationID, String eventName, String description, LocalDate startDate, LocalDate finishDate, int status) {
+        this.userID = userID;
         this.locationID = locationID;
         this.eventName = eventName;
         this.description = description;
         this.startDate = startDate;
         this.finishDate = finishDate;
         this.status = status;
+    }
+    public User getUserID() {
+        return userID;
+    }
+    public void setUserID(User userID) {
+        this.userID = userID;
     }
     public Location getLocationID() {
         return locationID;

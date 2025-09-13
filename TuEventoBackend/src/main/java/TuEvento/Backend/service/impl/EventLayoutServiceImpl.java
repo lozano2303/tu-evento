@@ -1,12 +1,12 @@
 package TuEvento.Backend.service.impl;
 
 
-import java.util.List;
+
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.events.Event;
+
 
 import TuEvento.Backend.dto.EventLayoutDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
@@ -30,22 +30,17 @@ public class EventLayoutServiceImpl implements EventLayoutService {
             eventLayout.setLayoutData(eventLayoutDto.getLayoutData());
             eventLayout.setCreatedAt(eventLayoutDto.getCreatedAt());
             eventLayoutRepository.save(eventLayout);
-            return new ResponseDto<>(true, "EventLayout created successfully");
+            return new ResponseDto<>(true, "EventLayout creado exitosamente");
         } catch (Exception e) {
             return new ResponseDto<>(false, "Error creando EventLayout"+ e);
         }
     }
 
     @Override
-    public ResponseDto<EventLayoutDto> deleteEventLayout(String name,EventLayoutDto eventLayoutID) {
+    public ResponseDto<EventLayoutDto> deleteEventLayout(EventLayoutDto eventLayoutID) {
         try {
-            Optional<TuEvento.Backend.model.Event> idEvent = eventRepostitory.findByEventName(name);
-            if(idEvent.isPresent()){
                 eventLayoutRepository.deleteById(eventLayoutID.getEventLayoutID());
                 return new ResponseDto<>(true, "EventLayout eliminado exitosamente");
-            }else{
-                return new ResponseDto<>(false, "EventLayout not found");
-            }
         } catch (Exception e) {
             return new ResponseDto<>(false, "Error eliminando EventLayout"+ e);
         }
@@ -54,7 +49,7 @@ public class EventLayoutServiceImpl implements EventLayoutService {
     @Override
     public ResponseDto<EventLayoutDto> getEventLayout(String name, EventLayoutDto eventLayoutID) {
         try {
-            Optional<TuEvento.Backend.model.Event> idEvent = eventRepostitory.findByEventName(name);
+            Optional<TuEvento.Backend.model.Event> idEvent = eventRepostitory.findByEventNameAndStatusNot(name,0);
 
             if (idEvent.isPresent()) {
                 Optional<EventLayout> eventLayout = eventLayoutRepository.findById(eventLayoutID.getEventLayoutID());
@@ -85,7 +80,7 @@ public class EventLayoutServiceImpl implements EventLayoutService {
     @Override
     public ResponseDto<EventLayoutDto> updateEventLayout(String name,EventLayoutDto eventLayoutDto) {
         try {
-            Optional<TuEvento.Backend.model.Event> idEvent = eventRepostitory.findByEventName(name);
+            Optional<TuEvento.Backend.model.Event> idEvent = eventRepostitory.findByEventNameAndStatusNot(name,0);
 
             if (idEvent.isPresent()) {
                 Optional<EventLayout> eventLayout = eventLayoutRepository.findById(eventLayoutDto.getEventLayoutID());
@@ -97,7 +92,6 @@ public class EventLayoutServiceImpl implements EventLayoutService {
                     dto.setEventLayoutID(layout.getId());
                     dto.setEventID(eventLayout.get().getEventID());
                     dto.setLayoutData(layout.getLayoutData());
-                    dto.setCreatedAt(layout.getCreatedAt());
                     eventLayoutRepository.save(eventLayout.get());
 
                     return new ResponseDto<>(true, "EventLayout encontrado", dto);
