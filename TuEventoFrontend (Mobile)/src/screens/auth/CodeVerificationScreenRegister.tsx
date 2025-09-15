@@ -1,10 +1,8 @@
 import { View, Text, Image, TouchableOpacity  } from "react-native";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
-import { useNavigation } from "@react-navigation/native";
 
 export default function CodeVerificationScreenRegister() {
-    View
   return (
     <View className="flex-1 bg-[#1a0033] items-center px-6 w-full h-full relative ">
         <View className="w-full top-12 ">
