@@ -11,11 +11,10 @@ public class OrganizerPetition {
     private int organizerPetitionID;
 
     @OneToOne
-    @JoinColumn(name = "userID", nullable = false)
+    @JoinColumn(name = "userid", referencedColumnName = "userID", nullable = false)
     private User userID;
 
-    @Lob
-    @Column(name = "document", nullable = false, columnDefinition = "BYTEA")
+    @Column(name = "document", nullable = false)
     private byte[] document;
 
     @Column(name = "applicationDate", nullable = false)
@@ -27,7 +26,8 @@ public class OrganizerPetition {
     public OrganizerPetition() {
     }
 
-    public OrganizerPetition(int organizerPetitionID, User userID, byte[] document, LocalDateTime applicationDate, int status) {
+    public OrganizerPetition(int organizerPetitionID, User userID, byte[] document, LocalDateTime applicationDate,
+            int status) {
         this.organizerPetitionID = organizerPetitionID;
         this.userID = userID;
         this.document = document;
