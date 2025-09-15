@@ -21,6 +21,7 @@ export default function useHistory(initialState = []) {
     setHistory([newState]);
     setIndex(0);
   };
-
+  
   return { state, pushState, undo, redo, reset, canUndo: index > 0, canRedo: index < history.length - 1 };
 }
+   
