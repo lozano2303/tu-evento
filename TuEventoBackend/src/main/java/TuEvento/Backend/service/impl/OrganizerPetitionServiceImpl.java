@@ -11,11 +11,13 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Base64;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.io.IOException;
 
 @Service
 public class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
@@ -27,32 +29,50 @@ public class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
     private UserRepository userRepository;
 
     @Override
-    @Transactional
-    public ResponseDto<String> submitPetition(OrganizerPetitionDto petitionDto) {
-        Optional<User> userOpt = userRepository.findById(petitionDto.getUserID());
-        if (userOpt.isEmpty()) {
-            return ResponseDto.error("Usuario no encontrado");
-        }
-
-        if (petitionRepository.existsByUserID_UserID(petitionDto.getUserID())) {
-            return ResponseDto.error("Ya existe una petición para este usuario");
-        }
-
+    //@Transactional
+    public ResponseDto<String> submitPetition(int userID, MultipartFile file) {
         try {
+            // Validar si el usuario existe
+            Optional<User> userOpt = userRepository.findById(userID);
+            if (userOpt.isEmpty()) {
+                return ResponseDto.error("Usuario no encontrado");
+            }
+
+            // Validar si ya existe petición para este usuario
+            if (petitionRepository.existsByUserID_UserID(userID)) {
+                return ResponseDto.error("Ya existe una petición para este usuario");
+            }
+
+            // Validar archivo
+            if (file == null || file.isEmpty()) {
+                return ResponseDto.error("El archivo está vacío o no fue enviado");
+            }
+
+            // Crear petición
             OrganizerPetition petition = new OrganizerPetition();
             petition.setUserID(userOpt.get());
-            petition.setApplicationDate(petitionDto.getApplicationDate());
-            petition.setDocument(Base64.getDecoder().decode(petitionDto.getDocumentBase64()));
-            petition.setStatus(0); // Estado inicial: pendiente
+            petition.setDocument(file.getBytes()); // 🔹 Guardar como bytea
+            petition.setApplicationDate(LocalDateTime.now());
+            petition.setStatus(0);
 
+            // Guardar en DB
             petitionRepository.save(petition);
+
             return ResponseDto.ok("Petición enviada correctamente");
+
         } catch (DataAccessException e) {
-            return ResponseDto.error("Error de base de datos al registrar la petición");
+            e.printStackTrace();
+            return ResponseDto.error("Error de base de datos: " + e.getMostSpecificCause().getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseDto.error("Error al leer el archivo: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseDto.error("Error inesperado al registrar la petición");
+            e.printStackTrace();
+            return ResponseDto.error("Error inesperado: " + e.getMessage());
         }
     }
+
+
 
     @Override
     public ResponseDto<List<OrganizerPetitionDto>> getAllPetitions() {
@@ -60,8 +80,6 @@ public class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
         List<OrganizerPetitionDto> dtoList = petitions.stream()
                 .map(p -> new OrganizerPetitionDto(
                         p.getUserID().getUserID(),
-                        Base64.getEncoder().encodeToString(p.getDocument()),
-                        p.getApplicationDate(),
                         p.getStatus()
                 ))
                 .collect(Collectors.toList());
@@ -83,8 +101,6 @@ public class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
         OrganizerPetition petition = petitionOpt.get();
         OrganizerPetitionDto dto = new OrganizerPetitionDto(
                 petition.getUserID().getUserID(),
-                Base64.getEncoder().encodeToString(petition.getDocument()),
-                petition.getApplicationDate(),
                 petition.getStatus()
         );
 

@@ -4,6 +4,7 @@ import Input from "../../components/Input";
 import Button from "../../components/Button";
 import RedSocialButton from "../../components/RedSocialButton";
 import { registerUser } from '../../api/services/UserApi';
+import { useNavigation } from "@react-navigation/native";
 
 export default function RegisterScreen() {
   // Estado para capturar los datos del formulario
@@ -13,6 +14,12 @@ export default function RegisterScreen() {
     email: '',
     password: ''
   });
+
+     const navigation = useNavigation();
+    
+    const handleGoToRegister = () => {
+      navigation.navigate("CodeVerificationScreenRegister" as never); 
+    };
   
   const [loading, setLoading] = useState(false);
 
@@ -43,25 +50,10 @@ export default function RegisterScreen() {
       // Llamar al API
       const result = await registerUser(userData);
       
-      // Mostrar alert de éxito
-      Alert.alert(
-        'Registro Exitoso',
-        `¡Bienvenido ${result.fullName || formData.fullName}! Tu cuenta ha sido creada correctamente.`,
-        [
-          {
-            text: 'Continuar',
-            onPress: () => {
-              // Limpiar formulario después del éxito
-              setFormData({
-                fullName: '',
-                telephone: '',
-                email: '',
-                password: ''
-              });
-            }
-          }
-        ]
-      );
+      console.log('Registro exitoso:', result);
+      // Navegar a la pantalla de verificación de código
+      handleGoToRegister();
+      
 
     } catch (error: any) {
       console.error('Error en el registro:', error);

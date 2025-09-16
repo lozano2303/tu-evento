@@ -10,6 +10,7 @@ import TuEvento.Backend.repository.UserRepository;
 import TuEvento.Backend.repository.LoginRepository;
 import TuEvento.Backend.repository.AddressRepository;
 import TuEvento.Backend.service.RegisterService;
+import TuEvento.Backend.service.AccountActivationService; // ✅ Nuevo import
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -35,57 +36,65 @@ public class RegisterServiceImpl implements RegisterService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private AccountActivationService accountActivationService; // ✅ Inyectado
+
     @Override
     @Transactional
     public ResponseDto<String> register(RegisterRequestDto dto) {
-    try {
-        // Validar si el correo ya existe en Login
-        if (loginRepository.findByEmail(dto.getEmail()).isPresent()) {
-            return ResponseDto.error("Correo electrónico existente");
-        }
-
-        Address address = null;
-        if (dto.getAddress() != null) {
-            Optional<Address> addressOpt = addressRepository.findById(dto.getAddress());
-            if (addressOpt.isEmpty()) {
-                return ResponseDto.error("Dirección no encontrada");
+        try {
+            // Validar si el correo ya existe en Login
+            if (loginRepository.findByEmail(dto.getEmail()).isPresent()) {
+                return ResponseDto.error("Correo electrónico existente");
             }
-            address = addressOpt.get();
+
+            Address address = null;
+            if (dto.getAddress() != null) {
+                Optional<Address> addressOpt = addressRepository.findById(dto.getAddress());
+                if (addressOpt.isEmpty()) {
+                    return ResponseDto.error("Dirección no encontrada");
+                }
+                address = addressOpt.get();
+            }
+
+            // 1. Crear usuario
+            User user = new User();
+            user.setFullName(dto.getFullName());
+            user.setTelephone(dto.getTelephone());
+
+            if (dto.getBirthDate() != null) {
+                user.setBirthDate(new java.sql.Date(dto.getBirthDate().getTime()));
+            }
+
+            user.setAddress(address);
+            user.setRole(Role.USER);
+            user.setStatus(true);
+            user.setActivated(false);
+
+            userRepository.save(user);
+
+            // 2. Crear login asociado CON CONTRASEÑA HASHEDA
+            Login login = new Login();
+            login.setEmail(dto.getEmail());
+            login.setPassword(passwordEncoder.encode(dto.getPassword()));
+            login.setLoginDate(LocalDateTime.now());
+            login.setUserID(user);
+            login.setUsername(dto.getEmail());
+
+            loginRepository.save(login);
+
+            // 3. Crear accountActivation y enviar correo
+            accountActivationService.createActivationForUser(user.getUserID());
+
+            return ResponseDto.ok(
+            "Usuario y login creados exitosamente. Código de activación enviado al correo.",
+            String.valueOf(user.getUserID())
+            );
+
+        } catch (DataAccessException e) {
+            return ResponseDto.error("Error de base de datos al registrar: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseDto.error("Error inesperado al registrar: " + e.getMessage());
         }
-
-
-        // 1. Crear usuario
-        User user = new User();
-        user.setFullName(dto.getFullName());
-        user.setTelephone(dto.getTelephone());
-
-        if (dto.getBirthDate() != null) {
-            user.setBirthDate(new java.sql.Date(dto.getBirthDate().getTime()));
-        }
-
-        user.setAddress(address);
-        user.setRole(Role.USER);
-        user.setStatus(true);
-        user.setActivated(false);
-
-        userRepository.save(user);
-
-        // 2. Crear login asociado CON CONTRASEÑA HASHEDA
-        Login login = new Login();
-        login.setEmail(dto.getEmail());
-        login.setPassword(passwordEncoder.encode(dto.getPassword()));
-        login.setLoginDate(LocalDateTime.now());
-        login.setUserID(user);
-        login.setUsername(dto.getEmail());
-
-        loginRepository.save(login);
-
-        return ResponseDto.ok("Usuario y login creados exitosamente");
-
-    } catch (DataAccessException e) {
-        return ResponseDto.error("Error de base de datos al registrar: " + e.getMessage());
-    } catch (Exception e) {
-        return ResponseDto.error("Error inesperado al registrar: " + e.getMessage());
     }
-}
 }
