@@ -2,6 +2,7 @@ package TuEvento.Backend.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -148,7 +149,27 @@ public class EventServiceImpl implements EventService {
             return ResponseDto.error("Error inesperado al obtener evento: " + e.getMessage());
         }
     }
-
+    @Override
+    public ResponseDto<EventDto> getEventById(int id) {
+        try {
+            Optional<Event> event = eventRepository.findById(id);
+            if (event.isPresent()) {
+                EventDto dto = new EventDto();
+                dto.setUserID(event.get().getUserID());
+                dto.setLocationID(event.get().getLocationID());
+                dto.setEventName(event.get().getEventName());
+                dto.setDescription(event.get().getDescription());
+                dto.setStartDate(event.get().getStartDate());
+                dto.setFinishDate(event.get().getFinishDate());
+                dto.setStatus(event.get().getStatus());
+                return ResponseDto.ok("Evento encontrado", dto);
+            } else {
+                return ResponseDto.error("Evento no encontrado");
+            }
+        } catch (Exception e) {
+            return ResponseDto.error("Error inesperado al obtener evento: " + e.getMessage());
+        }
+    }
     @Override
     public ResponseDto<List<EventDto>> getAllEvent() {
         try {

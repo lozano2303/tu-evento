@@ -51,6 +51,7 @@ public class SecurityConfig {
                         "/webjars/**"
                     ).permitAll()
                 .requestMatchers("/api/v1/eventLayout/**").permitAll()
+                .requestMatchers("/api/v1/eventRating/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

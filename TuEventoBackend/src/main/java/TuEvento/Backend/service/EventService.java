@@ -14,4 +14,5 @@ public interface EventService {
     ResponseDto<EventDto> CancelEvent(EventDto eventDto);
     ResponseDto<List<EventDto>> getAllEvent();
     ResponseDto<EventDto> getEvent(ResponseEventSearch responseEventSearch, EventDto eventDto);
+    ResponseDto<EventDto> getEventById(int id);
 }
