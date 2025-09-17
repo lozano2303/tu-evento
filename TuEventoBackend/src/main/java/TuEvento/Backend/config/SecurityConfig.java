@@ -53,6 +53,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/eventLayout/**").permitAll()
                 .requestMatchers("/api/v1/eventRating/**").permitAll()
                 .requestMatchers("/api/v1/organizer-petitions/**").permitAll()
+                .requestMatchers("/api/v1/sections/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
