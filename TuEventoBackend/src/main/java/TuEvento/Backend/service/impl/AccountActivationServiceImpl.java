@@ -80,6 +80,7 @@ public class AccountActivationServiceImpl implements AccountActivationService {
         String newActivationCode = String.format("%06d", new Random().nextInt(999999));
         activation.setActivationCode(newActivationCode);
         activation.setActivation(false);
+        // Restablecer tiempo de expiración 1 minuto para pruebas
         activation.setExpirationTime(LocalDateTime.now().plusMinutes(1)); // ⏰ Cambia a más tiempo en producción
 
         // Guardar cambios
