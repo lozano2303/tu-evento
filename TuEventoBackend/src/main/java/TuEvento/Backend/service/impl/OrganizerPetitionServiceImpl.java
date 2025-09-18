@@ -119,9 +119,22 @@ public class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
             OrganizerPetition petition = petitionOpt.get();
             petition.setStatus(newStatus);
             petitionRepository.save(petition);
+
+            // Obtener el usuario relacionado
+            User user = petition.getUserID(); // Asegúrate de tener este método en OrganizerPetition
+
+            // Actualizar el campo organizer según el estado
+            if (newStatus == 1) { // Aprobado
+                user.setOrganicer(true);
+            } else if (newStatus == 2) { // Rechazado
+                user.setOrganicer(false);
+            }
+            userRepository.save(user); // Guarda los cambios en el usuario
+
             return ResponseDto.ok("Estado actualizado correctamente");
         } catch (Exception e) {
             return ResponseDto.error("Error al actualizar el estado de la petición");
         }
     }
+
 }
