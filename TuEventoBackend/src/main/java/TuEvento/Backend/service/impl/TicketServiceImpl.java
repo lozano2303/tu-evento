@@ -1,151 +1,201 @@
 package TuEvento.Backend.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import TuEvento.Backend.dto.TicketDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
-import TuEvento.Backend.model.Ticket;
-import TuEvento.Backend.repository.EventRepository;
-import TuEvento.Backend.repository.TicketRepository;
-import TuEvento.Backend.repository.UserRepository;
+import TuEvento.Backend.model.*;
+import TuEvento.Backend.repository.*;
 import TuEvento.Backend.service.TicketService;
 
-import java.time.LocalDate;
+import jakarta.transaction.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class TicketServiceImpl implements TicketService {
+
     @Autowired
     private TicketRepository ticketRepository;
+
     @Autowired
     private EventRepository eventRepository;
+
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private SeatRepository seatRepository;
+
+    @Autowired
+    private SeatTicketRepository seatTicketRepository;
+
+    // DTO ↔ Entity
     private TicketDto toDto(Ticket ticket) {
         TicketDto dto = new TicketDto();
         dto.setTicketID(ticket.getTicketID());
-        dto.setEventId(ticket.getEventId());
-        dto.setUserId(ticket.getUserId());
-        dto.setTotalPrice(ticket.getTotalPrice());
+        dto.setEventId(ticket.getEventId().getId());
+        dto.setUserId(ticket.getUserId().getUserID());
         dto.setCode(ticket.getCode());
-        dto.setTicketDate(ticket.getTicketDate());
         dto.setStatus(ticket.getStatus());
         return dto;
     }
 
-    private Ticket toEntity(TicketDto dto) {
+    // Crear ticket con múltiples asientos
+    @Override
+    @Transactional
+    public ResponseDto<String> createTicketWithSeats(TicketDto ticketDto) {
+        List<Integer> seatIDs = ticketDto.getSeatIDs();
+        if (seatIDs == null || seatIDs.isEmpty()) {
+            return ResponseDto.error("No se seleccionaron asientos");
+        }
+
+        List<Seat> seats = seatRepository.findAllById(seatIDs);
+        for (Seat seat : seats) {
+            if (seat.isStatus()) {
+                return ResponseDto.error("El asiento " + seat.getSeatID() + " ya está ocupado");
+            }
+        }
+
+        Optional<User> userOpt = userRepository.findById(ticketDto.getUserId());
+        Optional<Event> eventOpt = eventRepository.findById(ticketDto.getEventId());
+
+
+        if (userOpt.isEmpty() || eventOpt.isEmpty()) {
+            return ResponseDto.error("Usuario o evento no encontrado");
+        }
+
+        BigDecimal totalPrice = seats.stream()
+            .map(seat -> seat.getSectionID().getPrice())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         Ticket ticket = new Ticket();
-        ticket.setTicketID(dto.getTicketID());
-        ticket.setEventId(dto.getEventId());
-        ticket.setUserId(dto.getUserId());
-        ticket.setTotalPrice(dto.getTotalPrice());
-        ticket.setCode(dto.getCode());
-        ticket.setTicketDate(dto.getTicketDate());
-        ticket.setStatus(dto.getStatus());
-        return ticket;
-    }
+        ticket.setUserId(userOpt.get());
+        ticket.setEventId(eventOpt.get());
+        ticket.setCode(ticketDto.getCode());
+        ticket.setStatus(0); // Pendiente
+        ticket.setTicketDate(LocalDateTime.now());
+        ticket.setTotalPrice(totalPrice);
+        ticketRepository.save(ticket);
 
-    @Override
-    public ResponseDto<TicketDto> insertTicket(TicketDto ticketDto) {
-        try {
-            Ticket ticket = toEntity(ticketDto);
-            ticket.setTicketDate(LocalDate.now());
-            //1 es activo, 0 inactivo
-            ticket.setStatus(1);
-            ticketRepository.save(ticket);
-            return new ResponseDto<>(true, "Ticket creado exitosamente");
-        } catch (Exception e) {
-            return new ResponseDto<>(false, "Error al crear el ticket: " + e.getMessage(), null);
+        for (Seat seat : seats) {
+            SeatTicket relation = new SeatTicket(seat, ticket);
+            seatTicketRepository.save(relation);
+            seat.setStatus(true);
+            seatRepository.save(seat);
         }
+
+        return ResponseDto.ok("Ticket creado con " + seats.size() + " asientos. Precio total: $" + totalPrice);
     }
 
+    // Cancelar ticket manualmente
     @Override
-    public ResponseDto<TicketDto> updateTicket(TicketDto ticketDto) {
-        try {
-            Optional<Ticket> optionalTicket = ticketRepository.findById(ticketDto.getTicketID());
-            if (!optionalTicket.isPresent()) {
-                return new ResponseDto<>(false, "Ticket no encontrado", null);
+    @Transactional
+    public ResponseDto<String> cancelTicket(int ticketID) {
+        Optional<Ticket> ticketOpt = ticketRepository.findById(ticketID);
+        if (ticketOpt.isEmpty()) return ResponseDto.error("Ticket no encontrado");
+
+        Ticket ticket = ticketOpt.get();
+        List<SeatTicket> relations = seatTicketRepository.findByTicket(ticket);
+
+        for (SeatTicket relation : relations) {
+            Seat seat = relation.getSeat();
+            seat.setStatus(false);
+            seatRepository.save(seat);
+            seatTicketRepository.delete(relation);
+        }
+
+        ticket.setStatus(2); // Cancelado
+        ticketRepository.save(ticket);
+
+        return ResponseDto.ok("Ticket cancelado y asientos liberados");
+    }
+
+    // Scheduler: liberar asientos si el ticket no se paga en 30 minutos
+    @Scheduled(fixedRate = 60000) // cada minuto
+    @Transactional
+    public void releaseExpiredTickets() {
+        List<Ticket> pendingTickets = ticketRepository.findByStatus(0); // Pendientes
+
+        for (Ticket ticket : pendingTickets) {
+            if (ticket.getTicketDate().plusMinutes(1).isBefore(LocalDateTime.now())) {
+                List<SeatTicket> relations = seatTicketRepository.findByTicket(ticket);
+
+                for (SeatTicket relation : relations) {
+                    Seat seat = relation.getSeat();
+                    seat.setStatus(false);
+                    seatRepository.save(seat);
+                    seatTicketRepository.delete(relation);
+                }
+
+                ticketRepository.delete(ticket); // Eliminar ticket no pagado
             }
-            Ticket ticket = optionalTicket.get();
-            ticket.setEventId(ticketDto.getEventId());
-            ticket.setUserId(ticketDto.getUserId());
-            ticket.setTotalPrice(ticketDto.getTotalPrice());
-            ticket.setCode(ticketDto.getCode());
-            ticket.setTicketDate(ticketDto.getTicketDate());
-            ticket.setStatus(ticketDto.getStatus());
-            Ticket updated = ticketRepository.save(ticket);
-            return new ResponseDto<>(true, "Ticket actualizado exitosamente", toDto(updated));
-        } catch (Exception e) {
-            return new ResponseDto<>(false, "Error al actualizar el ticket: " + e.getMessage(), null);
         }
     }
 
-    @Override
-    public ResponseDto<TicketDto> deleteTicket(int id) {
-        try {
-            Optional<Ticket> optionalTicket = ticketRepository.findById(id);
-            if (!optionalTicket.isPresent()) {
-                return new ResponseDto<>(false, "Ticket no encontrado", null);
-            }
-            ticketRepository.delete(optionalTicket.get());
-            return new ResponseDto<>(true, "Ticket eliminado exitosamente", null);
-        } catch (Exception e) {
-            return new ResponseDto<>(false, "No se pudo eliminar el Ticket: " + e.getMessage(), null);
-        }
-    }
+    // Obtener ticket por ID
     @Override
     public ResponseDto<TicketDto> getTicketById(int id) {
         try {
             Optional<Ticket> optionalTicket = ticketRepository.findById(id);
-            if (!optionalTicket.isPresent()) {
-                return new ResponseDto<>(false, "Ticket no encontrado", null);
+            if (optionalTicket.isEmpty()) {
+                return ResponseDto.error("Ticket no encontrado");
             }
-            Ticket ticket = optionalTicket.get();
-            return new ResponseDto<>(true, "Ticket encontrado", toDto(ticket));
+            return ResponseDto.ok("Ticket encontrado", toDto(optionalTicket.get()));
         } catch (Exception e) {
-            return new ResponseDto<>(false, "No se pudo obtener el Ticket: " + e.getMessage(), null);
+            return ResponseDto.error("No se pudo obtener el Ticket: " + e.getMessage());
         }
     }
+
+    // Obtener tickets por evento
     @Override
     public ResponseDto<List<TicketDto>> getTicketByEvent(int eventId) {
         try {
-            List<Ticket> optionalTicket = ticketRepository.findByEventId(eventRepository.findById(eventId).get());
-            if (optionalTicket.isEmpty()) {
-                return new ResponseDto<>(false, "Ticket no encontrado", null);
+            Optional<Event> eventOpt = eventRepository.findById(eventId);
+            if (eventOpt.isEmpty()) {
+                return ResponseDto.error("Evento no encontrado");
             }
-            List<TicketDto> ticketDtos = optionalTicket.stream()
+
+            List<Ticket> tickets = ticketRepository.findByEventId(eventOpt.get());
+            if (tickets.isEmpty()) {
+                return ResponseDto.error("No hay tickets para este evento");
+            }
+
+            List<TicketDto> ticketDtos = tickets.stream()
                 .map(this::toDto)
                 .toList();
-            return new ResponseDto<>(true, "Tickets encontrados", ticketDtos);
+            return ResponseDto.ok("Tickets encontrados", ticketDtos);
         } catch (Exception e) {
-            return new ResponseDto<>(false, "No se pudo obtener el Ticket: " + e.getMessage(), null);
+            return ResponseDto.error("No se pudo obtener los tickets: " + e.getMessage());
         }
     }
+
+    // Obtener tickets por usuario
     @Override
     public ResponseDto<List<TicketDto>> getTicketByUser(int userId) {
         try {
-            var userOpt = userRepository.findById(userId);
+            Optional<User> userOpt = userRepository.findById(userId);
             if (userOpt.isEmpty()) {
-                return new ResponseDto<>(false, "Usuario no encontrado", null);
+                return ResponseDto.error("Usuario no encontrado");
             }
 
             List<Ticket> tickets = ticketRepository.findByUserId(userOpt.get());
             if (tickets.isEmpty()) {
-                return new ResponseDto<>(false, "No hay tickets para este usuario", null);
+                return ResponseDto.error("No hay tickets para este usuario");
             }
 
             List<TicketDto> ticketDtos = tickets.stream()
                     .map(this::toDto)
                     .toList();
 
-            return new ResponseDto<>(true, "Tickets encontrados", ticketDtos);
+            return ResponseDto.ok("Tickets encontrados", ticketDtos);
         } catch (Exception e) {
-            return new ResponseDto<>(false, "No se pudo obtener los tickets: " + e.getMessage(), null);
+            return ResponseDto.error("No se pudo obtener los tickets: " + e.getMessage());
         }
     }
-
-    
 }

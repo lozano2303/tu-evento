@@ -1,25 +1,24 @@
 package TuEvento.Backend.service;
 
-
-
-import java.util.List;
-
 import TuEvento.Backend.dto.TicketDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
 
+import java.util.List;
 
 public interface TicketService {
 
-    ResponseDto<TicketDto> insertTicket(TicketDto ticketDto);
+    // Crear ticket con múltiples asientos
+    ResponseDto<String> createTicketWithSeats(TicketDto ticketDto);
 
-    ResponseDto<TicketDto> updateTicket(TicketDto ticketDto);
+    // Cancelar ticket manualmente
+    ResponseDto<String> cancelTicket(int ticketID);
 
-    ResponseDto<TicketDto> deleteTicket(int id);
-
+    // Obtener ticket por ID
     ResponseDto<TicketDto> getTicketById(int id);
 
+    // Obtener tickets por evento
     ResponseDto<List<TicketDto>> getTicketByEvent(int eventId);
 
+    // Obtener tickets por usuario
     ResponseDto<List<TicketDto>> getTicketByUser(int userId);
-
 }
