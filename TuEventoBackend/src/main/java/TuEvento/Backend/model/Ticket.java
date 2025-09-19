@@ -2,7 +2,7 @@ package TuEvento.Backend.model;
 
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,11 +29,11 @@ public class Ticket {
     @Column(name="code",length = 10, nullable = false)
     private String code;
     @Column(name="ticketDate", nullable = false)
-    private LocalDate ticketDate;
+    private LocalDateTime ticketDate;
     @Column(name="status", nullable = false)
     private int status;
     public Ticket(){}
-    public Ticket(int ticketID, Event eventId, User userId, BigDecimal totalPrice, String code, LocalDate ticketDate,
+    public Ticket(int ticketID, Event eventId, User userId, BigDecimal totalPrice, String code, LocalDateTime ticketDate,
             int status) {
         this.ticketID = ticketID;
         this.eventId = eventId;
@@ -73,10 +73,10 @@ public class Ticket {
     public void setCode(String code) {
         this.code = code;
     }
-    public LocalDate getTicketDate() {
+    public LocalDateTime getTicketDate() {
         return ticketDate;
     }
-    public void setTicketDate(LocalDate ticketDate) {
+    public void setTicketDate(LocalDateTime ticketDate) {
         this.ticketDate = ticketDate;
     }
     public int getStatus() {

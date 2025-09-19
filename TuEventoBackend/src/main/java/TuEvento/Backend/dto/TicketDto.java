@@ -1,75 +1,71 @@
 package TuEvento.Backend.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
-import TuEvento.Backend.model.Event;
-import TuEvento.Backend.model.User;
+import java.util.List;
 
 public class TicketDto {
-private int ticketID;
-    private Event eventId;
-
-    private User userId;
-
-    private BigDecimal totalPrice;
-
+    private int ticketID;
+    private int eventId;
+    private int userId;
     private String code;
-
-    private LocalDate ticketDate;
-
     private int status;
-    public TicketDto(){}
-    public TicketDto(int ticketID, Event eventId, User userId, BigDecimal totalPrice, String code, LocalDate ticketDate,
-            int status) {
+    private List<Integer> seatIDs;
+
+    public TicketDto() {}
+
+    public TicketDto(int ticketID, int eventId, int userId, String code, int status, List<Integer> seatIDs) {
         this.ticketID = ticketID;
         this.eventId = eventId;
         this.userId = userId;
-        this.totalPrice = totalPrice;
         this.code = code;
-        this.ticketDate = ticketDate;
         this.status = status;
+        this.seatIDs = seatIDs;
     }
+
     public int getTicketID() {
         return ticketID;
     }
+
     public void setTicketID(int ticketID) {
         this.ticketID = ticketID;
     }
-    public Event getEventId() {
+
+    public int getEventId() {
         return eventId;
     }
-    public void setEventId(Event eventId) {
+
+    public void setEventId(int eventId) {
         this.eventId = eventId;
     }
-    public User getUserId() {
+
+    public int getUserId() {
         return userId;
     }
-    public void setUserId(User userId) {
+
+    public void setUserId(int userId) {
         this.userId = userId;
     }
-    public BigDecimal getTotalPrice() {
-        return totalPrice;
-    }
-    public void setTotalPrice(BigDecimal totalPrice) {
-        this.totalPrice = totalPrice;
-    }
+
     public String getCode() {
         return code;
     }
+
     public void setCode(String code) {
         this.code = code;
     }
-    public LocalDate getTicketDate() {
-        return ticketDate;
-    }
-    public void setTicketDate(LocalDate ticketDate) {
-        this.ticketDate = ticketDate;
-    }
+
     public int getStatus() {
         return status;
     }
+
     public void setStatus(int status) {
         this.status = status;
+    }
+
+    public List<Integer> getSeatIDs() {
+        return seatIDs;
+    }
+
+    public void setSeatIDs(List<Integer> seatIDs) {
+        this.seatIDs = seatIDs;
     }
 }

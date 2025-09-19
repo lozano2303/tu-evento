@@ -56,6 +56,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/sections/**").permitAll()
                 .requestMatchers("/api/v1/tickets/**").permitAll()
                 .requestMatchers("/api/v1/notifications/**").permitAll()
+                .requestMatchers("/api/v1/seats/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -3,6 +3,7 @@ package TuEvento.Backend.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import TuEvento.Backend.dto.TicketDto;
@@ -16,33 +17,38 @@ public class TicketController {
     @Autowired
     private TicketService ticketService;
 
-    @PostMapping
-    public ResponseDto<TicketDto> insertTicket(@RequestBody TicketDto ticketDto) {
-        return ticketService.insertTicket(ticketDto);
+    // ✅ Crear ticket con múltiples asientos
+    @PostMapping("/create-with-seats")
+    public ResponseEntity<ResponseDto<String>> createTicketWithSeats(@RequestBody TicketDto ticketDto) {
+        ResponseDto<String> response = ticketService.createTicketWithSeats(ticketDto);
+        return ResponseEntity.status(response.isSuccess() ? 201 : 400).body(response);
     }
 
-    @PutMapping
-    public ResponseDto<TicketDto> updateTicket(@RequestBody TicketDto ticketDto) {
-        return ticketService.updateTicket(ticketDto);
+    // ✅ Cancelar ticket manualmente
+    @DeleteMapping("/cancel/{ticketID}")
+    public ResponseEntity<ResponseDto<String>> cancelTicket(@PathVariable int ticketID) {
+        ResponseDto<String> response = ticketService.cancelTicket(ticketID);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseDto<TicketDto> deleteTicket(@PathVariable int id) {
-        return ticketService.deleteTicket(id);
-    }
-
+    // ✅ Obtener ticket por ID
     @GetMapping("/{id}")
-    public ResponseDto<TicketDto> getTicketById(@PathVariable int id) {
-        return ticketService.getTicketById(id);
+    public ResponseEntity<ResponseDto<TicketDto>> getTicketById(@PathVariable int id) {
+        ResponseDto<TicketDto> response = ticketService.getTicketById(id);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
     }
 
+    // ✅ Obtener tickets por evento
     @GetMapping("/by-event/{eventId}")
-    public ResponseDto<List<TicketDto>> getTicketByEvent(@PathVariable int eventId) {
-        return ticketService.getTicketByEvent(eventId);
+    public ResponseEntity<ResponseDto<List<TicketDto>>> getTicketByEvent(@PathVariable int eventId) {
+        ResponseDto<List<TicketDto>> response = ticketService.getTicketByEvent(eventId);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
     }
 
+    // ✅ Obtener tickets por usuario
     @GetMapping("/by-user/{userId}")
-    public ResponseDto<List<TicketDto>> getTicketByUser(@PathVariable int userId) {
-        return ticketService.getTicketByUser(userId);
+    public ResponseEntity<ResponseDto<List<TicketDto>>> getTicketByUser(@PathVariable int userId) {
+        ResponseDto<List<TicketDto>> response = ticketService.getTicketByUser(userId);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
     }
 }
