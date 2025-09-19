@@ -107,16 +107,7 @@ export default function CodeVerificationScreenRegister() {
           disabled={isLoading || activationCode.length < 4}
         />
         
-        {/* Botón para volver */}
-        <TouchableOpacity 
-          className="mt-6 p-2"
-          onPress={() => navigation.goBack()}
-          disabled={isLoading}
-        >
-          <Text className="text-gray-400 text-center">
-            ← Volver al registro
-          </Text>
-        </TouchableOpacity>
+  
       </View>     
     </View>     
   ); 

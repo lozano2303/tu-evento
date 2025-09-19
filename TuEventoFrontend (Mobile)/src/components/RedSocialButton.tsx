@@ -27,7 +27,7 @@ export default function RedSocialButton({ social, onSuccess, onError }: RedSocia
     try {
       console.log(` [${social.toUpperCase()}] Iniciando OAuth...`);
       
-      // 1. URL de tu backend Spring Boot
+      // 1. URL del backend Spring Boot
       const authUrl = `${BASE_URL}/oauth2/authorization/${social}`;
       console.log(` [${social.toUpperCase()}] Auth URL:`, authUrl);
       
@@ -60,10 +60,10 @@ export default function RedSocialButton({ social, onSuccess, onError }: RedSocia
         // No mostrar alerta para cancelación (es comportamiento normal)
         
       } else {
-        console.log(`❌ [${social.toUpperCase()}] Resultado no exitoso:`, result.type);
+        console.log(` [${social.toUpperCase()}] Resultado no exitoso:`, result.type);
         onError?.(result);
         Alert.alert(
-          ' Error', 
+          'Error', 
           `No se pudo completar el login con ${label}`,
           [{ text: 'Reintentar', style: 'default' }]
         );
@@ -73,7 +73,7 @@ export default function RedSocialButton({ social, onSuccess, onError }: RedSocia
       console.error(` [${social.toUpperCase()}] Error inesperado:`, error);
       onError?.(error);
       Alert.alert(
-        '💥 Error de Conexión', 
+        'Error de Conexión', 
         `No se pudo conectar con ${label}. Verifica tu internet y que el servidor esté funcionando.`,
         [{ text: 'OK', style: 'cancel' }]
       );
