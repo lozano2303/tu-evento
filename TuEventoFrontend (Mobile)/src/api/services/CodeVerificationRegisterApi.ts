@@ -4,8 +4,8 @@ import { IRequestCodeVerification } from "../types/IcodeVerificationRegister";
 
 export const codeVerificationRegister = async (codeData: IRequestCodeVerification) => {
   try {
-    console.log("🚀 Enviando datos a:", VERIFICATION_ENDPOINT_REGISTER);
-    console.log("📤 Datos enviados:", codeData);
+    console.log(" Enviando datos a:", VERIFICATION_ENDPOINT_REGISTER);
+    console.log(" Datos enviados:", codeData);
 
     const response = await fetch(`${VERIFICATION_ENDPOINT_REGISTER}`, {
       method: "PUT",
@@ -23,11 +23,11 @@ export const codeVerificationRegister = async (codeData: IRequestCodeVerificatio
 
     // Aquí ya obtenemos el JSON directamente
     const responseData = await response.json();
-    console.log("✅ Verificación exitosa:", responseData);
+    console.log(" Verificación exitosa:", responseData);
 
     return responseData;
   } catch (error) {
-    console.error("❌ Error en codeVerificationRegister:", error);
+    console.error(" Error en codeVerificationRegister:", error);
     throw error;
   }
 };

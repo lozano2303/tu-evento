@@ -9,10 +9,10 @@ import { useNavigation } from "@react-navigation/native";
 export default function RegisterScreen() {
   const navigation = useNavigation();
 
-  // 🎯 Función para manejar login exitoso con redes sociales
+  //  Función para manejar login exitoso con redes sociales
   const handleOAuthSuccess = (authData: any) => {
-    console.log('🎉 OAuth exitoso - Navegando a EvenList');
-    console.log('📋 Datos recibidos:', authData);
+    console.log(' OAuth exitoso - Navegando a EvenList');
+    console.log(' Datos recibidos:', authData);
     
     // Navegar directamente a la lista de eventos
     navigation.navigate("EvenList" as never);
@@ -20,7 +20,7 @@ export default function RegisterScreen() {
 
   // ❌ Función para manejar errores (opcional)
   const handleOAuthError = (error: any) => {
-    console.log('💀 Error en OAuth:', error);
+    console.log(' Error en OAuth:', error);
     // Aquí podrías mostrar un mensaje de error si quieres
   };
 
@@ -55,46 +55,35 @@ export default function RegisterScreen() {
         password: formData.password,
       };
 
-      console.log('🚀 Intentando registrar usuario...');
-      console.log('📦 Datos enviados:', userData);
+      console.log(' Intentando registrar usuario...');
+      console.log(' Datos enviados:', userData);
       
       // Llamar al API y obtener la respuesta completa
       const responseData = await registerUser(userData);
       
-      console.log('✅ Registro exitoso - Respuesta completa:', responseData);
+      console.log(' Registro exitoso - Respuesta completa:', responseData);
       
       if (responseData.success) {
         // 🆔 AQUÍ CAPTURAMOS EL ID DEL USUARIO
         const userId = responseData.data; 
         
-        console.log('🔍 ID del usuario capturado:', userId);
-        console.log('📧 Email del usuario:', formData.email);
+        console.log(' ID del usuario capturado:', userId);
+        console.log(' Email del usuario:', formData.email);
         
-        // Mostrar mensaje de éxito y luego navegar
-        Alert.alert(
-          'Registro Exitoso',
-          responseData.message || 'Usuario creado exitosamente. Código de activación enviado al correo.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                console.log('🧭 Navegando a verificación con parámetros:');
-                console.log('   - userId:', userId);
-                console.log('   - email:', formData.email);
-                
-                // Navegación sin tipos estrictos
-                (navigation as any).navigate("CodeVerificationScreenRegister", {
-                  userId: userId,
-                  email: formData.email
-                });
-              }
-            }
-          ]
-        );
+        // Navegar directamente a verificación con parámetros
+        console.log(' Navegando a verificación con parámetros:');
+        console.log('   - userId:', userId);
+        console.log('   - email:', formData.email);
+
+        // Navegación sin tipos estrictos
+        (navigation as any).navigate("CodeVerificationScreenRegister", {
+          userId: userId,
+          email: formData.email
+        });
       }
 
     } catch (error: any) {
-      console.error('❌ Error en el registro:', error);
+      console.error(' Error en el registro:', error);
       Alert.alert(
         'Error al Registrarse',
         error.message || 'No se pudo crear la cuenta. Intenta nuevamente.'
@@ -160,7 +149,7 @@ export default function RegisterScreen() {
           Registrate mediante:
         </Text>
         
-        {/* 🚀 Botones de redes sociales ACTUALIZADOS */}
+        {/*  Botones de redes sociales ACTUALIZADOS */}
         <RedSocialButton 
           social="google" 
           onSuccess={handleOAuthSuccess}

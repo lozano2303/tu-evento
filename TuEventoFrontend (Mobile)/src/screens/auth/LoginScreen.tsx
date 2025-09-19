@@ -15,18 +15,18 @@ export default function LoginScreen() {
     navigation.navigate("ForgotPasswordScreen" as never);
   };
 
-  // 🎯 Función para manejar login exitoso con redes sociales
+  //  Función para manejar login exitoso con redes sociales
   const handleOAuthSuccess = (authData: any) => {
-    console.log('🎉 OAuth exitoso - Navegando a EvenList');
-    console.log('📋 Datos recibidos:', authData);
+    console.log('OAuth exitoso - Navegando a EvenList');
+    console.log('Datos recibidos:', authData);
     
     // Navegar directamente a la lista de eventos
     navigation.navigate("EvenList" as never);
   };
 
-  // ❌ Función para manejar errores (opcional)
+  //  Función para manejar errores 
   const handleOAuthError = (error: any) => {
-    console.log('💀 Error en OAuth:', error);
+    console.log('Error en OAuth:', error);
     // Aquí podrías mostrar un mensaje de error si quieres
   };
 
@@ -79,7 +79,7 @@ export default function LoginScreen() {
           Inicia sesión con:
         </Text>
 
-        {/* 🚀 Botones de redes sociales ACTUALIZADOS */}
+        {/* Botones de redes sociales  */}
         <RedSocialButton 
           social="google" 
           onSuccess={handleOAuthSuccess}
