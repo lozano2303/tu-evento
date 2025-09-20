@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface LoginRepository extends JpaRepository<Login, Integer> {
     Optional<Login> findByEmail(String email);
     Optional<Login> findByUsername(String username);
-    Optional<Login> findByUserID(User user); // <-- NUEVO MÉTODO
+    Optional<Login> findByUserID(User user);
 }

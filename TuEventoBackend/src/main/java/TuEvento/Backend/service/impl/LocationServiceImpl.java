@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,27 +26,91 @@ public class LocationServiceImpl implements LocationService {
     @Autowired
     private AddressRepository addressRepository;
 
+    // Validation patterns
+    private static final Pattern LOCATION_NAME_PATTERN = Pattern.compile("^[a-zA-ZÀ-ÿ0-9\\s\\-_.&()]+$");
+
+    // Validation methods
+    private String validateLocationName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "El nombre de la ubicación es obligatorio";
+        }
+
+        name = name.trim();
+
+        if (name.length() < 2) {
+            return "El nombre de la ubicación debe tener al menos 2 caracteres";
+        }
+
+        if (name.length() > 50) { // Según modelo Location.java
+            return "El nombre de la ubicación no puede tener más de 50 caracteres";
+        }
+
+        if (!LOCATION_NAME_PATTERN.matcher(name).matches()) {
+            return "El nombre de la ubicación contiene caracteres no permitidos";
+        }
+
+        return null; // Valid
+    }
+
+    private String validateAddress(Integer addressId) {
+        if (addressId == null) {
+            return "La dirección de la ubicación es obligatoria";
+        }
+
+        if (addressId <= 0) {
+            return "El ID de dirección debe ser un número positivo";
+        }
+
+        return null; // Valid
+    }
+
     @Override
     @Transactional
     public ResponseDto<LocationDto> insertLocation(LocationDto locationDto) {
-        Optional<Address> addressOpt = addressRepository.findById(locationDto.getAddressID());
-        if (!addressOpt.isPresent()) {
-            return ResponseDto.error("Dirección no encontrada");
-        }
-
         try {
+            // === VALIDACIONES DE ENTRADA ===
+
+            // Validar nombre de ubicación
+            String nameError = validateLocationName(locationDto.getName());
+            if (nameError != null) {
+                return ResponseDto.error(nameError);
+            }
+
+            // Validar dirección
+            String addressError = validateAddress(locationDto.getAddressID());
+            if (addressError != null) {
+                return ResponseDto.error(addressError);
+            }
+
+            // === VALIDACIONES DE RELACIONES ===
+
+            // Verificar que la dirección existe
+            Optional<Address> addressOpt = addressRepository.findById(locationDto.getAddressID());
+            if (!addressOpt.isPresent()) {
+                return ResponseDto.error("Dirección no encontrada");
+            }
+
+            // === VALIDACIONES DE NEGOCIO ===
+            // Validaciones de negocio pueden agregarse aquí según requerimientos específicos
+
+            // === CREACIÓN DE ENTIDAD ===
             Location location = new Location();
-            location.setName(locationDto.getName());
+            location.setName(locationDto.getName().trim());
             location.setAddress(addressOpt.get());
 
             locationRepository.save(location);
 
-            return ResponseDto.ok("Ubicación insertada correctamente",
+            return ResponseDto.ok("Ubicación creada exitosamente",
                     new LocationDto(locationDto.getAddressID(), location.getName()));
+
         } catch (DataAccessException e) {
-            return ResponseDto.error("Error de la base de datos");
+            System.err.println("Error de base de datos en creación de ubicación: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseDto.error("Error de base de datos al crear la ubicación");
         } catch (Exception e) {
-            return ResponseDto.error("Error inesperado al insertar la ubicación");
+            System.err.println("Error inesperado en creación de ubicación: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseDto.error("Error interno del servidor al crear la ubicación");
         }
     }
 

@@ -37,11 +37,6 @@ public class LoginController {
         return loginService.login(loginDto);
     }
 
-    @PostMapping("/register")
-    public ResponseDto<String> registerLogin(@RequestBody RequestLoginDTO requestLoginDTO) {
-        return loginService.save(requestLoginDTO);
-    }
-    
     @PostMapping("/changePassword")
     public ResponseEntity<ResponseDto> changePassword(@RequestBody ChangePasswordDto dto) {
         // Esto lo pongo para tener el nombre del usuario XD

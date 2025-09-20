@@ -198,8 +198,7 @@ public class LoginServiceImpl implements LoginService {
         return ResponseDto.ok("Contraseña actualizada correctamente");
     }
 
-    // eliminar tokens expirados cada 15 minutos 
-    @Scheduled(fixedRate = 900000)
+    @Scheduled(fixedRate = 900000) // cada 15 minutos
     public void eliminarTokensExpirados() {
         LocalDateTime ahora = LocalDateTime.now();
         resetTokens.entrySet().removeIf(entry -> entry.getValue().getExpiry().isBefore(ahora));

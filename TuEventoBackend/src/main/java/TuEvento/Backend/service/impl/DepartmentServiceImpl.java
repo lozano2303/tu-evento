@@ -4,6 +4,7 @@ import TuEvento.Backend.dto.responses.ResponseDto;
 
 import java.util.Optional;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -21,19 +22,62 @@ public class DepartmentServiceImpl implements DepartmentService{
     @Autowired
     private DepartmentRepository departmentRepository;
 
+    // Validation patterns
+    private static final Pattern DEPARTMENT_NAME_PATTERN = Pattern.compile("^[a-zA-ZÀ-ÿ\\s\\-_.']+$");
+
+    // Validation methods
+    private String validateDepartmentName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "El nombre del departamento es obligatorio";
+        }
+
+        name = name.trim();
+
+        if (name.length() < 2) {
+            return "El nombre del departamento debe tener al menos 2 caracteres";
+        }
+
+        if (name.length() > 50) { // Según modelo Department.java
+            return "El nombre del departamento no puede tener más de 50 caracteres";
+        }
+
+        if (!DEPARTMENT_NAME_PATTERN.matcher(name).matches()) {
+            return "El nombre del departamento contiene caracteres no permitidos";
+        }
+
+        return null; // Valid
+    }
+
     @Override
     @Transactional
     public ResponseDto<DepartmentDto> insertDepartment(DepartmentDto departmentDto) {
         try {
+            // === VALIDACIONES DE ENTRADA ===
+
+            // Validar nombre del departamento
+            String nameError = validateDepartmentName(departmentDto.getName());
+            if (nameError != null) {
+                return ResponseDto.error(nameError);
+            }
+
+            // === VALIDACIONES DE NEGOCIO ===
+            // Validaciones de negocio pueden agregarse aquí según requerimientos específicos
+
+            // === CREACIÓN DE ENTIDAD ===
             Department department = new Department();
-            department.setName(departmentDto.getName());
+            department.setName(departmentDto.getName().trim());
             departmentRepository.save(department);
-            
-            return ResponseDto.ok("Departamento insertado correctamente");
-        } catch(DataAccessException e){
-            return ResponseDto.error("Error de base de datos");
-        } catch(Exception e){
-            return ResponseDto.error("Error inesperado al insertar el departamento");
+
+            return ResponseDto.ok("Departamento creado exitosamente");
+
+        } catch (DataAccessException e) {
+            System.err.println("Error de base de datos en creación de departamento: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseDto.error("Error de base de datos al crear el departamento");
+        } catch (Exception e) {
+            System.err.println("Error inesperado en creación de departamento: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseDto.error("Error interno del servidor al crear el departamento");
         }
     }
 
