@@ -1,7 +1,7 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 
-import MainLayout from "./components/loyout/MainLayout.jsx";
+import MainLayout from "./components/layout/MainLayout.jsx";
 
 import LadingPage from "./components/views/lading-page.jsx";
 import Login from "./components/views/login.jsx";
