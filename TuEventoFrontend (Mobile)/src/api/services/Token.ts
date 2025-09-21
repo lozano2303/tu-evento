@@ -24,3 +24,17 @@ export const removeToken = async () => {
         return null;
     }
 }
+
+export const getUserIdFromToken = async (): Promise<number | null> => {
+    try {
+        const token = await getToken();
+        if (!token) return null;
+
+        const payload = token.split('.')[1];
+        const decoded = JSON.parse(atob(payload));
+        return decoded.userID || null;
+    } catch (error) {
+        console.error('Error decoding token:', error);
+        return null;
+    }
+}

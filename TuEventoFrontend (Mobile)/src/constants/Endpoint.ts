@@ -7,3 +7,5 @@ export const VERIFICATION_ENDPOINT_REGISTER = `${API_BASE_URL}/account-activatio
 export const FORGOT_ENDPOINT = `${API_BASE_URL}/login/forgot`; // Forgot password endpoint
 
 export const LOGIN_ENDPOINT = `${API_BASE_URL}/login/start`; // Login endpoint
+
+export const USER_PROFILE_ENDPOINT = `${API_BASE_URL}/users`; // User profile endpoint

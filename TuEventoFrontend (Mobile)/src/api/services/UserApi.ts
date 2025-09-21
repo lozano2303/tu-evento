@@ -1,5 +1,6 @@
-import { USER_ENDPOINT } from "../../constants/Endpoint"; 
-import { IRequestRegister } from "../types/IUser";
+import { USER_ENDPOINT, USER_PROFILE_ENDPOINT } from "../../constants/Endpoint";
+import { IRequestRegister, IUserProfileResponse } from "../types/IUser";
+import { getToken } from "./Token";
 //import axios from "axios";
 
 export const registerUser = async (userData: IRequestRegister) => {
@@ -29,5 +30,34 @@ export const registerUser = async (userData: IRequestRegister) => {
   } catch (error) {
     console.error(' Error en registerUser:', error);
     throw error; //  Lanzar el error en lugar de devolverlo
+  }
+};
+
+export const getUserProfile = async (userId: number): Promise<IUserProfileResponse> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("No token found");
+    }
+
+    const response = await fetch(`${USER_PROFILE_ENDPOINT}/${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok || responseData.success === false) {
+      throw new Error(responseData.message || "Error al obtener el perfil");
+    }
+
+    console.log('Perfil obtenido:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error en getUserProfile:', error);
+    throw error;
   }
 };

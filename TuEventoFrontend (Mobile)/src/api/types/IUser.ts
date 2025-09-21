@@ -12,3 +12,17 @@ export interface IRequestLogin {
   password: string
 }
 
+export interface IUserProfile {
+  fullName: string;
+  telephone: string;
+  birthDate: string | null;
+  address: string | null;
+  activated: boolean;
+}
+
+export interface IUserProfileResponse {
+  success: boolean;
+  message: string;
+  data: IUserProfile;
+}
+
