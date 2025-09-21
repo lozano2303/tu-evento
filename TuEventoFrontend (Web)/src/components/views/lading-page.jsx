@@ -1,6 +1,9 @@
 import { Calendar, Users, Gift, Smartphone, Globe, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function App() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
   
@@ -119,14 +122,17 @@ export default function App() {
 
           <div className="space-y-6 order-1 md:order-2">
             <h3 className="text-3xl md:text-4xl font-bold text-white leading-tight">
-              Busca el evento que más te
-              <span className="block">guste.</span>
+              Solicitud de
+              <span className="block">organizador.</span>
             </h3>
             <p className="text-gray-300 text-lg">
-              En nuestras librerías de eventos existentes, hay varios tipos de eventos de todo gusto y disponibilidad y precios, también hay tipos de reservaciones de asientos que te pueden interesar.
+              Si eres organizador de eventos, solicita la creación de tu evento personalizado. Completa el formulario con toda la información necesaria y nuestro equipo se pondrá en contacto contigo.
             </p>
-            <button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg hover:shadow-xl">
-              Busca el de tu gusto
+            <button
+              onClick={() => navigate('/event-request')}
+              className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              Solicitud de organizador
             </button>
           </div>
         </div>

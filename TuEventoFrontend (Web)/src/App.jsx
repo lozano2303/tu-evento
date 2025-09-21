@@ -10,6 +10,7 @@ import Events from "./components/views/Events.jsx";
 import EventsInfo from "./components/views/EventsInfo.jsx";
 import AdminLogin from "./components/views/AdminLogin.jsx";
 import AdminDashboard from "./components/views/AdminDashboard.jsx";
+import EventRequestForm from "./components/views/Forms/EventRequestForm.jsx";
 
 const App = () => {
   return (
@@ -65,6 +66,9 @@ const App = () => {
 
       {/* Admin Dashboard sin layout */}
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
+
+      {/* Event Request Form sin layout */}
+      <Route path="/event-request" element={<EventRequestForm onBack={() => window.history.back()} />} />
     </Routes>
   );
 };
