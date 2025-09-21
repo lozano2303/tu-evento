@@ -83,6 +83,9 @@ public class EventRatingServiceImpl implements EventRatingService {
 
             User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+            if (!user.isActivated()) {
+                throw new RuntimeException("Cuenta no activada. No puedes calificar eventos.");
+            }
             Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
 
@@ -140,6 +143,9 @@ public class EventRatingServiceImpl implements EventRatingService {
         try {
             User user = userRepository.findById(eventRatingDto.getUserId())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+            if (!user.isActivated()) {
+                throw new RuntimeException("Cuenta no activada.");
+            }
             Optional<EventRating> eventRating = eventRatingRepository.findByUserId(user);
             if (eventRating.isPresent()) {
                 return new ResponseDto<>(true, "Calificación del evento encontrada", toDto(eventRating.get()));

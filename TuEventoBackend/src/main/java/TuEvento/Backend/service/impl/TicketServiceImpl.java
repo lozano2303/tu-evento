@@ -65,9 +65,13 @@ public class TicketServiceImpl implements TicketService {
         Optional<User> userOpt = userRepository.findById(ticketDto.getUserId());
         Optional<Event> eventOpt = eventRepository.findById(ticketDto.getEventId());
 
-
         if (userOpt.isEmpty() || eventOpt.isEmpty()) {
             return ResponseDto.error("Usuario o evento no encontrado");
+        }
+
+        User user = userOpt.get();
+        if (!user.isActivated()) {
+            return ResponseDto.error("Cuenta no activada. No puedes comprar tickets.");
         }
 
         BigDecimal totalPrice = seats.stream()
@@ -184,7 +188,12 @@ public class TicketServiceImpl implements TicketService {
                 return ResponseDto.error("Usuario no encontrado");
             }
 
-            List<Ticket> tickets = ticketRepository.findByUserId(userOpt.get());
+            User user = userOpt.get();
+            if (!user.isActivated()) {
+                return ResponseDto.error("Cuenta no activada.");
+            }
+
+            List<Ticket> tickets = ticketRepository.findByUserId(user);
             if (tickets.isEmpty()) {
                 return ResponseDto.error("No hay tickets para este usuario");
             }

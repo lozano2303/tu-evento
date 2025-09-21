@@ -122,11 +122,15 @@ public class EventServiceImpl implements EventService {
         }
 
         if (!user.isActivated()) {
-            return "El usuario debe estar activado para crear eventos";
+            return "El usuario debe estar activado para gestionar eventos";
         }
 
         if (!user.isStatus()) {
-            return "El usuario debe estar activo para crear eventos";
+            return "El usuario debe estar activo para gestionar eventos";
+        }
+
+        if (!user.isOrganicer()) {
+            return "El usuario debe ser organizador para gestionar eventos";
         }
 
         return null; // Valid
