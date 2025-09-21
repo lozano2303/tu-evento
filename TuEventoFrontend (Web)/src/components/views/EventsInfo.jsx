@@ -7,7 +7,6 @@ const ReservaEvento = () => {
   const [mensaje, setMensaje] = useState('');
   const [showMapModal, setShowMapModal] = useState(false);
 
-  // Empty elements for the event map
   const sampleElements = [];
 
   const handleStarClick = (starNumber) => {

@@ -15,10 +15,7 @@ import EventRequestForm from "./components/views/Forms/EventRequestForm.jsx";
 const App = () => {
   return (
     <Routes>
-      {/* Login sin layout */}
       <Route path="/login" element={<Login />} />
-
-      {/* LadingPage con layout */}
       <Route
         path="/"
         element={
@@ -28,9 +25,8 @@ const App = () => {
         }
       />
 
-      {/* Landing Page con layout */}
       <Route
-        path="/ladingPage"
+        path="/landingPage"
         element={
           <MainLayout>
             <LadingPage />
@@ -38,10 +34,8 @@ const App = () => {
         }
       />
 
-      {/* Maquetation SIN layout (directo) */}
       <Route path="/FloorPlanDesigner" element={<Maquetation />} />
 
-      {/* Events con layout */}
       <Route
         path="/events"
         element={
@@ -50,8 +44,6 @@ const App = () => {
           </MainLayout>
         }
       />
-
-      {/* EventsInfo con layout */}
       <Route
         path="/event-info"
         element={
@@ -60,14 +52,8 @@ const App = () => {
           </MainLayout>
         }
       />
-
-      {/* Admin Login sin layout */}
       <Route path="/admin-login" element={<AdminLogin />} />
-
-      {/* Admin Dashboard sin layout */}
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
-
-      {/* Event Request Form sin layout */}
       <Route path="/event-request" element={<EventRequestForm onBack={() => window.history.back()} />} />
     </Routes>
   );

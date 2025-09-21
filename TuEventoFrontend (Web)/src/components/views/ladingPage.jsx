@@ -1,19 +1,19 @@
 import { Calendar, Users, Gift, Smartphone, Globe, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export default function App() {
+export default function LadingPage() {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
   
       {/* Hero Section */}
-     <section className="relative overflow-hidden py -20 ">
+     <section className="relative overflow-hidden py-20">
   {/* Fondo degradado */}
   <div className="absolute inset-0 bg-gradient-to-br bg-purple-700"></div>
 
   {/* Contenido principal */}
-  <div className="relative max-w-6xl mx-auto px-4 py-20">
+  <div className="relative max-w-6xl mx-auto px-4 py-10">
     <div className="grid md:grid-cols-2 gap-12 items-center">
       
       {/* Texto */}
@@ -45,8 +45,8 @@ export default function App() {
     </div>
   </div>
 
- <div className="relative w-full overflow-hidden mt-15">
-  <svg viewBox="0 0 1200 120" className="w-full h-24 fill-purple-950" preserveAspectRatio="none">
+ <div className="relative w-full overflow-hidden mt-18">
+  <svg viewBox="0 0 1200 120" className="w-full h-25 fill-purple-950" preserveAspectRatio="none">
     <path d="M0,60 Q150,0 300,60 T600,60 Q750,120 900,60 T1200,60 L1200,120 L0,120 Z"></path>
   </svg>
 </div>
@@ -76,9 +76,9 @@ export default function App() {
             <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-2xl">
               {/* Imagen real */}
               <div className="rounded-xl mb-4 overflow-hidden">
-                <img 
-                  src="/src/assets/images/imagen1.png" 
-                  alt="Interfaz de planos interactivos" 
+                <img
+                  src="/src/assets/images/imagen1.png"
+                  alt="Interfaz de planos interactivos"
                   className="w-full h-48 object-cover"
                 />
               </div>
@@ -107,9 +107,9 @@ export default function App() {
             <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-2xl">
               {/* Imagen real de eventos */}
               <div className="rounded-xl mb-4 overflow-hidden">
-                <img 
-                  src="/src/assets/images/imagen2.png" 
-                  alt="Búsqueda de eventos" 
+                <img
+                  src="/src/assets/images/imagen2.png"
+                  alt="Búsqueda de eventos"
                   className="w-full h-48 object-cover"
                 />
               </div>
