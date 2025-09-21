@@ -3,7 +3,7 @@ package TuEvento.Backend.controller;
 import TuEvento.Backend.dto.LoginDto;
 import TuEvento.Backend.dto.requests.ChangePasswordDto;
 import TuEvento.Backend.dto.requests.ForgotPasswordDto;
-import TuEvento.Backend.dto.requests.RequestLoginDTO;
+
 import TuEvento.Backend.dto.requests.ResetPasswordDTO;
 import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.dto.responses.ResponseLogin; // Import añadido
@@ -14,11 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -50,9 +51,21 @@ public class LoginController {
         ResponseDto response = loginServiceImpl.forgotPassword(dto.getEmail());
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-    @PostMapping("/resetPassword")
-    public ResponseEntity<Object> resetPassword(@RequestBody ResetPasswordDTO dto) {
-        ResponseDto response = loginServiceImpl.resetPassword(dto);
+    /**
+     * Endpoint para validar el token de reseteo de contraseña.
+     */
+    @GetMapping("/validateResetToken")
+    public ResponseEntity<ResponseDto<String>> validateResetToken(@RequestParam String token) {
+        ResponseDto<String> response = loginServiceImpl.validateResetToken(token);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /**
+     * Endpoint para cambiar la contraseña usando un token válido.
+     */
+    @PostMapping("/resetPasswordWithToken")
+    public ResponseEntity<ResponseDto<String>> resetPasswordWithToken(@RequestBody ResetPasswordDTO dto) {
+        ResponseDto<String> response = loginServiceImpl.resetPasswordWithToken(dto);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

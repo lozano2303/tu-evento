@@ -171,7 +171,25 @@ public class LoginServiceImpl implements LoginService {
     }
 
     // Método para restablecer la contraseña solo para si se le olvido, no se necesita iniciar sesión
-    public ResponseDto<String> resetPassword(ResetPasswordDTO dto) {
+    public ResponseDto<String> validateResetToken(String token) {
+        TokenInfo info = resetTokens.get(token);
+
+        if (info == null) {
+            return ResponseDto.error("Token inválido");
+        }
+
+        if (info.getExpiry().isBefore(LocalDateTime.now())) {
+            resetTokens.remove(token);
+            return ResponseDto.error("El token ha expirado");
+        }
+
+        return ResponseDto.ok("Token válido");
+    }
+
+    /**
+     * Cambia la contraseña usando un token previamente validado.
+     */
+    public ResponseDto<String> resetPasswordWithToken(ResetPasswordDTO dto) {
         TokenInfo info = resetTokens.get(dto.getToken());
 
         if (info == null) {
@@ -192,16 +210,16 @@ public class LoginServiceImpl implements LoginService {
         Login usuario = optionalUser.get();
         usuario.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         loginRepository.save(usuario);
+
         RecoverPasswordDto recoverPasswordDto = new RecoverPasswordDto();
-        recoverPasswordDto.setCodeStatus(true); 
-        
-    // Guardar en base de datos con tu servicio
-    recoverPasswordService.updateRecoverPassword(dto.getToken(), recoverPasswordDto);
+        recoverPasswordDto.setCodeStatus(true);
+
+        // Guardar en base de datos con tu servicio
+        recoverPasswordService.updateRecoverPassword(dto.getToken(), recoverPasswordDto);
         resetTokens.remove(dto.getToken()); // token usado token eliminado
 
         return ResponseDto.ok("Contraseña actualizada correctamente");
     }
-
     @Scheduled(fixedRate = 900000) // cada 15 minutos
     public void eliminarTokensExpirados() {
         LocalDateTime ahora = LocalDateTime.now();

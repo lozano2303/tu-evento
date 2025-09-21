@@ -16,7 +16,7 @@ import TuEvento.Backend.dto.EventDto;
 
 import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.dto.responses.ResponseEvent;
-import TuEvento.Backend.dto.responses.ResponseEventSearch;
+
 import TuEvento.Backend.service.EventService;
 
 @RestController

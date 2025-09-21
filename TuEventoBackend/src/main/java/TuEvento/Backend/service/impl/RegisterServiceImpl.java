@@ -7,9 +7,9 @@ import TuEvento.Backend.model.Login;
 import TuEvento.Backend.model.Role;
 import TuEvento.Backend.repository.UserRepository;
 import TuEvento.Backend.repository.LoginRepository;
-import TuEvento.Backend.repository.AddressRepository;
+
 import TuEvento.Backend.service.RegisterService;
-import TuEvento.Backend.service.AccountActivationService; // ✅ Nuevo import
+import TuEvento.Backend.service.AccountActivationService; 
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
