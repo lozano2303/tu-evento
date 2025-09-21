@@ -1,6 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Search, ChevronDown } from 'lucide-react';
 
+const popularEvents = [
+  {
+    id: 1,
+    title: "Concierto de ópera",
+    image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&h=250&fit=crop",
+    city: "Bogotá",
+    day: "Viernes",
+    category: "Música"
+  },
+  {
+    id: 2,
+    title: "Concierto de música",
+    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=250&fit=crop",
+    city: "Medellín",
+    day: "Sábado",
+    category: "Música"
+  },
+  {
+    id: 3,
+    title: "Linkin Park",
+    image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=250&fit=crop",
+    city: "Cali",
+    day: "Domingo",
+    category: "Música"
+  }
+];
+
 const TuEvento = () => {
   const [activeFilter, setActiveFilter] = useState('Ciudad');
   const [selectedCity, setSelectedCity] = useState('Bogotá');
@@ -12,6 +39,7 @@ const TuEvento = () => {
   const [showDayDropdown, setShowDayDropdown] = useState(false);
   const [showOrderDropdown, setShowOrderDropdown] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [filteredEvents, setFilteredEvents] = useState(popularEvents);
 
   // Refs para los dropdowns
   const cityRef = useRef(null);
@@ -42,6 +70,17 @@ const TuEvento = () => {
     };
   }, []);
 
+  const handleFilter = () => {
+    let filtered = popularEvents.filter(event => {
+      if (selectedCity !== 'Bogotá' && event.city !== selectedCity) return false;
+      if (selectedDay !== 'Lunes' && event.day !== selectedDay) return false;
+      if (selectedCategory !== 'Todas' && event.category !== selectedCategory) return false;
+      if (searchTerm && !event.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      return true;
+    });
+    setFilteredEvents(filtered);
+  };
+
   const filters = ['Ciudad', 'Día', 'Orden', 'Categorías', 'Próximos'];
 
   // Ciudades de Colombia inventadas
@@ -55,33 +94,6 @@ const TuEvento = () => {
   const orderOptions = ['Mayor a menor', 'Menor a mayor', 'Más recientes', 'Más antiguos'];
 
   const eventCategories = ['Todas', 'Música', 'Deportes', 'Teatro', 'Conferencias', 'Fiestas', 'Deportes', 'Culturales'];
-
-  const popularEvents = [
-    {
-      id: 1,
-      title: "Concierto de ópera",
-      image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&h=250&fit=crop",
-      city: "Bogotá",
-      day: "Viernes",
-      category: "Música"
-    },
-    {
-      id: 2,
-      title: "Concierto de música",
-      image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=250&fit=crop",
-      city: "Medellín",
-      day: "Sábado",
-      category: "Música"
-    },
-    {
-      id: 3,
-      title: "Linkin Park",
-      image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=250&fit=crop",
-      city: "Cali",
-      day: "Domingo",
-      category: "Música"
-    }
-  ];
 
   const categories = [
     { name: "Música", image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=140&fit=crop" },
@@ -252,6 +264,15 @@ const TuEvento = () => {
                   <span>Próximos</span>
                 </button>
 
+                {/* Filtrar */}
+                <button
+                  onClick={handleFilter}
+                  className="flex items-center bg-purple-700/40 rounded-full px-3 py-1.5 border border-purple-600/30 hover:border-purple-500/50 transition-colors text-white text-sm"
+                >
+                  <span className="mr-1">🔍</span>
+                  <span>Filtrar</span>
+                </button>
+
               </div>
             </div>
           </div>
@@ -281,6 +302,7 @@ const TuEvento = () => {
             </div>
           </div>
 
+         
           {/* POPULARES */}
           <div className="mb-16">
             <h2 className="text-white text-lg font-medium mb-8">POPULARES</h2>
@@ -301,7 +323,7 @@ const TuEvento = () => {
               ))}
             </div>
           </div>
-
+          
           {/* COMENTARIOS DE LA COMUNIDAD */}
           <div className="mb-16">
             <h2 className="text-white text-lg font-medium mb-10 text-center">COMENTARIOS DE LA COMUNIDAD</h2>
