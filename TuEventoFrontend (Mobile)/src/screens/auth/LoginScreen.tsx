@@ -24,7 +24,7 @@ export default function LoginScreen() {
       const result = await login({ email, password });
       if (result.token) {
         console.log('Token:', result.token);
-        navigation.navigate("EvenList" as never);
+        navigation.navigate("MainTabs" as never);
       } else {
         Alert.alert("Error", result.message);
       }
@@ -39,7 +39,7 @@ export default function LoginScreen() {
     console.log('Datos recibidos:', authData);
     
     // Navegar directamente a la lista de eventos
-    navigation.navigate("EvenList" as never);
+    navigation.navigate("MainTabs" as never);
   };
 
   //  Función para manejar errores 

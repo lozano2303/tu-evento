@@ -15,7 +15,7 @@ export default function RegisterScreen() {
     console.log(' Datos recibidos:', authData);
     
     // Navegar directamente a la lista de eventos
-    navigation.navigate("EvenList" as never);
+    navigation.navigate("MainTabs" as never);
   };
 
   // ❌ Función para manejar errores (opcional)

@@ -56,10 +56,10 @@ export default function CodeVerificationScreenRegister() {
           result.message || 'Tu cuenta ha sido activada exitosamente',
           [
             {
-              text: 'Iniciar Sesión',
+              text: 'Continuar',
               onPress: () => {
-                // Navegar al login o pantalla principal
-                (navigation as any).navigate('LoginScreen');
+                // Navigate to main tabs
+                (navigation as any).navigate('MainTabs');
               }
             }
           ]
