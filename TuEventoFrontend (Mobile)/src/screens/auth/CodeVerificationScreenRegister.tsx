@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Input from "../../components/Input";
 import Button from "../../components/Button";
-import { codeVerificationRegister } from "../../api/services/CodeVerificationRegisterApi";
+import { codeVerificationRegister, resendCode } from "../../api/services/CodeVerificationRegisterApi";
 
 type RouteParams = {
   userId: string;
@@ -30,6 +30,11 @@ export default function CodeVerificationScreenRegister() {
       return;
     }
 
+    if (activationCode.length !== 6) {
+      Alert.alert('Error', 'El código debe tener exactamente 6 dígitos');
+      return;
+    }
+
     if (!userId) {
       Alert.alert('Error', 'ID de usuario no encontrado');
       return;
@@ -40,7 +45,7 @@ export default function CodeVerificationScreenRegister() {
     try {
       // Preparar datos para enviar a la API
       const codeData = {
-        userID: userId,                    // El ID capturado del registro
+        userID: Number(userId),                    // El ID capturado del registro
         activationCode: activationCode // El código que ingresó el usuario
       };
 
@@ -58,8 +63,8 @@ export default function CodeVerificationScreenRegister() {
             {
               text: 'Continuar',
               onPress: () => {
-                // Navigate to main tabs
-                (navigation as any).navigate('MainTabs');
+                // Navigate to login screen
+                (navigation as any).navigate('LoginScreen');
               }
             }
           ]
@@ -77,7 +82,46 @@ export default function CodeVerificationScreenRegister() {
     }
   };
 
-  return (     
+  // Función para manejar el reenvío del código
+  const handleResend = async () => {
+    if (!userId) {
+      Alert.alert('Error', 'ID de usuario no encontrado');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Preparar datos para enviar a la API
+      const resendData = {
+        userID: Number(userId),
+        activationCode: activationCode // Usar el código actual o vacío
+      };
+
+      console.log('Intentando reenviar código...');
+
+      // Llamar a la API de reenvío
+      const result = await resendCode(resendData);
+
+      if (result.success) {
+        Alert.alert(
+          'Código Reenviado',
+          result.message || 'Se ha enviado un nuevo código a tu correo electrónico.'
+        );
+      }
+
+    } catch (error: any) {
+      console.error('Error en reenvío:', error);
+      Alert.alert(
+        'Error de Reenvío',
+        error.message || 'No se pudo reenviar el código. Intenta nuevamente.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
     <View className="flex-1 bg-[#1a0033] items-center px-6 w-full h-full relative ">         
       <View className="w-full top-12 ">         
         {/* Título */}         
@@ -100,15 +144,26 @@ export default function CodeVerificationScreenRegister() {
           maxLength={6}
         />         
         
-        {/* Botón de verificar */}         
-        <Button 
+        {/* Botón de verificar */}
+        <Button
           label={isLoading ? "Verificando..." : "Verificar Código"}
           onPress={handleVerification}
-          disabled={isLoading || activationCode.length < 4}
+          disabled={isLoading || activationCode.length !== 6}
         />
-        
-  
-      </View>     
+
+        {/* Botón de reenviar código */}
+        <TouchableOpacity
+          onPress={handleResend}
+          disabled={isLoading}
+          className="mt-4"
+        >
+          <Text className="text-white text-center underline">
+            {isLoading ? "Reenviando..." : "Reenviar Código"}
+          </Text>
+        </TouchableOpacity>
+
+
+      </View>
     </View>     
   ); 
 }

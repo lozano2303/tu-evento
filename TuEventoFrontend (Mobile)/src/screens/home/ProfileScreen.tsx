@@ -1,12 +1,14 @@
 import { View, Text } from 'react-native';
 import { useState, useEffect } from 'react';
-import { getUserIdFromToken } from '../../api/services/Token';
+import { getUserIdFromToken, removeToken } from '../../api/services/Token';
 import { getUserProfile } from '../../api/services/UserApi';
 import { IUserProfile } from '../../api/types/IUser';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import { useNavigation } from '@react-navigation/native';
 
 export default function ProfileScreen() {
+  const navigation = useNavigation();
   const [profile, setProfile] = useState<IUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +35,11 @@ export default function ProfileScreen() {
     loadProfile();
   }, []);
 
+  const handleLogout = async () => {
+    await removeToken();
+    navigation.navigate('LoginScreen' as never);
+  };
+
   if (loading) {
     return (
       <View className="flex-1 bg-[#1a0033] items-center justify-center">
@@ -51,7 +58,7 @@ export default function ProfileScreen() {
 
   return (
     <View className="flex-1 bg-[#1a0033] p-6">
-      <Text className="text-white text-3xl font-bold mb-6 text-center">Perfil del Usuario</Text>
+      <Text className="text-white text-3xl font-bold mb-6 text-center">Perfil del Usuario </Text>
       {profile && (
         <View>
           <Input
@@ -76,6 +83,8 @@ export default function ProfileScreen() {
             onChangeText={(value) => setEditedProfile(prev => ({ ...prev, address: value }))}
           />
           <Button label="Guardar Cambios" onPress={() => {}} />
+    
+          <Button label="Cerrar Sesión" onPress={handleLogout} />
         </View>
       )}
     </View>
