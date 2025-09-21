@@ -8,12 +8,16 @@ import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 import TuEvento.Backend.dto.UserDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.model.Address;
+import TuEvento.Backend.model.Login;
 import TuEvento.Backend.model.Role;
 import TuEvento.Backend.model.User;
 import TuEvento.Backend.repository.AddressRepository;
@@ -337,5 +341,29 @@ public class UserServiceImpl implements UserService {
             addressId,
             user.isActivated()
         );
+    }
+
+    // Scheduler: eliminar cuentas no activadas después de 10 minutos
+    @Scheduled(fixedRate = 60000) // cada minuto
+    @Transactional
+    public void deleteUnactivatedAccounts() {
+        LocalDateTime tenMinutesAgo = LocalDateTime.now().minusMinutes(10);
+
+        // Buscar todos los logins y filtrar usuarios no activados con loginDate anterior a 10 minutos
+        List<Login> allLogins = loginRepository.findAll();
+        List<Login> unactivatedLogins = allLogins.stream()
+            .filter(login -> !login.getUserID().isActivated() && login.getLoginDate().isBefore(tenMinutesAgo))
+            .toList();
+
+        for (Login login : unactivatedLogins) {
+            try {
+                User user = login.getUserID();
+                // Eliminar usuario (cascada eliminará login y otras referencias)
+                userRepository.delete(user);
+            } catch (Exception e) {
+                // Log error but continue
+                System.err.println("Error eliminando cuenta no activada para userId: " + login.getUserID().getUserID() + " - " + e.getMessage());
+            }
+        }
     }
 }
