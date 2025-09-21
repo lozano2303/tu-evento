@@ -70,6 +70,10 @@ public class LoginServiceImpl implements LoginService {
 
             Login login = optionalLogin.get();
 
+            if (!login.getUserID().isActivated()) {
+                return ResponseDto.error("Cuenta no activada. Revisa tu correo para activar la cuenta.");
+            }
+
             if (!passwordEncoder.matches(loginDto.getPassword(), login.getPassword())) {
                 return ResponseDto.error("Contraseña incorrecta");
             }

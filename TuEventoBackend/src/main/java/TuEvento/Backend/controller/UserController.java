@@ -4,6 +4,7 @@ import TuEvento.Backend.dto.UserDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,14 +16,24 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/create")
-    public ResponseDto<UserDto> createUser(@RequestBody UserDto userDto) {
-        return userService.createUser(userDto);
-    }
-
     @PutMapping("/{id}/telephone")
     public ResponseDto<String> updateTelephone(@PathVariable int id, @RequestParam String newTelephone) {
         return userService.updateTelephone(id, newTelephone);
+    }
+
+    @PutMapping("/{id}/birthdate")
+    public ResponseDto<String> updateBirthDate(@PathVariable int id, @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") java.util.Date newBirthDate) {
+        return userService.updateBirthDate(id, newBirthDate);
+    }
+
+    @PutMapping("/{id}/address")
+    public ResponseDto<String> updateAddress(@PathVariable int id, @RequestParam Integer newAddressId) {
+        return userService.updateAddress(id, newAddressId);
+    }
+
+    @DeleteMapping("/{id}/delete-account")
+    public ResponseDto<String> deleteUserAccount(@PathVariable int id) {
+        return userService.deleteUserAccount(id);
     }
 
     @PutMapping("/{id}/deactivate")
