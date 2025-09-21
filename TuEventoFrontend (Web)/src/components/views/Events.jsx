@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search, ChevronDown } from 'lucide-react';
 
 const popularEvents = [
@@ -29,6 +30,7 @@ const popularEvents = [
 ];
 
 const TuEvento = () => {
+  const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('Ciudad');
   const [selectedCity, setSelectedCity] = useState('Bogotá');
   const [selectedDay, setSelectedDay] = useState('Lunes');
@@ -315,6 +317,7 @@ const TuEvento = () => {
                     <button
                       className="text-white px-4 py-1 text-sm rounded font-medium"
                       style={{ backgroundColor: '#8b5cf6' }}
+                      onClick={() => navigate('/event-info')}
                     >
                       Reservar
                     </button>

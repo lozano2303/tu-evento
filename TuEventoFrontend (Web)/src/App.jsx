@@ -7,6 +7,9 @@ import LadingPage from "./components/views/lading-page.jsx";
 import Login from "./components/views/login.jsx";
 import Maquetation from "./components/views/FloorPlanDesigner.jsx";
 import Events from "./components/views/Events.jsx";
+import EventsInfo from "./components/views/EventsInfo.jsx";
+import AdminLogin from "./components/views/AdminLogin.jsx";
+import AdminDashboard from "./components/views/AdminDashboard.jsx";
 
 const App = () => {
   return (
@@ -17,6 +20,16 @@ const App = () => {
       {/* LadingPage con layout */}
       <Route
         path="/"
+        element={
+          <MainLayout>
+            <LadingPage />
+          </MainLayout>
+        }
+      />
+
+      {/* Landing Page con layout */}
+      <Route
+        path="/landing-page"
         element={
           <MainLayout>
             <LadingPage />
@@ -36,6 +49,22 @@ const App = () => {
           </MainLayout>
         }
       />
+
+      {/* EventsInfo con layout */}
+      <Route
+        path="/event-info"
+        element={
+          <MainLayout>
+            <EventsInfo />
+          </MainLayout>
+        }
+      />
+
+      {/* Admin Login sin layout */}
+      <Route path="/admin-login" element={<AdminLogin />} />
+
+      {/* Admin Dashboard sin layout */}
+      <Route path="/admin-dashboard" element={<AdminDashboard />} />
     </Routes>
   );
 };

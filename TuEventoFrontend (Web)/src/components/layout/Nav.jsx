@@ -12,16 +12,20 @@ export default function Navbar() {
         </div>
 
         <div className="hidden md:flex space-x-6 text-white"> {/* Added text-white here for all links */}
-          <Link to="" className="hover:text-purple-400 transition-colors">Inicio</Link>
+          <Link to="/landing-page" className="hover:text-purple-400 transition-colors">Inicio</Link>
           <Link to="" className="hover:text-purple-400 transition-colors">Nosotros</Link>
           <Link to="/FloorPlanDesigner" className="hover:text-purple-400 transition-colors">Crear</Link>
           <Link to="/Events" className="hover:text-purple-400 transition-colors">Eventos</Link>
         </div>
 
-        <button className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors text-white">
-        <Link to="/login">Iniciar sesión</Link>
-
-        </button>
+        <div className="flex space-x-2">
+          <button className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors text-white">
+            <Link to="/admin-login">Admin</Link>
+          </button>
+          <button className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors text-white">
+            <Link to="/login">Iniciar sesión</Link>
+          </button>
+        </div>
       </nav>
     </header>
   );
