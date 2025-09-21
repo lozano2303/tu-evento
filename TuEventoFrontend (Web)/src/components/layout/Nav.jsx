@@ -12,7 +12,7 @@ export default function Navbar() {
         </div>
 
         <div className="hidden md:flex space-x-6 text-white"> {/* Added text-white here for all links */}
-          <Link to="/landing-page" className="hover:text-purple-400 transition-colors">Inicio</Link>
+          <Link to="/ladingPage" className="hover:text-purple-400 transition-colors">Inicio</Link>
           <Link to="" className="hover:text-purple-400 transition-colors">Nosotros</Link>
           <Link to="/FloorPlanDesigner" className="hover:text-purple-400 transition-colors">Crear</Link>
           <Link to="/Events" className="hover:text-purple-400 transition-colors">Eventos</Link>

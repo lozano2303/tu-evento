@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 
 import MainLayout from "./components/layout/MainLayout.jsx";
 
-import LadingPage from "./components/views/lading-page.jsx";
+import LadingPage from "./components/views/ladingPage.jsx";
 import Login from "./components/views/login.jsx";
 import Maquetation from "./components/views/FloorPlanDesigner.jsx";
 import Events from "./components/views/Events.jsx";
@@ -30,7 +30,7 @@ const App = () => {
 
       {/* Landing Page con layout */}
       <Route
-        path="/landing-page"
+        path="/ladingPage"
         element={
           <MainLayout>
             <LadingPage />
