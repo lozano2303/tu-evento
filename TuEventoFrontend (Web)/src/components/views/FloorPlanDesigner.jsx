@@ -539,61 +539,6 @@ const selectedElement = elements.find(el => el.id === selectedId)
     pushSnapshot([...(elements || []), ...sample]);
   };
 
-  const loadTemplate = (type) => {
-    let template = [];
-    if (type === 'concert') {
-      // TEATRO MUNICIPAL PROFESIONAL - Diseño técnico con paleta limpia
-      template = [
-        // ESTRUCTURA GRIS - Paredes principales
-        { id: nanoid(), type: 'wall', x1: 200, y1: 100, x2: 1400, y2: 100, stroke: '#6b7280', thickness: 12, meta: { label: 'Pared Frontal' } },
-        { id: nanoid(), type: 'wall', x1: 200, y1: 100, x2: 200, y2: 700, stroke: '#6b7280', thickness: 12, meta: { label: 'Pared Izquierda' } },
-        { id: nanoid(), type: 'wall', x1: 1400, y1: 100, x2: 1400, y2: 700, stroke: '#6b7280', thickness: 12, meta: { label: 'Pared Derecha' } },
-        { id: nanoid(), type: 'wall', x1: 200, y1: 700, x2: 1400, y2: 700, stroke: '#6b7280', thickness: 12, meta: { label: 'Pared Trasera' } },
-
-        // ESCENARIO ROJO - Área de actuación
-        { id: nanoid(), type: 'stage', x: 800, y: 150, width: 500, height: 100, fill: '#dc2626', stroke: '#b91c1c', meta: { label: 'ESCENARIO' } },
-
-        // ASIENTOS CON ETIQUETAS GRANDES - Sistema de butacas
-        ...generateSeatGrid(800, 300, 16, 6, 42, 45, 'Platea'),
-
-        // CAMERINOS ROJOS - Zonas de preparación
-        { id: nanoid(), type: 'zone', x: 250, y: 180, width: 120, height: 80, fill: '#dc2626', stroke: '#b91c1c', meta: { label: 'CAMERINOS' } },
-
-        // CONTROL TÉCNICO VERDE - Área técnica
-        { id: nanoid(), type: 'zone', x: 1350, y: 180, width: 120, height: 80, fill: '#059669', stroke: '#047857', meta: { label: 'CONTROL TÉCNICO' } },
-
-        // ENTRADAS AZUL CLARO - Puertas ancladas exactamente en los bordes de las paredes
-        { id: nanoid(), type: 'door', x: 800, y: 700, fill: '#3b82f6', stroke: '#2563eb', meta: { label: 'ENTRADA PRINCIPAL' } },
-        { id: nanoid(), type: 'door', x: 600, y: 700, fill: '#3b82f6', stroke: '#2563eb', meta: { label: 'ENTRADA LATERAL' } },
-        { id: nanoid(), type: 'door', x: 1000, y: 700, fill: '#3b82f6', stroke: '#2563eb', meta: { label: 'ENTRADA LATERAL' } },
-
-        // SALIDAS DE EMERGENCIA ROJAS - Ancladas en los bordes de las paredes
-        { id: nanoid(), type: 'exit', x: 300, y: 700, width: 80, height: 40, fill: '#dc2626', stroke: '#b91c1c', meta: { label: 'SALIDA EMERGENCIA' } },
-        { id: nanoid(), type: 'exit', x: 1300, y: 700, width: 80, height: 40, fill: '#dc2626', stroke: '#b91c1c', meta: { label: 'SALIDA EMERGENCIA' } },
-
-        // ACCESO ESCENARIO AZUL - Anclado en la pared lateral derecha
-        { id: nanoid(), type: 'door', x: 1400, y: 300, fill: '#3b82f6', stroke: '#2563eb', meta: { label: 'ACCESO ESCENARIO' } },
-
-        // SERVICIOS GRIS - Áreas de servicio
-        { id: nanoid(), type: 'zone', x: 400, y: 750, width: 100, height: 60, fill: '#6b7280', stroke: '#4b5563', meta: { label: 'TAQUILLA' } },
-        { id: nanoid(), type: 'zone', x: 1200, y: 750, width: 100, height: 60, fill: '#6b7280', stroke: '#4b5563', meta: { label: 'BAÑOS' } },
-
-        // VESTÍBULO GRIS CLARO - Área de recepción
-        { id: nanoid(), type: 'zone', x: 800, y: 620, width: 250, height: 70, fill: '#9ca3af', stroke: '#6b7280', meta: { label: 'VESTÍBULO' } },
-
-        // EXTINTORES - Símbolos de seguridad
-        { id: nanoid(), type: 'zone', x: 220, y: 120, width: 15, height: 30, fill: '#dc2626', stroke: '#b91c1c', meta: { label: '🧯' } },
-        { id: nanoid(), type: 'zone', x: 1380, y: 120, width: 15, height: 30, fill: '#dc2626', stroke: '#b91c1c', meta: { label: '🧯' } },
-        { id: nanoid(), type: 'zone', x: 220, y: 650, width: 15, height: 30, fill: '#dc2626', stroke: '#b91c1c', meta: { label: '🧯' } },
-        { id: nanoid(), type: 'zone', x: 1380, y: 650, width: 15, height: 30, fill: '#dc2626', stroke: '#b91c1c', meta: { label: '🧯' } },
-
-        // SÍMBOLO DE ESCALA Y ORIENTACIÓN
-        { id: nanoid(), type: 'zone', x: 200, y: 50, width: 100, height: 30, fill: 'transparent', stroke: '#6b7280', meta: { label: 'ESCALA 1:100' } },
-        { id: nanoid(), type: 'zone', x: 1400, y: 50, width: 80, height: 30, fill: 'transparent', stroke: '#6b7280', meta: { label: 'NORTE ↑' } },
-      ];
-    }
-    pushSnapshot(template);
-  };
 
   const onUploadEvent = () => {
     // For now, export the map as uploading the event
