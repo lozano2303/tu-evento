@@ -1,11 +1,15 @@
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity, Alert } from "react-native";
+import { useState } from "react";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import RedSocialButton from "../../components/RedSocialButton";
 import { useNavigation } from "@react-navigation/native";
+import { login } from "../../api/services/LoginApi";
 
 export default function LoginScreen() {
   const navigation = useNavigation();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleGoToRegister = () => {
     navigation.navigate("RegisterScreen" as never);
@@ -13,6 +17,20 @@ export default function LoginScreen() {
 
   const handleGoToForgotPassword = () => {
     navigation.navigate("ForgotPasswordScreen" as never);
+  };
+
+  const handleLogin = async () => {
+    try {
+      const result = await login({ email, password });
+      if (result.token) {
+        console.log('Token:', result.token);
+        navigation.navigate("EvenList" as never);
+      } else {
+        Alert.alert("Error", result.message);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Ocurrió un error durante el login");
+    }
   };
 
   //  Función para manejar login exitoso con redes sociales
@@ -42,15 +60,19 @@ export default function LoginScreen() {
         <Input
           label="Ingresa tu Correo Electronico"
           placeholder="Correo o nombre"
+          value={email}
+          onChangeText={setEmail}
         />
         <Input
           label="Ingresa tu contraseña"
           placeholder="Contraseña"
           secureTextEntry
+          value={password}
+          onChangeText={setPassword}
         />
 
         {/* Botón */}
-        <Button label="Iniciar" />
+        <Button label="Iniciar" onPress={handleLogin} />
 
         {/* Texto inferior */}
         <Text className="text-white mt-6 text-left mt-2">

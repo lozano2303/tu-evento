@@ -18,7 +18,7 @@ const icons = {
 };
 
 // 🔥 Tu IP correcta
-const BASE_URL = 'http://192.168.21.235:8080';
+const BASE_URL = 'http://192.168.0.16:8080';
 
 export default function RedSocialButton({ social, onSuccess, onError }: RedSocialButtonProps) {
   const { name, color, label } = icons[social];
