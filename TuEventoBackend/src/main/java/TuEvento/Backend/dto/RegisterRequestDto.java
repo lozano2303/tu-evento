@@ -1,23 +1,15 @@
 package TuEvento.Backend.dto;
 
-import java.sql.Date;
-
 public class RegisterRequestDto {
 
     private String fullName;
-    private String telephone;
-    private Date birthDate;
-    private Integer address;
     private String email;
     private String password;
 
     public RegisterRequestDto() {}
 
-    public RegisterRequestDto(String fullName, String telephone, Date birthDate, Integer address, String email, String password) {
+    public RegisterRequestDto(String fullName, String email, String password) {
         this.fullName = fullName;
-        this.telephone = telephone;
-        this.birthDate = birthDate;
-        this.address = address;
         this.email = email;
         this.password = password;
     }
@@ -28,30 +20,6 @@ public class RegisterRequestDto {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
-    }
-
-    public String getTelephone() {
-        return telephone;
-    }
-
-    public void setTelephone(String telephone) {
-        this.telephone = telephone;
-    }
-
-    public Date getBirthDate() {
-        return birthDate;
-    }
-
-    public void setBirthDate(Date birthDate) {
-        this.birthDate = birthDate;
-    }
-
-    public Integer getAddress() {
-        return address;
-    }
-
-    public void setAddress(Integer address) {
-        this.address = address;
     }
 
     public String getEmail() {
