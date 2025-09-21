@@ -76,24 +76,32 @@ const useDragAndDrop = () => {
     return finalState;
   }, []);
 
+  const snapToGrid = (value, gridSize = 20) => {
+    return Math.round(value / gridSize) * gridSize;
+  };
+
   const calculateNewPosition = useCallback((element, offset) => {
     if (!offset) return element;
 
     const updatedElement = { ...element };
+    const gridSize = 20; // Tamaño de la cuadrícula
 
     if (element.type === 'wall') {
-      updatedElement.x1 = dragStartRef.current.initialElementPos.x1 + offset.x;
-      updatedElement.y1 = dragStartRef.current.initialElementPos.y1 + offset.y;
-      updatedElement.x2 = dragStartRef.current.initialElementPos.x2 + offset.x;
-      updatedElement.y2 = dragStartRef.current.initialElementPos.y2 + offset.y;
+      updatedElement.x1 = snapToGrid(dragStartRef.current.initialElementPos.x1 + offset.x, gridSize);
+      updatedElement.y1 = snapToGrid(dragStartRef.current.initialElementPos.y1 + offset.y, gridSize);
+      updatedElement.x2 = snapToGrid(dragStartRef.current.initialElementPos.x2 + offset.x, gridSize);
+      updatedElement.y2 = snapToGrid(dragStartRef.current.initialElementPos.y2 + offset.y, gridSize);
     } else if (element.type === 'curvedWall') {
       updatedElement.points = dragStartRef.current.initialElementPos.points.map(p => ({
-        x: p.x + offset.x,
-        y: p.y + offset.y
+        x: snapToGrid(p.x + offset.x, gridSize),
+        y: snapToGrid(p.y + offset.y, gridSize)
       }));
+    } else if (element.type === 'circle') {
+      updatedElement.x = snapToGrid(dragStartRef.current.initialElementPos.x + offset.x, gridSize);
+      updatedElement.y = snapToGrid(dragStartRef.current.initialElementPos.y + offset.y, gridSize);
     } else {
-      updatedElement.x = dragStartRef.current.initialElementPos.x + offset.x;
-      updatedElement.y = dragStartRef.current.initialElementPos.y + offset.y;
+      updatedElement.x = snapToGrid(dragStartRef.current.initialElementPos.x + offset.x, gridSize);
+      updatedElement.y = snapToGrid(dragStartRef.current.initialElementPos.y + offset.y, gridSize);
     }
 
     return updatedElement;

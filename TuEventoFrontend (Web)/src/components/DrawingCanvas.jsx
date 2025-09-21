@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState, useEffect, useCallback } from "react"
 import CanvasElement from "./CanvasElement"
 import useDragAndDrop from "../components/views/Hooks/useDragAndDrop.js"
 
@@ -10,24 +10,24 @@ const DrawingCanvas = ({
   onUpdate,
   onDelete,
   activeTool,
+  setActiveTool,
+  units,
 }) => {
   const svgRef = useRef(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [currentElement, setCurrentElement] = useState(null)
   const [startPoint, setStartPoint] = useState(null)
   
-  // Drag and Drop
-  const { 
-    dragState, 
-    startDrag, 
-    updateDrag, 
-    endDrag, 
+  const {
+    dragState,
+    startDrag,
+    updateDrag,
+    endDrag,
     calculateNewPosition,
     isDragging,
-    draggedElementId 
+    draggedElementId
   } = useDragAndDrop()
 
-  // Viewport y zoom
   const viewWidth = 2000
   const viewHeight = 1200
   const [zoom, setZoom] = useState(1)
@@ -45,21 +45,63 @@ const DrawingCanvas = ({
     const svg = svgRef.current
     if (!svg) return { x: 0, y: 0 }
 
-    const rect = svg.getBoundingClientRect()
-    const scaleX = viewWidth / zoom / rect.width
-    const scaleY = viewHeight / zoom / rect.height
+    const ctm = svg.getScreenCTM()
+    if (!ctm) return { x: 0, y: 0 }
 
-    const x = offset.x + (clientX - rect.left) * scaleX
-    const y = offset.y + (clientY - rect.top) * scaleY
+    const point = svg.createSVGPoint()
+    point.x = clientX
+    point.y = clientY
+    const svgPoint = point.matrixTransform(ctm.inverse())
 
-    return { x, y }
+    return { x: svgPoint.x, y: svgPoint.y }
   }
 
+
+  const handleDragMove = useCallback((pos) => {
+    const dragOffset = updateDrag(pos)
+    const elementToDrag = elements.find(el => el.id === draggedElementId)
+
+    if (elementToDrag && dragOffset) {
+      const updatedElement = calculateNewPosition(elementToDrag, dragOffset)
+      let updates = {}
+      if (elementToDrag.type === 'wall') {
+        updates = { x1: updatedElement.x1, y1: updatedElement.y1, x2: updatedElement.x2, y2: updatedElement.y2 }
+      } else if (elementToDrag.type === 'curvedWall') {
+        updates = { points: updatedElement.points }
+      } else {
+        updates = { x: updatedElement.x, y: updatedElement.y }
+      }
+      onUpdate && onUpdate(elementToDrag.id, updates)
+    }
+  }, [elements, draggedElementId, updateDrag, calculateNewPosition, onUpdate])
+
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleGlobalMouseMove = (e) => {
+      e.preventDefault()
+      const pos = toViewCoords(e.clientX, e.clientY)
+      handleDragMove(pos)
+    }
+
+    const handleGlobalMouseUp = (e) => {
+      e.preventDefault()
+      endDrag()
+    }
+
+    document.addEventListener('mousemove', handleGlobalMouseMove)
+    document.addEventListener('mouseup', handleGlobalMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove)
+      document.removeEventListener('mouseup', handleGlobalMouseUp)
+    }
+  }, [isDragging, handleDragMove, endDrag])
+
   const getElementAt = (pos) => {
-    // Buscar elemento en la posición dada
     for (let i = elements.length - 1; i >= 0; i--) {
       const element = elements[i]
-      
+
       if (isPointInElement(pos, element)) {
         return element
       }
@@ -69,45 +111,46 @@ const DrawingCanvas = ({
 
   const isPointInElement = (point, element) => {
     const { x: px, y: py } = point
-    
+
     if (element.type === 'wall') {
-      // Para muros, verificar proximidad a la línea
       const { x1, y1, x2, y2 } = element
       const thickness = element.thickness || 15
       const distance = distanceFromPointToLine(px, py, x1, y1, x2, y2)
-      return distance <= thickness / 2
+      return distance <= thickness / 2 + 10
     } else if (element.type === 'curvedWall') {
-      // Para muros curvos, verificar proximidad a cualquier segmento
       if (!element.points || element.points.length < 2) return false
       const thickness = element.strokeWidth || 3
-      
+
       for (let i = 0; i < element.points.length - 1; i++) {
         const p1 = element.points[i]
         const p2 = element.points[i + 1]
         const distance = distanceFromPointToLine(px, py, p1.x, p1.y, p2.x, p2.y)
-        if (distance <= thickness * 2) return true
+        if (distance <= thickness * 2 + 10) return true
       }
       return false
     } else if (element.type === 'chair') {
-      // Para sillas, usar el tamaño fijo
       const chairSize = 50
-      return px >= element.x - chairSize / 2 && 
-             px <= element.x + chairSize / 2 && 
-             py >= element.y - chairSize / 2 && 
+      return px >= element.x - chairSize / 2 &&
+             px <= element.x + chairSize / 2 &&
+             py >= element.y - chairSize / 2 &&
              py <= element.y + chairSize / 2
     } else if (element.type === 'door') {
-      // Para puertas, usar el tamaño fijo
       const doorSize = 100
-      return px >= element.x && 
-             px <= element.x + doorSize && 
-             py >= element.y && 
-             py <= element.y + doorSize
+      return px >= element.x - doorSize / 2 &&
+             px <= element.x + doorSize / 2 &&
+             py >= element.y - doorSize / 2 &&
+             py <= element.y + doorSize / 2
+    } else if (element.type === 'circle') {
+      const dx = px - element.x
+      const dy = py - element.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      return distance <= (element.radius || 50)
     } else {
-      // Para elementos rectangulares
-      return px >= element.x && 
-             px <= element.x + (element.width || 0) && 
-             py >= element.y && 
-             py <= element.y + (element.height || 0)
+      const maxDim = Math.max(element.width || 0, element.height || 0) * 1.5
+      return px >= element.x - maxDim / 2 &&
+             px <= element.x + maxDim / 2 &&
+             py >= element.y - maxDim / 2 &&
+             py <= element.y + maxDim / 2
     }
   }
 
@@ -120,7 +163,7 @@ const DrawingCanvas = ({
     const dot = A * C + B * D
     const lenSq = C * C + D * D
     let param = -1
-    
+
     if (lenSq !== 0) {
       param = dot / lenSq
     }
@@ -143,6 +186,7 @@ const DrawingCanvas = ({
     return Math.sqrt(dx * dx + dy * dy)
   }
 
+
   const handleMouseDown = (e) => {
     e.preventDefault()
 
@@ -161,40 +205,32 @@ const DrawingCanvas = ({
 
     const pos = toViewCoords(e.clientX, e.clientY)
 
-    // Herramienta de selección o sin herramienta activa (modo selección por defecto)
-    if (activeTool === 'select' || !activeTool) {
-      const elementAtPos = getElementAt(pos)
-      
-      if (elementAtPos) {
-        // Seleccionar elemento si no está seleccionado
-        if (selectedElementId !== elementAtPos.id) {
-          onSelect && onSelect(elementAtPos.id)
-          return
-        }
-        
-        // Iniciar arrastre del elemento seleccionado
-        startDrag(elementAtPos, pos)
-        return
-      } else {
-        // Deseleccionar si se hace clic en área vacía
-        onSelect && onSelect(null)
-        return
+    const clickedElement = getElementAt(pos)
+
+    if (clickedElement) {
+      if (activeTool === 'select') {
+        onSelect && onSelect(clickedElement.id)
+        startDrag(clickedElement, pos)
       }
+      return
     }
 
-    // Si hay un elemento seleccionado y hacemos clic sobre él, permitir moverlo
-    if (selectedElementId) {
+    // If tool is select and something is selected, drag the selected element
+    if (activeTool === 'select' && selectedElementId) {
       const selectedElement = elements.find(el => el.id === selectedElementId)
-      if (selectedElement && getElementAt(pos)?.id === selectedElementId) {
+      if (selectedElement) {
         startDrag(selectedElement, pos)
         return
       }
     }
 
+
+    onSelect && onSelect(null)
+
     // Crear nuevo elemento
     setStartPoint(pos)
 
-    if (["zone", "seatRow", "chair", "door", "exit", "stage"].includes(activeTool)) {
+    if (["zone", "seatRow", "chair", "door", "exit", "stage", "field", "bleacher"].includes(activeTool)) {
       const newEl = {
         id: Date.now(),
         type: activeTool,
@@ -241,7 +277,6 @@ const DrawingCanvas = ({
     e.preventDefault()
     const pos = toViewCoords(e.clientX, e.clientY)
 
-    // Manejo de panning
     if (isPanning) {
       const dx = (panOrigin.current.x - e.clientX) * (viewWidth / (zoom * svgRef.current.clientWidth))
       const dy = (panOrigin.current.y - e.clientY) * (viewHeight / (zoom * svgRef.current.clientHeight))
@@ -252,15 +287,8 @@ const DrawingCanvas = ({
       return
     }
 
-    // Manejo de drag and drop
     if (isDragging && draggedElementId) {
-      const dragOffset = updateDrag(pos)
-      const elementToDrag = elements.find(el => el.id === draggedElementId)
-      
-      if (elementToDrag && dragOffset) {
-        const updatedElement = calculateNewPosition(elementToDrag, dragOffset)
-        onUpdate && onUpdate(updatedElement)
-      }
+      handleDragMove(pos)
       return
     }
 
@@ -269,16 +297,22 @@ const DrawingCanvas = ({
 
     const updated = { ...currentElement }
 
-    if (["zone", "seatRow", "chair", "door", "exit", "stage"].includes(activeTool)) {
+    if (activeTool === "circle") {
+      const dx = pos.x - startPoint.x
+      const dy = pos.y - startPoint.y
+      updated.radius = Math.sqrt(dx * dx + dy * dy)
+      updated.x = startPoint.x
+      updated.y = startPoint.y
+    } else if (["zone", "seatRow", "chair", "door", "exit", "stage"].includes(activeTool)) {
       // Calcular dimensiones del rectángulo
       const width = pos.x - startPoint.x
       const height = pos.y - startPoint.y
-      
+
       updated.x = width < 0 ? pos.x : startPoint.x
       updated.y = height < 0 ? pos.y : startPoint.y
       updated.width = Math.abs(width)
       updated.height = Math.abs(height)
-      
+
       // Tamaños mínimos para ciertos elementos
       if (activeTool === "chair") {
         updated.width = Math.max(updated.width, 50)
@@ -308,13 +342,11 @@ const DrawingCanvas = ({
   const handleMouseUp = (e) => {
     e.preventDefault()
 
-    // Terminar panning
     if (isPanning) {
       setIsPanning(false)
       return
     }
 
-    // Terminar drag and drop
     if (isDragging) {
       endDrag()
       return
@@ -330,7 +362,9 @@ const DrawingCanvas = ({
       // Validar que el elemento tenga dimensiones mínimas
       let isValidElement = true
       
-      if (["zone", "seatRow", "exit", "stage"].includes(activeTool)) {
+      if (activeTool === "circle") {
+        isValidElement = currentElement.radius > 10
+      } else if (["zone", "seatRow", "exit", "stage"].includes(activeTool)) {
         isValidElement = currentElement.width > 10 && currentElement.height > 10
       } else if (activeTool === "wall") {
         const dx = currentElement.x2 - currentElement.x1
@@ -351,8 +385,7 @@ const DrawingCanvas = ({
 
   const handleDoubleClick = (e) => {
     e.preventDefault()
-    
-    // Finalizar muro curvo en doble clic
+
     if (isDrawing && activeTool === "curvedWall" && currentElement) {
       if (currentElement.points.length >= 2) {
         onCreate && onCreate(currentElement)
@@ -393,10 +426,11 @@ const DrawingCanvas = ({
 
   const getDefaultFill = (type) => {
     switch (type) {
-      case 'zone': return 'rgba(59, 130, 246, 0.1)'
-      case 'seatRow': return 'rgba(34, 197, 94, 0.1)'
-      case 'stage': return 'rgba(239, 68, 68, 0.1)'
-      case 'exit': return 'rgba(245, 158, 11, 0.1)'
+      case 'zone': return 'url(#zonePattern)'
+      case 'seatRow': return 'url(#seatRowPattern)'
+      case 'stage': return 'url(#stagePattern)'
+      case 'circle': return '#f97316'
+      case 'exit': return 'url(#exitPattern)'
       default: return 'transparent'
     }
   }
@@ -406,6 +440,7 @@ const DrawingCanvas = ({
       case 'zone': return '#3b82f6'
       case 'seatRow': return '#22c55e'
       case 'stage': return '#ef4444'
+      case 'circle': return '#f97316'
       case 'exit': return '#f59e0b'
       default: return '#000'
     }
@@ -414,12 +449,12 @@ const DrawingCanvas = ({
   const getCursor = () => {
     if (isPanning) return 'grabbing'
     if (isDragging) return 'grabbing'
-    if (activeTool === 'select' || !activeTool) return 'default'
+    if (activeTool === 'select' || !activeTool) return 'pointer'
     return 'crosshair'
   }
 
   return (
-    <div className="w-full h-full relative bg-background">
+    <div className="w-full h-full relative bg-gradient-to-br from-white to-gray-50">
       <svg
         ref={svgRef}
         width="100%"
@@ -431,17 +466,36 @@ const DrawingCanvas = ({
         onDoubleClick={handleDoubleClick}
         onWheel={handleWheel}
         onContextMenu={(e) => e.preventDefault()}
-        className="relative z-10 bg-white shadow-inner border border-border/50"
+        className="relative z-10 bg-white shadow-lg border border-gray-200 rounded-lg"
         style={{ cursor: getCursor() }}
       >
-        {/* Filtros SVG */}
         <defs>
           <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
             <feDropShadow dx="2" dy="4" stdDeviation="3" floodOpacity="0.3"/>
           </filter>
+
+          <pattern id="zonePattern" patternUnits="userSpaceOnUse" width="20" height="20">
+            <circle cx="10" cy="10" r="2" fill="#3b82f6" opacity="0.3"/>
+          </pattern>
+          <pattern id="seatRowPattern" patternUnits="userSpaceOnUse" width="20" height="20">
+            <rect x="5" y="5" width="10" height="10" fill="#22c55e" opacity="0.3"/>
+          </pattern>
+          <pattern id="stagePattern" patternUnits="userSpaceOnUse" width="10" height="10">
+            <rect width="10" height="10" fill="#ef4444" opacity="0.5"/>
+            <path d="M0,0 L10,10 M10,0 L0,10" stroke="#ef4444" strokeWidth="1" opacity="0.7"/>
+          </pattern>
+          <pattern id="exitPattern" patternUnits="userSpaceOnUse" width="20" height="20">
+            <polygon points="10,2 18,10 10,18 2,10" fill="#f59e0b" opacity="0.3"/>
+          </pattern>
+          <pattern id="circlePattern" patternUnits="userSpaceOnUse" width="20" height="20">
+            <circle cx="10" cy="10" r="8" fill="#f97316" opacity="0.3"/>
+          </pattern>
+
         </defs>
 
-        {/* Elementos existentes */}
+
+
+
         {elements.map((el) => (
           <CanvasElement
             key={el.id}
@@ -450,10 +504,11 @@ const DrawingCanvas = ({
             onSelect={onSelect}
             onUpdate={onUpdate}
             onDelete={onDelete}
+            units={units}
+            elements={elements}
           />
         ))}
-        
-        {/* Elemento siendo creado */}
+
         {currentElement && (
           <CanvasElement
             element={currentElement}
@@ -466,21 +521,27 @@ const DrawingCanvas = ({
       </svg>
       
       {/* Información de estado */}
-      <div className="absolute top-2 left-2 bg-black/70 text-white px-3 py-2 rounded text-sm">
-        <div>Zoom: {(zoom * 100).toFixed(0)}%</div>
-        <div>Herramienta: {activeTool || 'seleccionar'}</div>
-        {isDragging && <div className="text-blue-300">🖱️ Arrastrando...</div>}
-        {selectedElementId && <div className="text-green-300">✓ Seleccionado</div>}
+      <div className="absolute top-2 left-2 bg-black/70 text-white px-3 py-2 rounded text-sm flex items-center gap-4">
+        <div>
+          <div>Zoom: {(zoom * 100).toFixed(0)}%</div>
+          <div>Herramienta: {activeTool || 'seleccionar'}</div>
+          {isDragging && <div className="text-blue-300">🖱️ Arrastrando...</div>}
+          {selectedElementId && <div className="text-green-300">✓ Seleccionado</div>}
+        </div>
+        <div className="flex flex-col gap-1">
+          <button onClick={() => setZoom(Math.min(4, zoom + 0.2))} className="bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded text-xs">+</button>
+          <button onClick={() => setZoom(Math.max(0.2, zoom - 0.2))} className="bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded text-xs">-</button>
+          <button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }} className="bg-gray-600 hover:bg-gray-500 px-2 py-1 rounded text-xs">1:1</button>
+        </div>
       </div>
 
       {/* Ayuda contextual */}
-      {(!activeTool || activeTool === 'select') && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg shadow-md border border-blue-200">
-          <div className="text-sm text-center">
-            ✨ Haz clic en un elemento para seleccionarlo y arrastrarlo libremente | Clic derecho para hacer pan | Rueda para zoom
-          </div>
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg shadow-md border border-blue-200">
+        <div className="text-sm text-center">
+          {activeTool === 'select' ? '🖱️ Selecciona y arrastra elementos | Ctrl+Z/Y deshacer/rehacer | Ctrl+C/V copiar/pegar | Delete eliminar' :
+           '🎨 Haz clic para colocar elementos | Clic derecho pan | Rueda zoom | Ctrl+Z deshacer'}
         </div>
-      )}
+      </div>
     </div>
   )
 }
