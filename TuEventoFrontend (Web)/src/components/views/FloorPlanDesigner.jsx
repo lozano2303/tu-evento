@@ -2,7 +2,7 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MousePointer,
-  Square, Undo, Redo, Download, Upload, Trash2, Home
+  Square, Undo, Redo, Download, Upload, Trash2, Home, Calendar
 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 
@@ -13,7 +13,7 @@ import { MapProvider, useMapState, useMapDispatch } from '../context/MapContext'
 
 
 // Top navbar
-const TopNavbar = ({ onExport, onImport, onUploadEvent, onGoHome }) => {
+const TopNavbar = ({ onExport, onImport, onUploadEvent, onGoHome, onGoToEvents }) => {
   return (
     <div className="bg-gray-800 text-white h-16 flex items-center px-4 justify-between">
       <div className="flex items-center">
@@ -26,6 +26,10 @@ const TopNavbar = ({ onExport, onImport, onUploadEvent, onGoHome }) => {
       <div className="flex items-center space-x-3">
         <button title="Volver al Inicio" onClick={onGoHome} className="flex items-center px-3 py-2 rounded hover:bg-gray-700">
           <Home size={16} className="mr-2" /> Inicio
+        </button>
+
+        <button title="Ver Eventos" onClick={onGoToEvents} className="flex items-center px-3 py-2 rounded hover:bg-gray-700">
+          <Calendar size={16} className="mr-2" /> Eventos
         </button>
 
         <button title="Exportar" onClick={onExport} className="flex items-center px-3 py-2 rounded hover:bg-gray-700">
@@ -549,9 +553,13 @@ const selectedElement = elements.find(el => el.id === selectedId)
     navigate('/');
   };
 
+  const goToEvents = () => {
+    navigate('/events');
+  };
+
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      <TopNavbar onExport={exportMap} onImport={importMap} onUploadEvent={onUploadEvent} onGoHome={goHome} />
+      <TopNavbar onExport={exportMap} onImport={importMap} onUploadEvent={onUploadEvent} onGoHome={goHome} onGoToEvents={goToEvents} />
 
       {/* Professional Toolbar */}
       <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">

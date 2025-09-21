@@ -15,7 +15,7 @@ export default function Navbar() {
           <Link to="" className="hover:text-purple-400 transition-colors">Inicio</Link>
           <Link to="" className="hover:text-purple-400 transition-colors">Nosotros</Link>
           <Link to="/FloorPlanDesigner" className="hover:text-purple-400 transition-colors">Crear</Link>
-          <Link to="" className="hover:text-purple-400 transition-colors">Eventos</Link>
+          <Link to="/Events" className="hover:text-purple-400 transition-colors">Eventos</Link>
         </div>
 
         <button className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors text-white">

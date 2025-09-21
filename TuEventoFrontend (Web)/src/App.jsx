@@ -5,7 +5,8 @@ import MainLayout from "./components/layout/MainLayout.jsx";
 
 import LadingPage from "./components/views/lading-page.jsx";
 import Login from "./components/views/login.jsx";
-import Maquetation from "./components/views/FloorPlanDesigner.jsx"
+import Maquetation from "./components/views/FloorPlanDesigner.jsx";
+import Events from "./components/views/Events.jsx";
 
 const App = () => {
   return (
@@ -25,6 +26,16 @@ const App = () => {
 
       {/* Maquetation SIN layout (directo) */}
       <Route path="/FloorPlanDesigner" element={<Maquetation />} />
+
+      {/* Events con layout */}
+      <Route
+        path="/events"
+        element={
+          <MainLayout>
+            <Events />
+          </MainLayout>
+        }
+      />
     </Routes>
   );
 };
