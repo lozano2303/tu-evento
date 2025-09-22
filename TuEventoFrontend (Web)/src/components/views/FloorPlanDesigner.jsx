@@ -2,7 +2,22 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MousePointer,
-  Square, Undo, Redo, Download, Upload, Trash2, Home, Calendar
+  Square, 
+  Undo, 
+  Redo, 
+  Download, 
+  Upload, 
+  Trash2, 
+  Home, 
+  Calendar,
+  Circle,
+  DoorOpen,
+  LogOut,
+  Ruler,
+  Theater,
+  Sofa,          
+  Grid3x3,       
+  Sliders        
 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 
@@ -11,8 +26,6 @@ import useDragAndDrop from './Hooks/useDragAndDrop';
 import DrawingCanvas from '../DrawingCanvas'; 
 import { MapProvider, useMapState, useMapDispatch } from '../context/MapContext';
 
-
-// Top navbar
 const TopNavbar = ({ onExport, onImport, onUploadEvent, onGoHome, onGoToEvents }) => {
   return (
     <div className="bg-gray-800 text-white h-16 flex items-center px-4 justify-between">
@@ -50,20 +63,19 @@ const TopNavbar = ({ onExport, onImport, onUploadEvent, onGoHome, onGoToEvents }
   );
 };
 
-// Tool panel
 const ToolPanel = ({ activeTool, setActiveTool, onUndo, onRedo, canUndo, canRedo, onAddSample }) => {
-  const tools = [
-    { id: 'select', icon: MousePointer, label: 'Seleccionar' },
-    { id: 'wall', icon: Square, label: 'Pared' },
-    { id: 'zone', icon: Square, label: 'Zona' },
-    { id: 'stage', icon: Square, label: 'Escenario' },
-    { id: 'circle', icon: Square, label: 'Círculo' },
-    { id: 'chair', icon: Square, label: 'Silla' },
-    { id: 'seatRow', icon: Square, label: 'Fila de sillas' },
-    { id: 'door', icon: Square, label: 'Puerta' },
-    { id: 'exit', icon: Square, label: 'Salida' },
-    { id: 'curvedWall', icon: Square, label: 'Pared curva' }
-  ];
+const tools = [
+  { id: 'select', icon: MousePointer, label: 'Seleccionar' },
+  { id: 'wall', icon: Ruler, label: 'Pared' },
+  { id: 'zone', icon: Square, label: 'Zona' },
+  { id: 'stage', icon: Theater, label: 'Escenario' },
+  { id: 'circle', icon: Circle, label: 'Círculo' },
+  { id: 'chair', icon: Sofa, label: 'Silla' },
+  { id: 'seatRow', icon: Grid3x3, label: 'Fila de sillas' },
+  { id: 'door', icon: DoorOpen, label: 'Puerta' },
+  { id: 'exit', icon: LogOut, label: 'Salida' },
+  { id: 'curvedWall', icon: Sliders, label: 'Pared curva' }  
+];
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 p-4">
@@ -74,7 +86,9 @@ const ToolPanel = ({ activeTool, setActiveTool, onUndo, onRedo, canUndo, canRedo
             key={tool.id}
             onClick={() => setActiveTool(tool.id)}
             className={`w-full flex items-center p-3 rounded text-left transition-colors ${
-              activeTool === tool.id ? 'bg-blue-100 text-blue-800 border border-blue-300' : 'hover:bg-gray-50 text-gray-700'
+              activeTool === tool.id 
+                ? 'bg-blue-100 text-blue-800 border border-blue-300' 
+                : 'hover:bg-gray-50 text-gray-700'
             }`}
           >
             <tool.icon size={18} className="mr-3" />
@@ -86,14 +100,25 @@ const ToolPanel = ({ activeTool, setActiveTool, onUndo, onRedo, canUndo, canRedo
       <div className="border-t pt-4">
         <h4 className="text-sm font-semibold mb-3 text-gray-700">Acciones</h4>
         <div className="space-y-2">
-          <button onClick={onUndo} disabled={!canUndo} className="w-full flex items-center p-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+          <button 
+            onClick={onUndo} 
+            disabled={!canUndo} 
+            className="w-full flex items-center p-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
             <Undo size={16} className="mr-2" /> Deshacer
           </button>
-          <button onClick={onRedo} disabled={!canRedo} className="w-full flex items-center p-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+          <button 
+            onClick={onRedo} 
+            disabled={!canRedo} 
+            className="w-full flex items-center p-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
             <Redo size={16} className="mr-2" /> Rehacer
           </button>
-          <button onClick={onAddSample} className="w-full flex items-center p-2 rounded text-sm hover:bg-gray-50">
-            Añadir ejemplo
+          <button 
+            onClick={onAddSample} 
+            className="w-full flex items-center p-2 rounded text-sm hover:bg-gray-50"
+          >
+            <Square size={16} className="mr-2" /> Añadir ejemplo
           </button>
         </div>
       </div>
@@ -109,7 +134,6 @@ const PropertiesPanel = ({ selectedElement, onUpdate, onDelete, units, setUnits 
     if (selectedElement) {
       const factor = units === 'cm' ? 1 : 100;
 
-      // Handle different element types
       if (selectedElement.type === 'wall') {
         const dx = selectedElement.x2 - selectedElement.x1;
         const dy = selectedElement.y2 - selectedElement.y1;
@@ -152,13 +176,11 @@ const PropertiesPanel = ({ selectedElement, onUpdate, onDelete, units, setUnits 
       const actualValue = units === 'm' ? Math.round(num * 100) : Math.round(num);
 
       if (selectedElement.type === 'wall') {
-        // Handle wall-specific updates
         const centerX = prop === 'x' ? actualValue : parseFloat(inputValues.x) * (units === 'm' ? 100 : 1);
         const centerY = prop === 'y' ? actualValue : parseFloat(inputValues.y) * (units === 'm' ? 100 : 1);
         const length = prop === 'width' ? actualValue : parseFloat(inputValues.width) * (units === 'm' ? 100 : 1);
         const thickness = prop === 'height' ? actualValue : parseFloat(inputValues.height) * (units === 'm' ? 100 : 1);
 
-        // Calculate wall endpoints based on center, length, and current angle
         const dx = selectedElement.x2 - selectedElement.x1;
         const dy = selectedElement.y2 - selectedElement.y1;
         const currentLength = Math.sqrt(dx * dx + dy * dy);
@@ -305,6 +327,9 @@ const FloorPlanDesignerInner = () => {
   const [showGuide, setShowGuide] = useState(false);
   const [showMeasurements, setShowMeasurements] = useState(true);
 
+  const snapToGridValue = (value, gridSize = 20) => {
+    return Math.round(value / gridSize) * gridSize;
+  };
 
   const generateSeatGrid = (centerX, startY, cols, rows, spacingX, spacingY, sectionName = '') => {
     const seats = [];
@@ -366,8 +391,6 @@ const FloorPlanDesignerInner = () => {
     }
   };
 
-
-
   const handleCreate = useCallback((el) => {
     const newEl = {
       ...el,
@@ -393,9 +416,8 @@ const FloorPlanDesignerInner = () => {
           const wallTop = Math.min(element.y1, element.y2);
           const wallBottom = Math.max(element.y1, element.y2);
 
-          // Si se solapan, no incluir la pared
           if (!(wallRight <= doorLeft || wallLeft >= doorRight || wallBottom <= doorTop || wallTop >= doorBottom)) {
-            continue; // Saltar esta pared
+            continue; 
           }
         }
       }
@@ -421,7 +443,6 @@ const FloorPlanDesignerInner = () => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Tool shortcuts
       const toolShortcuts = {
         's': 'select',
         'w': 'wall',
@@ -500,10 +521,10 @@ const FloorPlanDesignerInner = () => {
     }
 
     window.addEventListener('keydown', handleKeyDown)
-  return () => window.removeEventListener('keydown', handleKeyDown)
-}, [selectedId, elements, handleUpdate, handleDelete, setActiveTool, undo, redo])
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedId, elements, handleUpdate, handleDelete, setActiveTool, undo, redo, clipboard])
 
-const selectedElement = elements.find(el => el.id === selectedId)
+  const selectedElement = elements.find(el => el.id === selectedId)
 
   const exportMap = useCallback(() => {
     const data = {
@@ -534,7 +555,7 @@ const selectedElement = elements.find(el => el.id === selectedId)
       }
     };
     reader.readAsText(file);
-  }, []);
+  }, [dispatch, historyWrapper]);
 
   const addSample = () => {
     const sample = [
@@ -543,9 +564,7 @@ const selectedElement = elements.find(el => el.id === selectedId)
     pushSnapshot([...(elements || []), ...sample]);
   };
 
-
   const onUploadEvent = () => {
-    // For now, export the map as uploading the event
     exportMap();
   };
 
@@ -724,7 +743,6 @@ const selectedElement = elements.find(el => el.id === selectedId)
           </div>
         </div>
       )}
-
     </div>
   );
 };
