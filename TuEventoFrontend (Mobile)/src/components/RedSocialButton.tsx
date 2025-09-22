@@ -17,7 +17,7 @@ const icons = {
   facebook: { name: "facebook-f", color: "#1877F3", label: "Facebook" },
 };
 
-// 🔥 Tu IP correcta
+//  IP correcta
 const BASE_URL = 'http://192.168.0.16:8080';
 
 export default function RedSocialButton({ social, onSuccess, onError }: RedSocialButtonProps) {

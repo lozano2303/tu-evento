@@ -18,7 +18,7 @@ export default function RegisterScreen() {
     navigation.navigate("MainTabs" as never);
   };
 
-  // ❌ Función para manejar errores (opcional)
+  //  Función para manejar errores (opcional)
   const handleOAuthError = (error: any) => {
     console.log(' Error en OAuth:', error);
     // Aquí podrías mostrar un mensaje de error si quieres
@@ -27,7 +27,6 @@ export default function RegisterScreen() {
   // Estado para capturar los datos del formulario
   const [formData, setFormData] = useState({
     fullName: '',
-    telephone: '',
     email: '',
     password: ''
   });
@@ -42,7 +41,7 @@ export default function RegisterScreen() {
     }));
   };
 
-  // 🔥 FUNCIÓN MODIFICADA - Ahora captura el userId de la respuesta
+  //  FUNCIÓN MODIFICADA - Ahora captura el userId de la respuesta
   const handleRegister = async () => {
     try {
       setLoading(true);
@@ -50,7 +49,6 @@ export default function RegisterScreen() {
       // Preparar datos para enviar al API
       const userData = {
         fullName: formData.fullName.trim(),
-        telephone: formData.telephone.trim(),
         email: formData.email.trim(),
         password: formData.password,
       };
@@ -64,7 +62,7 @@ export default function RegisterScreen() {
       console.log(' Registro exitoso - Respuesta completa:', responseData);
       
       if (responseData.success) {
-        // 🆔 AQUÍ CAPTURAMOS EL ID DEL USUARIO
+        //  AQUÍ CAPTURAMOS EL ID DEL USUARIO
         const userId = responseData.data; 
         
         console.log(' ID del usuario capturado:', userId);
@@ -105,14 +103,6 @@ export default function RegisterScreen() {
           placeholder="Ingresa tu nombre completo"
           value={formData.fullName}
           onChangeText={(value) => updateField('fullName', value)}
-        />
-        
-        <Input
-          label="Telefono"
-          placeholder="Número de teléfono"
-          value={formData.telephone}
-          onChangeText={(value) => updateField('telephone', value)}
-          keyboardType="phone-pad"
         />
         
         <Input

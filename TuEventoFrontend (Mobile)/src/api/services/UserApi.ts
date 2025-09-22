@@ -1,7 +1,7 @@
 import { USER_ENDPOINT, USER_PROFILE_ENDPOINT } from "../../constants/Endpoint";
 import { IRequestRegister, IUserProfileResponse } from "../types/IUser";
 import { getToken } from "./Token";
-//import axios from "axios";
+
 
 export const registerUser = async (userData: IRequestRegister) => {
   try {
