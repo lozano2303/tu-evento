@@ -7,6 +7,7 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import CodeVerificationScreenRegister from '../screens/auth/CodeVerificationScreenRegister';
 import CodeVerifcationForgotPassword from '../screens/auth/CodeVerifcationForgotPassword';
+import NewPasswordScreen from '../screens/auth/NewPasswordScreen';
 import EvenList from '../screens/home/EvenListScreen';
 import ProfileScreen from '../screens/home/ProfileScreen';
 
@@ -54,6 +55,7 @@ export default function AppNavigator() {
         <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
         <Stack.Screen name="CodeVerificationScreenRegister" component={CodeVerificationScreenRegister} />
         <Stack.Screen name="CodeVerifcationForgotPassword" component={CodeVerifcationForgotPassword} />
+        <Stack.Screen name="NewPasswordScreen" component={NewPasswordScreen} />
         <Stack.Screen name="MainTabs" component={MainTabs} />
       </Stack.Navigator>
     </NavigationContainer>

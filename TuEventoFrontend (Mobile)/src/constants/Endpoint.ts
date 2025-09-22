@@ -8,6 +8,8 @@ export const RESEND_ENDPOINT = `${API_BASE_URL}/account-activation/resend`; // R
 
 export const FORGOT_ENDPOINT = `${API_BASE_URL}/login/forgot`; // Forgot password endpoint
 
+export const RESET_ENDPOINT_TOKEN = `${API_BASE_URL}/login/validateResetToken`; // Validate reset token endpoint
+
 export const LOGIN_ENDPOINT = `${API_BASE_URL}/login/start`; // Login endpoint
 
 export const USER_PROFILE_ENDPOINT = `${API_BASE_URL}/users`; // User profile endpoint

@@ -1,8 +1,9 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useState } from "react";
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Input from "../../components/Input";
 import Button from "../../components/Button";
+import { validateResetTokenApi } from "../../api/services/ForgotPasswordApi";
 
 type RouteParams = {
   email: string;
@@ -15,9 +16,48 @@ export default function CodeVerifcationForgotPassword() {
 
   // Estado para el código
   const [activationCode, setactivationCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [validToken, setValidToken] = useState<string | null>(null);
 
   // Obtener los parámetros
   const { email } = (route.params as RouteParams) || {};
+
+  // Función para manejar la verificación del código
+  const handleVerifyCode = async () => {
+    if (activationCode.length !== 6) {
+      Alert.alert('Error', 'El código debe tener 6 dígitos');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      console.log('Verificando código:', activationCode);
+
+      // Llamar a la API para validar el token
+      const response = await validateResetTokenApi({ token: activationCode });
+
+      console.log('Token validado exitosamente:', response);
+
+      // Almacenar el token válido
+      setValidToken(activationCode);
+
+      // Navegar a la pantalla de nueva contraseña
+      (navigation as any).navigate('NewPasswordScreen', {
+        token: activationCode,
+        email: email
+      });
+
+    } catch (error: any) {
+      console.error('Error al validar el código:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Código inválido o expirado. Intenta nuevamente.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-[#1a0033] items-center px-6 w-full h-full relative ">
@@ -42,10 +82,9 @@ export default function CodeVerifcationForgotPassword() {
 
         {/* Botón de verificar */}
         <Button
-          label="Verificar Código"
-          onPress={() => {
-            // Aquí implementarás la lógica de verificación
-          }}
+          label={loading ? "Verificando..." : "Verificar Código"}
+          onPress={handleVerifyCode}
+          disabled={loading || activationCode.length !== 6}
         />
 
       </View>
