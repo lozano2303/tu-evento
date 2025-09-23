@@ -1,11 +1,12 @@
 import "../../styles/index.css";
-import { Calendar, User, LogOut, Key } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Calendar, User, LogOut, Key, Plus } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getUserById } from "../../services/Login.js";
 import ChangePassword from "../views/ChangePassword.jsx";
 
 export default function Navbar() {
+  const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
@@ -48,6 +49,25 @@ export default function Navbar() {
     setIsModalOpen(false);
     window.location.reload(); // Recargar para actualizar estado
   };
+
+  const handleCreateClick = () => {
+    if (!userData) {
+      // Usuario no logueado
+      navigate('/login');
+      return;
+    }
+
+    // Verificar si es organizador
+    const isOrganizer = userData.organizer || userData.organicer;
+    if (!isOrganizer) {
+      // No es organizador, ir a solicitud
+      navigate('/organizer-petition');
+      return;
+    }
+
+    // Es organizador, ir a gestión de eventos
+    navigate('/event-management');
+  };
   return (
     <header className="bg-gray-800 p-4">
       <nav className="max-w-6xl mx-auto flex items-center justify-between">
@@ -59,7 +79,13 @@ export default function Navbar() {
         <div className="hidden md:flex space-x-6 text-white"> {/* Added text-white here for all links */}
           <Link to="/landingPage" className="hover:text-purple-400 transition-colors">Inicio</Link>
           <Link to="" className="hover:text-purple-400 transition-colors">Nosotros</Link>
-          <Link to="/FloorPlanDesigner" className="hover:text-purple-400 transition-colors">Crear</Link>
+          <button
+            onClick={handleCreateClick}
+            className="hover:text-purple-400 transition-colors bg-transparent border-none cursor-pointer"
+          >
+            <Plus className="w-4 h-4 inline mr-1" />
+            Crear
+          </button>
           <Link to="/events" className="hover:text-purple-400 transition-colors">Eventos</Link>
         </div>
 

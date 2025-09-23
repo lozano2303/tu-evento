@@ -22,11 +22,12 @@ import {
 import { nanoid } from 'nanoid';
 
 import useHistory from './Hooks/useHistory';
-import useDragAndDrop from './Hooks/useDragAndDrop';   
-import DrawingCanvas from '../DrawingCanvas'; 
+import useDragAndDrop from './Hooks/useDragAndDrop';
+import DrawingCanvas from '../DrawingCanvas';
 import { MapProvider, useMapState, useMapDispatch } from '../context/MapContext';
+import { saveEventLayout, getEventLayout } from '../../services/EventLayoutService.js';
 
-const TopNavbar = ({ onExport, onImport, onUploadEvent, onGoHome, onGoToEvents }) => {
+const TopNavbar = ({ onExport, onImport, onUploadEvent, onLoadLayout, onGoHome, onGoToEvents }) => {
   return (
     <div className="bg-gray-800 text-white h-16 flex items-center px-4 justify-between">
       <div className="flex items-center">
@@ -55,8 +56,12 @@ const TopNavbar = ({ onExport, onImport, onUploadEvent, onGoHome, onGoToEvents }
           Importar
         </label>
 
-        <button title="Subir Evento" onClick={onUploadEvent} className="flex items-center px-3 py-2 rounded hover:bg-gray-700">
-          <Upload size={16} className="mr-2" /> Subir Evento
+        <button title="Cargar Layout" onClick={onLoadLayout} className="flex items-center px-3 py-2 rounded hover:bg-gray-700">
+          <Upload size={16} className="mr-2" /> Cargar Layout
+        </button>
+
+        <button title="Guardar Layout" onClick={onUploadEvent} className="flex items-center px-3 py-2 rounded hover:bg-gray-700">
+          <Upload size={16} className="mr-2" /> Guardar Layout
         </button>
       </div>
     </div>
@@ -301,6 +306,10 @@ const FloorPlanDesignerInner = () => {
   const { elements, selectedId } = useMapState();
   const dispatch = useMapDispatch();
 
+  // Get eventId from URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const eventId = urlParams.get('eventId');
+
   const historyWrapper = useHistory(elements || []);
 
   const pushSnapshot = (newElements) => {
@@ -326,6 +335,13 @@ const FloorPlanDesignerInner = () => {
   const [clipboard, setClipboard] = useState(null);
   const [showGuide, setShowGuide] = useState(false);
   const [showMeasurements, setShowMeasurements] = useState(true);
+
+  // Load existing layout for the event when component mounts
+  useEffect(() => {
+    if (eventId) {
+      loadLayoutFromBackend(eventId);
+    }
+  }, [eventId]);
 
   const snapToGridValue = (value, gridSize = 20) => {
     return Math.round(value / gridSize) * gridSize;
@@ -564,8 +580,69 @@ const FloorPlanDesignerInner = () => {
     pushSnapshot([...(elements || []), ...sample]);
   };
 
+  const saveLayoutToBackend = async (layoutName) => {
+    try {
+      const layoutData = {
+        name: eventId ? `event_${eventId}` : layoutName,
+        elements: elements,
+        exportedAt: new Date().toISOString()
+      };
+
+      const result = await saveEventLayout(layoutData);
+      if (result.success) {
+        alert(eventId ? 'Layout del evento guardado exitosamente' : 'Layout guardado exitosamente en el backend');
+      } else {
+        alert('Error guardando layout: ' + (result.message || 'Error desconocido'));
+      }
+    } catch (error) {
+      console.error('Error saving layout to backend:', error);
+      alert('Error de conexión al guardar layout');
+    }
+  };
+
+  const loadLayoutFromBackend = async (layoutName) => {
+    try {
+      const result = await getEventLayout(layoutName);
+      if (result.success && result.data.elements) {
+        dispatch({ type: 'SET_ELEMENTS', payload: result.data.elements });
+        historyWrapper.pushState(result.data.elements);
+        if (!eventId) {
+          alert('Layout cargado exitosamente desde el backend');
+        }
+      } else {
+        if (!eventId) {
+          alert('Error cargando layout: ' + (result.message || 'Layout no encontrado'));
+        }
+        // If loading for eventId, don't show error if layout doesn't exist (it's normal for new events)
+      }
+    } catch (error) {
+      console.error('Error loading layout from backend:', error);
+      if (!eventId) {
+        alert('Error de conexión al cargar layout');
+      }
+    }
+  };
+
+  const onLoadLayout = () => {
+    if (eventId) {
+      loadLayoutFromBackend(`event_${eventId}`);
+    } else {
+      const layoutName = prompt('Ingrese el nombre del layout a cargar:');
+      if (layoutName && layoutName.trim()) {
+        loadLayoutFromBackend(layoutName.trim());
+      }
+    }
+  };
+
   const onUploadEvent = () => {
-    exportMap();
+    if (eventId) {
+      saveLayoutToBackend(`event_${eventId}`);
+    } else {
+      const layoutName = prompt('Ingrese el nombre del layout:');
+      if (layoutName && layoutName.trim()) {
+        saveLayoutToBackend(layoutName.trim());
+      }
+    }
   };
 
   const goHome = () => {
@@ -578,7 +655,7 @@ const FloorPlanDesignerInner = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      <TopNavbar onExport={exportMap} onImport={importMap} onUploadEvent={onUploadEvent} onGoHome={goHome} onGoToEvents={goToEvents} />
+      <TopNavbar onExport={exportMap} onImport={importMap} onUploadEvent={onUploadEvent} onLoadLayout={onLoadLayout} onGoHome={goHome} onGoToEvents={goToEvents} />
 
       {/* Professional Toolbar */}
       <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
