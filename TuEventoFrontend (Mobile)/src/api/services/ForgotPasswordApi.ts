@@ -30,24 +30,30 @@ export const forgotPasswordApi = async (data: IRequestForgotPassword) => {
 //Correcion en la conexion a la API GET no puede tener body
 export const validateResetTokenApi = async (data: ItokenForgotPassword) => {
     try {
-        console.log(' Enviando datos a:', RESET_ENDPOINT_TOKEN);
-        console.log(' Datos enviados:', data);
-        const response = await fetch(`${RESET_ENDPOINT_TOKEN}`, {
+        // Construir la URL con el token como query parameter
+        const url = `${RESET_ENDPOINT_TOKEN}?token=${encodeURIComponent(data.token)}`;
+        
+        console.log('Enviando petición GET a:', url);
+        
+        const response = await fetch(url, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(data),
+            // NO incluir body en peticiones GET
         });
-        const responseData = await response.json(); // siempre parseamos
+        
+        const responseData = await response.json();
+        
         if (!response.ok || responseData.success === false) {
             throw new Error(responseData.message || "Error en la validación del token de restablecimiento");
         }
-        console.log(' Respuesta exitosa:', responseData);
+        
+        console.log('Respuesta exitosa:', responseData);
         return responseData;
+        
     } catch (error) {
-        console.error(' Error en validateResetTokenApi:', error);
-        throw error; //  Lanzar el error en lugar de devolverlo
+        console.error('Error en validateResetTokenApi:', error);
+        throw error;
     }
-
 }
