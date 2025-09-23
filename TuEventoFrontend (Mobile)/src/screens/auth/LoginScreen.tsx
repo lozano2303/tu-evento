@@ -50,7 +50,7 @@ export default function LoginScreen() {
 
   return (
     <View className="flex-1 bg-[#1a0033] items-center px-6 w-full h-full relative">
-      <View className="w-full" style={{ marginTop: 80 }}>
+      <View className="w-full" style={{ marginTop: 100 }}>
         {/* Título */}
         <Text className="text-white text-2xl font-bold mb-4 text-center">
           Iniciar Sesión
@@ -97,7 +97,7 @@ export default function LoginScreen() {
 
         {/* Línea divisoria */}
         <Text className="text-white text-sm text-center my-6">
-          ______________________________________________________
+          __________________________O____________________________
         </Text>
 
         {/* Texto "Inicia sesión con:" */}
