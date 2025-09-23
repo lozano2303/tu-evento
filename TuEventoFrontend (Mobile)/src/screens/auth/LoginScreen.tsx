@@ -101,17 +101,21 @@ export default function LoginScreen() {
           Inicia sesión con:
         </Text>
 
-        {/* Botones de redes sociales  */}
-        <RedSocialButton 
-          social="google" 
-          onSuccess={handleOAuthSuccess}
-          onError={handleOAuthError}
-        />
-        <RedSocialButton 
-          social="facebook" 
-          onSuccess={handleOAuthSuccess}
-          onError={handleOAuthError}
-        />
+        {/* Botones de redes sociales con solo iconos */}
+        <View className="flex-row justify-center items-center mb-4" style={{ gap: 20 }}>
+          <RedSocialButton 
+            social="google" 
+            onSuccess={handleOAuthSuccess}
+            onError={handleOAuthError}
+            iconOnly={true}
+          />
+          <RedSocialButton 
+            social="facebook" 
+            onSuccess={handleOAuthSuccess}
+            onError={handleOAuthError}
+            iconOnly={true}
+          />
+        </View>
 
         {/* Terminos y condiciones */}
         <Text className="text-white text-base text-center mt-4 px-4">
