@@ -50,7 +50,7 @@ export default function LoginScreen() {
 
   return (
     <View className="flex-1 bg-[#1a0033] items-center px-6 w-full h-full relative">
-      <View className="w-full top-12">
+      <View className="w-full" style={{ marginTop: 100 }}>
         {/* Título */}
         <Text className="text-white text-2xl font-bold mb-4 text-center">
           Iniciar Sesión
@@ -58,11 +58,14 @@ export default function LoginScreen() {
 
         {/* Inputs */}
         <Input
-          label="Ingresa tu Correo Electronico"
-          placeholder="Correo o nombre"
+          label="Correo electrónico o nombre de usuario"
+          placeholder="Ingresa tu correo"
           value={email}
           onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
+
         <Input
           label="Ingresa tu contraseña"
           placeholder="Contraseña"
@@ -74,49 +77,58 @@ export default function LoginScreen() {
         {/* Botón */}
         <Button label="Iniciar" onPress={handleLogin} />
 
-        {/* Texto inferior */}
-        <Text className="text-white mt-6 text-left mt-2">
-          ¿No tienes una cuenta?
-        </Text>
-        {/* Navegar a RegisterScreen */}
-        <TouchableOpacity onPress={handleGoToRegister}>
-          <Text className="text-blue-400">Crea tu cuenta</Text>
-        </TouchableOpacity>
-
-        {/*Recuperar contraseña */}
-        <Text className="text-white mt-2 text-left">
-          ¿Olvidaste tu contraseña?{"  "}
-          <TouchableOpacity onPress={handleGoToForgotPassword}>
-            <Text className="text-blue-400">Recuperar contraseña</Text>
+        {/* Texto inferior alineado a la izquierda */}
+        <View className="mt-4">
+          <Text className="text-white text-left mb-1">
+            ¿No tienes una cuenta?
+          </Text>
+          {/* Navegar a RegisterScreen */}
+          <TouchableOpacity onPress={handleGoToRegister}>
+            <Text style={{ color: '#B06CFF' }}>Crea tu cuenta</Text>
           </TouchableOpacity>
-        </Text>
+        </View>
+
+        {/*Recuperar contraseña alineado a la izquierda */}
+        <View className="mt-4">
+          <Text className="text-white text-left mb-1">
+            ¿Olvidaste tu contraseña?
+          </Text>
+          <TouchableOpacity onPress={handleGoToForgotPassword}>
+            <Text style={{ color: '#B06CFF' }}>Recuperar contraseña</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Línea divisoria */}
         <Text className="text-white text-sm text-center my-6">
-          __________________________O____________________________
+          ___________________________________________________________
         </Text>
 
         {/* Texto "Inicia sesión con:" */}
-        <Text className="text-gray-300 text-lg text-left mb-3 font-semibold">
+         {/* Texto "Inicia sesión con:" centrado */}
+        <Text className="text-gray-300 text-lg text-center mb-4 font-semibold">
           Inicia sesión con:
         </Text>
-
-        {/* Botones de redes sociales  */}
-        <RedSocialButton 
-          social="google" 
-          onSuccess={handleOAuthSuccess}
-          onError={handleOAuthError}
-        />
-        <RedSocialButton 
-          social="facebook" 
-          onSuccess={handleOAuthSuccess}
-          onError={handleOAuthError}
-        />
+        
+        {/* Botones de redes sociales con solo iconos */}
+        <View className="flex-row justify-center items-center mb-4" style={{ gap: 20 }}>
+          <RedSocialButton 
+            social="google" 
+            onSuccess={handleOAuthSuccess}
+            onError={handleOAuthError}
+            iconOnly={true}
+          />
+          <RedSocialButton 
+            social="facebook" 
+            onSuccess={handleOAuthSuccess}
+            onError={handleOAuthError}
+            iconOnly={true}
+          />
+        </View>
 
         {/* Terminos y condiciones */}
-        <Text className="text-white text-base text-center mt-4 px-4">
+        <Text className="text-white text-base text-center mt-3 px-3">
           Al iniciar sesión, aceptas nuestros{" "}
-          <Text className="text-blue-400 font-semibold">Términos y condiciones</Text>
+          <Text style={{ color: '#B06CFF' }} className="font-semibold">Términos y condiciones</Text>
         </Text>
       </View>
 
