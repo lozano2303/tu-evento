@@ -74,26 +74,30 @@ export default function LoginScreen() {
         {/* Botón */}
         <Button label="Iniciar" onPress={handleLogin} />
 
-        {/* Texto inferior */}
-        <Text className="text-white mt-6 text-left mt-2">
-          ¿No tienes una cuenta?
-        </Text>
-        {/* Navegar a RegisterScreen */}
-        <TouchableOpacity onPress={handleGoToRegister}>
-          <Text className="text-blue-400">Crea tu cuenta</Text>
-        </TouchableOpacity>
-
-        {/*Recuperar contraseña */}
-        <Text className="text-white mt-2 text-left">
-          ¿Olvidaste tu contraseña?{"  "}
-          <TouchableOpacity onPress={handleGoToForgotPassword}>
-            <Text className="text-blue-400">Recuperar contraseña</Text>
+        {/* Texto inferior alineado a la izquierda */}
+        <View className="mt-6">
+          <Text className="text-white text-left mb-2">
+            ¿No tienes una cuenta?
+          </Text>
+          {/* Navegar a RegisterScreen */}
+          <TouchableOpacity onPress={handleGoToRegister}>
+            <Text style={{ color: '#B06CFF' }}>Crea tu cuenta</Text>
           </TouchableOpacity>
-        </Text>
+        </View>
+
+        {/*Recuperar contraseña alineado a la izquierda */}
+        <View className="mt-4">
+          <Text className="text-white text-left mb-2">
+            ¿Olvidaste tu contraseña?
+          </Text>
+          <TouchableOpacity onPress={handleGoToForgotPassword}>
+            <Text style={{ color: '#B06CFF' }}>Recuperar contraseña</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Línea divisoria */}
         <Text className="text-white text-sm text-center my-6">
-          __________________________O____________________________
+          ______________________________________________________
         </Text>
 
         {/* Texto "Inicia sesión con:" */}
@@ -120,7 +124,7 @@ export default function LoginScreen() {
         {/* Terminos y condiciones */}
         <Text className="text-white text-base text-center mt-4 px-4">
           Al iniciar sesión, aceptas nuestros{" "}
-          <Text className="text-blue-400 font-semibold">Términos y condiciones</Text>
+          <Text style={{ color: '#B06CFF' }} className="font-semibold">Términos y condiciones</Text>
         </Text>
       </View>
 
