@@ -1,0 +1,44 @@
+@startuml Login Use Case Diagram
+
+left to right direction
+
+actor "User" as User
+actor "Email System" as EmailSystem
+
+rectangle "TuEvento" {
+    usecase "Log In" as UC1
+    usecase "Register" as UC2
+    usecase "Verify Activation Code" as UC3
+    usecase "Resend Activation Code" as UC4
+    usecase "Change Password" as UC5
+    usecase "Forgot Password" as UC6
+    usecase "Validate Reset Token" as UC7
+    usecase "Reset Password with Token" as UC8
+    usecase "OAuth2 Login" as UC9
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+
+UC2 ..> UC3 : <<include>>
+UC3 ..> UC4 : <<include>>
+UC6 ..> UC7 : <<include>>
+UC7 ..> UC8 : <<include>>
+
+UC1 --> EmailSystem : <<communicate>>
+UC2 --> EmailSystem : <<communicate>>
+UC4 --> EmailSystem : <<communicate>>
+UC6 --> EmailSystem : <<communicate>>
+
+note right of UC9
+    Support for Google, Facebook, etc.
+end note
+
+@enduml

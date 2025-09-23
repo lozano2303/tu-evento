@@ -1,0 +1,63 @@
+@startuml Simple Repository Class Diagram
+
+interface AccountActivationRepository {
+}
+
+interface AddressRepository {
+}
+
+interface CategoryEventRepository {
+}
+
+interface CategoryRepository {
+}
+
+interface CityRepository {
+}
+
+interface DepartmentRepository {
+}
+
+interface EventLayoutRepository {
+}
+
+interface EventRatingRepository {
+}
+
+interface EventRepository {
+}
+
+interface LocationRepository {
+}
+
+interface LoginRepository {
+}
+
+interface NotificationRepository {
+}
+
+interface NotificationUserRepository {
+}
+
+interface OrganizerPetitionRepository {
+}
+
+interface RecoverPasswordRepository {
+}
+
+interface SeatRepository {
+}
+
+interface SeatTicketRepository {
+}
+
+interface SectionRepository {
+}
+
+interface TicketRepository {
+}
+
+interface UserRepository {
+}
+
+@enduml

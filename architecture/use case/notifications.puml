@@ -1,0 +1,41 @@
+@startuml Notifications Use Case Diagram
+
+left to right direction
+
+actor "Organizer User" as Organizer
+actor "Buyer User" as Buyer
+actor "Email System" as EmailSystem
+
+rectangle "TuEvento" {
+    usecase "Create Notification" as UC1
+    usecase "Update Notification" as UC2
+    usecase "Delete Notification" as UC3
+    usecase "View Notification by ID" as UC4
+    usecase "View Notifications by Event" as UC5
+    usecase "Send Notification to Users" as UC6
+    usecase "Associate User to Notification" as UC7
+    usecase "View User Notifications" as UC8
+}
+
+Organizer --> UC1
+Organizer --> UC2
+Organizer --> UC3
+Organizer --> UC4
+Organizer --> UC5
+Organizer --> UC6
+
+Buyer --> UC8
+
+UC1 ..> UC6 : <<include>>
+UC6 ..> UC7 : <<include>>
+UC6 --> EmailSystem : <<communicate>>
+
+note right of UC6
+    Sends emails to users registered for the event
+end note
+
+note right of UC7
+    Intermediate table notification_user
+end note
+
+@enduml

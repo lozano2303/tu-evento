@@ -1,0 +1,330 @@
+@startuml Complete DTO Class Diagram
+
+class AccountActivationDto {
+    - int userID
+    - String activationCode
+    + AccountActivationDto()
+    + AccountActivationDto(int, String)
+    + int getUserID()
+    + void setUserID(int)
+    + String getActivationCode()
+    + void setActivationCode(String)
+}
+
+class AddressDto {
+    - int cityID
+    - String street
+    - String postalCode
+    + AddressDto()
+    + AddressDto(int, String, String)
+    + int getCityID()
+    + void setCityID(int)
+    + String getStreet()
+    + void setStreet(String)
+    + String getPostalCode()
+    + void setPostalCode(String)
+}
+
+class CategoryDto {
+    - String name
+    - String description
+    - Integer dadID
+    + CategoryDto()
+    + CategoryDto(String, String, Integer)
+    + String getName()
+    + void setName(String)
+    + String getDescription()
+    + void setDescription(String)
+    + Integer getDadID()
+    + void setDadID(Integer)
+}
+
+class CategoryEventDto {
+    - Integer categoryID
+    - Integer eventID
+    + CategoryEventDto()
+    + CategoryEventDto(Integer, Integer)
+    + Integer getCategoryID()
+    + void setCategoryID(Integer)
+    + Integer getEventID()
+    + void setEventID(Integer)
+}
+
+class CityDto {
+    - int departmentID
+    - String name
+    + CityDto()
+    + CityDto(int, String)
+    + int getDepartmentID()
+    + void setDepartmentID(int)
+    + String getName()
+    + void setName(String)
+}
+
+class DepartmentDto {
+    - String name
+    + DepartmentDto()
+    + DepartmentDto(String)
+    + String getName()
+    + void setName(String)
+}
+
+class EventDto {
+    - User userID
+    - Location locationID
+    - String eventName
+    - String description
+    - LocalDate startDate
+    - LocalDate finishDate
+    - int status
+    + EventDto()
+    + EventDto(User, Location, String, String, LocalDate, LocalDate, int)
+    + User getUserID()
+    + void setUserID(User)
+    + Location getLocationID()
+    + void setLocationID(Location)
+    + String getEventName()
+    + void setEventName(String)
+    + String getDescription()
+    + void setDescription(String)
+    + LocalDate getStartDate()
+    + void setStartDate(LocalDate)
+    + LocalDate getFinishDate()
+    + void setFinishDate(LocalDate)
+    + int getStatus()
+    + void setStatus(int)
+}
+
+class EventLayoutDto {
+    - int eventLayoutID
+    - Event eventID
+    - JsonNode layoutData
+    - LocalDateTime createdAt
+    + EventLayoutDto()
+    + EventLayoutDto(int, Event, JsonNode, LocalDateTime)
+    + int getEventLayoutID()
+    + void setEventLayoutID(int)
+    + Event getEventID()
+    + void setEventID(Event)
+    + JsonNode getLayoutData()
+    + void setLayoutData(JsonNode)
+    + LocalDateTime getCreatedAt()
+    + void setCreatedAt(LocalDateTime)
+}
+
+class EventRatingDto {
+    - int ratingID
+    - int userId
+    - int eventId
+    - int rating
+    - String comment
+    - LocalDateTime createdAt
+    + EventRatingDto()
+    + EventRatingDto(int, int, int, int, String, LocalDateTime)
+    + int getRatingID()
+    + void setRatingID(int)
+    + int getUserId()
+    + void setUserId(int)
+    + int getEventId()
+    + void setEventId(int)
+    + int getRating()
+    + void setRating(int)
+    + String getComment()
+    + void setComment(String)
+    + LocalDateTime getCreatedAt()
+    + void setCreatedAt(LocalDateTime)
+}
+
+class LocationDto {
+    - int addressID
+    - String name
+    + LocationDto()
+    + LocationDto(int, String)
+    + int getAddressID()
+    + void setAddressID(int)
+    + String getName()
+    + void setName(String)
+}
+
+class LoginDto {
+    - String password
+    - String email
+    - String username
+    + LoginDto()
+    + LoginDto(String, String)
+    + String getPassword()
+    + void setPassword(String)
+    + String getEmail()
+    + void setEmail(String)
+    + String getUsername()
+    + void setUsername(String)
+}
+
+class NotificationDto {
+    - int notificationID
+    - int EventID
+    - String message
+    - LocalDateTime sendDate
+    + NotificationDto()
+    + NotificationDto(int, int, String, LocalDateTime)
+    + int getNotificationID()
+    + void setNotificationID(int)
+    + int getEventID()
+    + void setEventID(int)
+    + String getMessage()
+    + void setMessage(String)
+    + LocalDateTime getSendDate()
+    + void setSendDate(LocalDateTime)
+}
+
+class NotificationUserDto {
+    - int notificationUserId
+    - int user
+    - int notification
+    + NotificationUserDto()
+    + NotificationUserDto(int, int, int)
+    + int getNotificationUserId()
+    + void setNotificationUserId(int)
+    + int getUser()
+    + void setUser(int)
+    + int getNotification()
+    + void setNotification(int)
+}
+
+class OrganizerPetitionDto {
+    - int userID
+    - int status
+    + OrganizerPetitionDto()
+    + OrganizerPetitionDto(int, int)
+    + int getUserID()
+    + void setUserID(int)
+    + int getStatus()
+    + void setStatus(int)
+}
+
+class RecoverPasswordDto {
+    - int recoverPasswordID
+    - User userID
+    - String code
+    - boolean codeStatus
+    - LocalDateTime expieres
+    - String lastPasswordChange
+    + RecoverPasswordDto()
+    + RecoverPasswordDto(int, User, String, boolean, LocalDateTime, String)
+    + int getRecoverPasswordID()
+    + void setRecoverPasswordID(int)
+    + User getUserID()
+    + void setUserID(User)
+    + String getCode()
+    + void setCode(String)
+    + boolean isCodeStatus()
+    + void setCodeStatus(boolean)
+    + LocalDateTime getExpieres()
+    + void setExpieres(LocalDateTime)
+    + String getLastPasswordChange()
+    + void setLastPasswordChange(String)
+}
+
+class RegisterRequestDto {
+    - String fullName
+    - String email
+    - String password
+    + RegisterRequestDto()
+    + RegisterRequestDto(String, String, String)
+    + String getFullName()
+    + void setFullName(String)
+    + String getEmail()
+    + void setEmail(String)
+    + String getPassword()
+    + void setPassword(String)
+}
+
+class SeatDto {
+    - int sectionID
+    - int eventLayoutID
+    - int seatNumber
+    - boolean status
+    + SeatDto()
+    + SeatDto(int, int, int, boolean)
+    + int getSectionID()
+    + void setSectionID(int)
+    + int getEventLayoutID()
+    + void setEventLayoutID(int)
+    + int getSeatNumber()
+    + void setSeatNumber(int)
+    + boolean isStatus()
+    + void setStatus(boolean)
+}
+
+class SectionDto {
+    - int sectionID
+    - String sectionName
+    - BigDecimal price
+    + SectionDto()
+    + SectionDto(int, String, BigDecimal)
+    + int getSectionID()
+    + void setSectionID(int)
+    + String getSectionName()
+    + void setSectionName(String)
+    + BigDecimal getPrice()
+    + void setPrice(BigDecimal)
+}
+
+class TicketDto {
+    - int ticketID
+    - int eventId
+    - int userId
+    - String code
+    - int status
+    - List<Integer> seatIDs
+    + TicketDto()
+    + TicketDto(int, int, int, String, int, List<Integer>)
+    + int getTicketID()
+    + void setTicketID(int)
+    + int getEventId()
+    + void setEventId(int)
+    + int getUserId()
+    + void setUserId(int)
+    + String getCode()
+    + void setCode(String)
+    + int getStatus()
+    + void setStatus(int)
+    + List<Integer> getSeatIDs()
+    + void setSeatIDs(List<Integer>)
+}
+
+class UserDto {
+    - String fullName
+    - String telephone
+    - Date birthDate
+    - Integer address
+    - boolean activated
+    + UserDto()
+    + UserDto(String, String, Date, Integer, boolean)
+    + String getFullName()
+    + void setFullName(String)
+    + String getTelephone()
+    + void setTelephone(String)
+    + Date getBirthDate()
+    + void setBirthDate(Date)
+    + Integer getAddress()
+    + void setAddress(Integer)
+    + boolean isActivated()
+    + void setActivated(boolean)
+}
+
+class UserSocial {
+    - int userID
+    + UserSocial()
+    + UserSocial(int)
+    + int getUserID()
+    + void setUserID(int)
+}
+
+' Relationships
+EventDto --> User : userID
+EventDto --> Location : locationID
+EventLayoutDto --> Event : eventID
+RecoverPasswordDto --> User : userID
+
+@enduml

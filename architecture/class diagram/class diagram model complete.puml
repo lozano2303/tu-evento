@@ -1,0 +1,435 @@
+@startuml Complete Class Diagram
+
+class User {
+    - int userID
+    - String fullName
+    - String telephone
+    - boolean status
+    - boolean activated
+    - Role role
+    - Date birthDate
+    - Address address
+    - boolean organicer
+    + User()
+    + User(int, String, String, boolean, boolean, Role, Date, Address, boolean)
+    + int getUserID()
+    + void setUserID(int)
+    + String getFullName()
+    + void setFullName(String)
+    + String getTelephone()
+    + void setTelephone(String)
+    + boolean isStatus()
+    + void setStatus(boolean)
+    + boolean isActivated()
+    + void setActivated(boolean)
+    + Role getRole()
+    + void setRole(Role)
+    + Date getBirthDate()
+    + void setBirthDate(Date)
+    + Address getAddress()
+    + void setAddress(Address)
+    + boolean isOrganicer()
+    + void setOrganicer(boolean)
+}
+
+class Address {
+    - int addressID
+    - City city
+    - String street
+    - String postalCode
+    + Address()
+    + Address(int, City, String, String)
+    + int getAddressID()
+    + void setAddressID(int)
+    + City getCity()
+    + void setCity(City)
+    + String getStreet()
+    + void setStreet(String)
+    + String getPostalCode()
+    + void setPostalCode(String)
+}
+
+class City {
+    - int cityID
+    - Department department
+    - String name
+    + City()
+    + City(int, Department, String)
+    + int getCityID()
+    + void setCityID(int)
+    + Department getDepartment()
+    + void setDepartment(Department)
+    + String getName()
+    + void setName(String)
+}
+
+class Department {
+    - int departmentID
+    - String name
+    + Department()
+    + Department(int, String)
+    + int getDepartmentID()
+    + void setDepartmentID(int)
+    + String getName()
+    + void setName(String)
+}
+
+class Location {
+    - int locationID
+    - Address address
+    - String name
+    + Location()
+    + Location(int, Address, String)
+    + int getLocationID()
+    + void setLocationID(int)
+    + Address getAddress()
+    + void setAddress(Address)
+    + String getName()
+    + void setName(String)
+}
+
+class Event {
+    - int id
+    - User userID
+    - Location locationID
+    - String eventName
+    - String description
+    - LocalDate startDate
+    - LocalDate finishDate
+    - int status
+    + Event()
+    + Event(int, User, Location, String, String, LocalDate, LocalDate, int)
+    + int getId()
+    + void setId(int)
+    + User getUserID()
+    + void setUserID(User)
+    + Location getLocationID()
+    + void setLocationID(Location)
+    + String getEventName()
+    + void setEventName(String)
+    + String getDescription()
+    + void setDescription(String)
+    + LocalDate getStartDate()
+    + void setStartDate(LocalDate)
+    + LocalDate getFinishDate()
+    + void setFinishDate(LocalDate)
+    + int getStatus()
+    + void setStatus(int)
+}
+
+class EventLayout {
+    - int eventLayoutID
+    - Event eventID
+    - JsonNode layoutData
+    - LocalDateTime createdAt
+    + EventLayout()
+    + EventLayout(int, Event, JsonNode, LocalDateTime)
+    + int getId()
+    + void setId(int)
+    + Event getEventID()
+    + void setEventID(Event)
+    + JsonNode getLayoutData()
+    + void setLayoutData(JsonNode)
+    + LocalDateTime getCreatedAt()
+    + void setCreatedAt(LocalDateTime)
+}
+
+class Seat {
+    - int seatID
+    - Section sectionID
+    - EventLayout eventLayoutID
+    - int seatNumber
+    - boolean status
+    + Seat()
+    + Seat(int, Section, EventLayout, int, boolean)
+    + int getSeatID()
+    + void setSeatID(int)
+    + Section getSectionID()
+    + void setSectionID(Section)
+    + EventLayout getEventLayoutID()
+    + void setEventLayoutID(EventLayout)
+    + int getSeatNumber()
+    + void setSeatNumber(int)
+    + boolean isStatus()
+    + void setStatus(boolean)
+}
+
+class Section {
+    - int sectionID
+    - String sectionName
+    - BigDecimal price
+    + Section()
+    + Section(int, String, BigDecimal)
+    + int getSectionID()
+    + void setSectionID(int)
+    + String getSectionName()
+    + void setSectionName(String)
+    + BigDecimal getPrice()
+    + void setPrice(BigDecimal)
+}
+
+class Ticket {
+    - int ticketID
+    - Event eventId
+    - User userId
+    - BigDecimal totalPrice
+    - String code
+    - LocalDateTime ticketDate
+    - int status
+    + Ticket()
+    + Ticket(int, Event, User, BigDecimal, String, LocalDateTime, int)
+    + int getTicketID()
+    + void setTicketID(int)
+    + Event getEventId()
+    + void setEventId(Event)
+    + User getUserId()
+    + void setUserId(User)
+    + BigDecimal getTotalPrice()
+    + void setTotalPrice(BigDecimal)
+    + String getCode()
+    + void setCode(String)
+    + LocalDateTime getTicketDate()
+    + void setTicketDate(LocalDateTime)
+    + int getStatus()
+    + void setStatus(int)
+}
+
+class EventRating {
+    - int ratingID
+    - User userId
+    - Event eventId
+    - int rating
+    - String comment
+    - LocalDateTime createdAt
+    + EventRating()
+    + EventRating(int, User, Event, int, String, LocalDateTime)
+    + int getRatingID()
+    + void setRatingID(int)
+    + User getUserId()
+    + void setUserId(User)
+    + Event getEventId()
+    + void setEventId(Event)
+    + int getRating()
+    + void setRating(int)
+    + String getComment()
+    + void setComment(String)
+    + LocalDateTime getCreatedAt()
+    + void setCreatedAt(LocalDateTime)
+}
+
+class Notification {
+    - int notificationID
+    - Event event
+    - String message
+    - LocalDateTime sendDate
+    + Notification()
+    + Notification(int, Event, String, LocalDateTime)
+    + int getNotificationID()
+    + void setNotificationID(int)
+    + Event getEventID()
+    + void setEventID(Event)
+    + String getMessage()
+    + void setMessage(String)
+    + LocalDateTime getSendDate()
+    + void setSendDate(LocalDateTime)
+}
+
+class NotificationUser {
+    - int notificationUserId
+    - User user
+    - Notification notification
+    + NotificationUser()
+    + NotificationUser(int, User, Notification)
+    + int getNotificationUserId()
+    + void setNotificationUserId(int)
+    + User getUser()
+    + void setUser(User)
+    + Notification getNotification()
+    + void setNotification(Notification)
+}
+
+class Login {
+    - int loginID
+    - User userID
+    - String username
+    - String password
+    - String email
+    - LocalDateTime loginDate
+    + Login()
+    + Collection<? extends GrantedAuthority> getAuthorities()
+    + String getPassword()
+    + String getUsername()
+    + boolean isAccountNonExpired()
+    + boolean isAccountNonLocked()
+    + boolean isCredentialsNonExpired()
+    + boolean isEnabled()
+    + int getLoginID()
+    + void setLoginID(int)
+    + User getUserID()
+    + void setUserID(User)
+    + void setUsername(String)
+    + void setPassword(String)
+    + String getEmail()
+    + void setEmail(String)
+    + LocalDateTime getLoginDate()
+    + void setLoginDate(LocalDateTime)
+}
+
+class AccountActivation {
+    - int accountActivationID
+    - User userID
+    - String activationCode
+    - Boolean activation
+    - LocalDateTime expirationTime
+    + AccountActivation()
+    + AccountActivation(int, User, String, Boolean, LocalDateTime)
+    + boolean isExpired()
+    + int getAccountActivationID()
+    + void setAccountActivationID(int)
+    + User getUserID()
+    + void setUserID(User)
+    + String getActivationCode()
+    + void setActivationCode(String)
+    + Boolean getActivation()
+    + void setActivation(Boolean)
+    + LocalDateTime getExpirationTime()
+    + void setExpirationTime(LocalDateTime)
+}
+
+class OrganizerPetition {
+    - int organizerPetitionID
+    - User userID
+    - byte[] document
+    - LocalDateTime applicationDate
+    - int status
+    + OrganizerPetition()
+    + OrganizerPetition(int, User, byte[], LocalDateTime, int)
+    + int getOrganizerPetitionID()
+    + void setOrganizerPetitionID(int)
+    + User getUserID()
+    + void setUserID(User)
+    + byte[] getDocument()
+    + void setDocument(byte[])
+    + LocalDateTime getApplicationDate()
+    + void setApplicationDate(LocalDateTime)
+    + int getStatus()
+    + void setStatus(int)
+}
+
+class RecoverPassword {
+    - int recoverPasswordID
+    - User userID
+    - String code
+    - boolean codeStatus
+    - LocalDateTime expieres
+    - String lastPasswordChange
+    + RecoverPassword()
+    + RecoverPassword(int, User, String, boolean, LocalDateTime, String)
+    + int getRecoverPasswordID()
+    + void setRecoverPasswordID(int)
+    + User getUserID()
+    + void setUserID(User)
+    + String getCode()
+    + void setCode(String)
+    + boolean isCodeStatus()
+    + void setCodeStatus(boolean)
+    + LocalDateTime getExpieres()
+    + void setExpieres(LocalDateTime)
+    + String getLastPasswordChange()
+    + void setLastPasswordChange(String)
+}
+
+class Category {
+    - Integer categoryID
+    - String name
+    - String description
+    - Category parentCategory
+    - List<Category> subCategories
+    + Category()
+    + Category(Integer, String, String, Category)
+    + Integer getCategoryID()
+    + void setCategoryID(Integer)
+    + String getName()
+    + void setName(String)
+    + String getDescription()
+    + void setDescription(String)
+    + Category getParentCategory()
+    + void setParentCategory(Category)
+    + List<Category> getSubCategories()
+    + void setSubCategories(List<Category>)
+}
+
+class CategoryEvent {
+    - Category category
+    - Event event
+    + CategoryEvent()
+    + CategoryEvent(Category, Event)
+    + Category getCategory()
+    + void setCategory(Category)
+    + Event getEvent()
+    + void setEvent(Event)
+}
+
+class SeatTicket {
+    - Seat seat
+    - Ticket ticket
+    + SeatTicket()
+    + SeatTicket(Seat, Ticket)
+    + Seat getSeat()
+    + void setSeat(Seat)
+    + Ticket getTicket()
+    + void setTicket(Ticket)
+}
+
+enum Role {
+    ADMIN
+    USER
+}
+
+class CategoryEventId {
+    - int category
+    - int event
+    + CategoryEventId()
+    + CategoryEventId(int, int)
+    + boolean equals(Object)
+    + int hashCode()
+}
+
+class SeatTicketId {
+    - int seat
+    - int ticket
+    + SeatTicketId()
+    + SeatTicketId(int, int)
+    + boolean equals(Object)
+    + int hashCode()
+}
+
+' Relationships
+User --> Address : address
+Address --> City : city
+City --> Department : department
+Location --> Address : address
+Event --> User : userID
+Event --> Location : locationID
+EventLayout --> Event : eventID
+Seat --> Section : sectionID
+Seat --> EventLayout : eventLayoutID
+Ticket --> Event : eventId
+Ticket --> User : userId
+EventRating --> User : userId
+EventRating --> Event : eventId
+Notification --> Event : event
+NotificationUser --> User : user
+NotificationUser --> Notification : notification
+Login --> User : userID
+AccountActivation --> User : userID
+OrganizerPetition --> User : userID
+RecoverPassword --> User : userID
+Category --> Category : parentCategory
+Category --> "*" Category : subCategories
+CategoryEvent --> Category : category
+CategoryEvent --> Event : event
+SeatTicket --> Seat : seat
+SeatTicket --> Ticket : ticket
+
+@enduml

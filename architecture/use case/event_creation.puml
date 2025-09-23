@@ -1,0 +1,53 @@
+@startuml Event Creation Use Case Diagram
+
+left to right direction
+
+actor "Organizer User" as Organizer
+actor "Administrator" as Admin
+
+rectangle "TuEvento" {
+    usecase "Create Event" as UC1
+    usecase "Update Event" as UC2
+    usecase "Cancel Event" as UC3
+    usecase "View Events" as UC4
+    usecase "Search Events" as UC5
+    usecase "Assign Categories to Event" as UC6
+    usecase "Create Event Layout" as UC7
+    usecase "Update Event Layout" as UC8
+    usecase "Delete Event Layout" as UC9
+    usecase "Create Sections" as UC10
+    usecase "Manage Seats" as UC11
+}
+
+Organizer --> UC1
+Organizer --> UC2
+Organizer --> UC3
+Organizer --> UC4
+Organizer --> UC5
+Organizer --> UC6
+Organizer --> UC7
+Organizer --> UC8
+Organizer --> UC9
+Organizer --> UC10
+Organizer --> UC11
+
+Admin --> UC2 : <<extend>>
+Admin --> UC3 : <<extend>>
+
+UC1 ..> UC6 : <<include>>
+UC1 ..> UC7 : <<include>>
+UC1 ..> UC10 : <<include>>
+UC1 ..> UC11 : <<include>>
+
+UC2 ..> UC6 : <<include>>
+UC2 ..> UC7 : <<include>>
+
+note right of UC1
+    Requires location and categories
+end note
+
+note right of UC7
+    Includes JSON layout data
+end note
+
+@enduml

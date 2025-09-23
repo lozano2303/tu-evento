@@ -1,0 +1,65 @@
+@startuml Address and Location Management Use Case Diagram
+
+left to right direction
+
+actor "Administrator" as Admin
+actor "User" as User
+
+rectangle "TuEvento" {
+    usecase "Create Address" as UC1
+    usecase "Update Address" as UC2
+    usecase "Delete Address" as UC3
+    usecase "View All Addresses" as UC4
+    usecase "View Address by ID" as UC5
+    usecase "Create Location" as UC6
+    usecase "Update Location" as UC7
+    usecase "Delete Location" as UC8
+    usecase "View All Locations" as UC9
+    usecase "View Location by ID" as UC10
+    usecase "Create City" as UC11
+    usecase "Update City" as UC12
+    usecase "Delete City" as UC13
+    usecase "View All Cities" as UC14
+    usecase "View City by ID" as UC15
+    usecase "Create Department" as UC16
+    usecase "Update Department" as UC17
+    usecase "Delete Department" as UC18
+    usecase "View All Departments" as UC19
+    usecase "View Department by ID" as UC20
+}
+
+User --> UC19
+User --> UC14
+User --> UC9
+User --> UC4
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+Admin --> UC10
+Admin --> UC11
+Admin --> UC12
+Admin --> UC13
+Admin --> UC14
+Admin --> UC15
+Admin --> UC16
+Admin --> UC17
+Admin --> UC18
+Admin --> UC19
+Admin --> UC20
+
+note right of UC1
+    Requires existing city
+end note
+
+note right of UC6
+    Requires existing address
+end note
+
+@enduml

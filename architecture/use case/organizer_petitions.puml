@@ -1,0 +1,39 @@
+@startuml Organizer Petitions Use Case Diagram
+
+left to right direction
+
+actor "Applicant User" as User
+actor "Administrator" as Admin
+actor "Email System" as EmailSystem
+
+rectangle "TuEvento" {
+    usecase "Submit Organizer Petition" as UC1
+    usecase "Upload Document" as UC2
+    usecase "View My Petitions" as UC3
+    usecase "View All Petitions" as UC4
+    usecase "Update Petition Status" as UC5
+    usecase "Download Document" as UC6
+    usecase "Notify User" as UC7
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+
+UC1 ..> UC2 : <<include>>
+UC5 ..> UC7 : <<include>>
+UC7 --> EmailSystem : <<communicate>>
+
+note right of UC1
+    Requires document (PDF, etc.)
+end note
+
+note right of UC5
+    Statuses: pending, approved, rejected
+end note
+
+@enduml

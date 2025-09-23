@@ -1,0 +1,31 @@
+@startuml Event Ratings Use Case Diagram
+
+left to right direction
+
+actor "Buyer User" as Buyer
+
+rectangle "TuEvento" {
+    usecase "Rate Event" as UC1
+    usecase "Update Rating" as UC2
+    usecase "View Rating by Comment" as UC3
+    usecase "Delete Rating" as UC4
+    usecase "View Ratings by Event" as UC5
+    usecase "View Ratings by User" as UC6
+}
+
+Buyer --> UC1
+Buyer --> UC2
+Buyer --> UC3
+Buyer --> UC4
+Buyer --> UC5
+Buyer --> UC6
+
+note right of UC1
+    Includes rating (1-5) and comment
+end note
+
+note right of UC2
+    Only the user who rated can update
+end note
+
+@enduml

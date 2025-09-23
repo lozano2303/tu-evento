@@ -1,0 +1,72 @@
+@startuml Simple DTO Class Diagram
+
+class AccountActivationDto {
+}
+
+class AddressDto {
+}
+
+class CategoryDto {
+}
+
+class CategoryEventDto {
+}
+
+class CityDto {
+}
+
+class DepartmentDto {
+}
+
+class EventDto {
+}
+
+class EventLayoutDto {
+}
+
+class EventRatingDto {
+}
+
+class LocationDto {
+}
+
+class LoginDto {
+}
+
+class NotificationDto {
+}
+
+class NotificationUserDto {
+}
+
+class OrganizerPetitionDto {
+}
+
+class RecoverPasswordDto {
+}
+
+class RegisterRequestDto {
+}
+
+class SeatDto {
+}
+
+class SectionDto {
+}
+
+class TicketDto {
+}
+
+class UserDto {
+}
+
+class UserSocial {
+}
+
+' Relationships
+EventDto --> User : userID
+EventDto --> Location : locationID
+EventLayoutDto --> Event : eventID
+RecoverPasswordDto --> User : userID
+
+@enduml

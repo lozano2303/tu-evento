@@ -1,0 +1,10 @@
+@startuml Complete JWT Class Diagram
+
+class jwtAuthenticationFilter {
+    - jwtService jwtService
+    - LoginRepository loginRepository
+    - UserDetailsService userDetailsService
+    + void doFilterInternal(HttpServletRequest, HttpServletResponse, FilterChain)
+}
+
+@enduml

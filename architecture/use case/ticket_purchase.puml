@@ -1,0 +1,44 @@
+@startuml Ticket Purchase Use Case Diagram
+
+left to right direction
+
+actor "Buyer User" as Buyer
+actor "Payment System" as PaymentSystem
+
+rectangle "TuEvento" {
+    usecase "View Available Events" as UC1
+    usecase "Select Event" as UC2
+    usecase "Select Seats" as UC3
+    usecase "Purchase Tickets" as UC4
+    usecase "Cancel Ticket" as UC5
+    usecase "View My Tickets" as UC6
+    usecase "Download Ticket" as UC7
+    usecase "Validate Ticket" as UC8
+}
+
+Buyer --> UC1
+Buyer --> UC2
+Buyer --> UC3
+Buyer --> UC4
+Buyer --> UC5
+Buyer --> UC6
+Buyer --> UC7
+Buyer --> UC8
+
+UC1 ..> UC2 : <<include>>
+UC2 ..> UC3 : <<include>>
+UC3 ..> UC4 : <<include>>
+
+UC4 --> PaymentSystem : <<communicate>>
+
+UC5 ..> UC6 : <<include>>
+
+note right of UC4
+    Creates ticket with multiple seats
+end note
+
+note right of UC8
+    Verifies unique ticket code
+end note
+
+@enduml
