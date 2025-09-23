@@ -1,12 +1,14 @@
 package TuEvento.Backend.dto.requests;
 
-import java.time.LocalDateTime;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class TokenInfo {
-    private String email;
-    private LocalDateTime expiry;
+    private int idRecoverPassword;
+    private String token;
 }
