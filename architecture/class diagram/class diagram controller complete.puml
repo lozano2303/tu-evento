@@ -1,0 +1,170 @@
+@startuml Complete Controller Class Diagram
+
+class AccountActivationController {
+    - AccountActivationService activationService
+    + String createActivationCode(AccountActivationDto)
+    + String resendActivationCode(AccountActivationDto)
+    + ResponseDto<String> verifyActivationCode(AccountActivationDto)
+}
+
+class AddressController {
+    - AddressService addressService
+    + ResponseEntity<ResponseDto<AddressDto>> insertAddress(AddressDto)
+    + ResponseEntity<ResponseDto<String>> updateAddress(int, AddressDto)
+    + ResponseEntity<ResponseDto<String>> deleteAddress(int)
+    + ResponseEntity<ResponseDto<List<AddressDto>>> getAllAddresses()
+    + ResponseEntity<ResponseDto<AddressDto>> getAddressById(int)
+}
+
+class CategoryController {
+    - CategoryService categoryService
+    + ResponseEntity<ResponseDto<CategoryDto>> insertCategory(CategoryDto)
+    + ResponseEntity<ResponseDto<String>> updateCategory(int, CategoryDto)
+    + ResponseEntity<ResponseDto<String>> deleteCategory(int)
+    + ResponseEntity<ResponseDto<List<CategoryDto>>> getAllCategories()
+    + ResponseEntity<ResponseDto<CategoryDto>> getCategoryById(int)
+    + ResponseEntity<ResponseDto<List<CategoryDto>>> getRootCategories()
+    + ResponseEntity<ResponseDto<List<CategoryDto>>> getSubCategories(int)
+    + ResponseEntity<ResponseDto<List<CategoryDto>>> searchCategoriesByName(String)
+}
+
+class CategoryEventController {
+    - CategoryEventService categoryEventService
+    + ResponseEntity<ResponseDto<CategoryEventDto>> assignCategoryToEvent(CategoryEventDto)
+    + ResponseEntity<ResponseDto<String>> removeCategoryFromEvent(int, int)
+    + ResponseEntity<ResponseDto<List<CategoryEventDto>>> getCategoriesByEvent(int)
+    + ResponseEntity<ResponseDto<List<CategoryEventDto>>> getEventsByCategory(int)
+    + ResponseEntity<ResponseDto<String>> removeAllCategoriesFromEvent(int)
+    + ResponseEntity<ResponseDto<String>> removeAllEventsFromCategory(int)
+}
+
+class CityController {
+    - CityService cityService
+    + ResponseEntity<ResponseDto<CityDto>> insertCity(CityDto)
+    + ResponseEntity<ResponseDto<String>> updateCity(int, CityDto)
+    + ResponseEntity<ResponseDto<String>> deleteCity(int)
+    + ResponseEntity<ResponseDto<List<CityDto>>> getAllCities()
+    + ResponseEntity<ResponseDto<CityDto>> getCityById(int)
+}
+
+class DepartmentController {
+    - DepartmentService departmentService
+    + ResponseEntity<ResponseDto<DepartmentDto>> insertDepartment(DepartmentDto)
+    + ResponseEntity<ResponseDto<String>> updateDepartment(int, DepartmentDto)
+    + ResponseEntity<ResponseDto<String>> deleteDepartment(int)
+    + ResponseEntity<ResponseDto<List<DepartmentDto>>> getAllDepartments()
+    + ResponseEntity<ResponseDto<DepartmentDto>> getDepartmentById(int)
+}
+
+class EventController {
+    - EventService eventService
+    + ResponseDto<EventDto> Event(EventDto)
+    + ResponseDto<EventDto> updateEvent(ResponseEvent, EventDto)
+    + ResponseDto<EventDto> deleteEvent(EventDto)
+    + ResponseDto<EventDto> getEvent(int)
+    + ResponseDto<List<EventDto>> getAllEvent()
+}
+
+class EventLayoutController {
+    - EventLayoutService eventLayoutService
+    + ResponseDto<EventLayoutDto> Event(EventLayoutDto)
+    + ResponseDto<EventLayoutDto> updateEvent(String, EventLayoutDto)
+    + ResponseDto<EventLayoutDto> deleteEvent(EventLayoutDto)
+    + ResponseDto<EventLayoutDto> getEvent(String, EventLayoutDto)
+}
+
+class EventRatingController {
+    - EventRatingService eventRatingService
+    + ResponseDto<EventRatingDto> insertEventRating(int, int, EventRatingDto)
+    + ResponseDto<EventRatingDto> updateEventRating(EventRatingDto)
+    + ResponseDto<EventRatingDto> getEventRating(String)
+    + ResponseDto<EventRatingDto> deleteEventRating(int)
+    + ResponseDto<EventRatingDto> getEventRatingByEvent(int)
+    + ResponseDto<EventRatingDto> getEventRatingByUser(int)
+}
+
+class LocationController {
+    - LocationService locationService
+    + ResponseEntity<ResponseDto<LocationDto>> insertLocation(LocationDto)
+    + ResponseEntity<ResponseDto<String>> updateLocation(int, LocationDto)
+    + ResponseEntity<ResponseDto<String>> deleteLocation(int)
+    + ResponseEntity<ResponseDto<List<LocationDto>>> getAllLocations()
+    + ResponseEntity<ResponseDto<LocationDto>> getLocationById(int)
+}
+
+class LoginController {
+    - LoginService loginService
+    - LoginServiceImpl loginServiceImpl
+    + ResponseDto<ResponseLogin> login(LoginDto)
+    + ResponseEntity<ResponseDto> changePassword(ChangePasswordDto)
+    + ResponseEntity<Object> forgotPassword(ForgotPasswordDto)
+    + ResponseEntity<ResponseDto<String>> validateResetToken(String)
+    + ResponseEntity<ResponseDto<String>> resetPasswordWithToken(ResetPasswordDTO)
+}
+
+class NotificationController {
+    - NotificationService notificationService
+    + ResponseDto<NotificationDto> createNotification(NotificationDto)
+    + ResponseDto<NotificationDto> updateNotification(NotificationDto)
+    + ResponseDto<NotificationDto> deleteNotification(int)
+    + ResponseDto<NotificationDto> getNotification(int)
+    + ResponseDto<List<NotificationDto>> getNotificationsByEvent(int)
+}
+
+class OrganizerPetitionController {
+    - OrganizerPetitionService petitionService
+    - OrganizerPetitionRepository petitionRepository
+    + ResponseEntity<ResponseDto<String>> submitPetition(int, MultipartFile)
+    + ResponseEntity<ResponseDto<List<OrganizerPetitionDto>>> getAllPetitions()
+    + ResponseEntity<ResponseDto<OrganizerPetitionDto>> getPetitionByUserID(int)
+    + ResponseEntity<ResponseDto<String>> updatePetitionStatus(int, int)
+    + ResponseEntity<byte[]> downloadDocument(int)
+}
+
+class RegisterController {
+    - RegisterService registerService
+    + ResponseDto<String> register(RegisterRequestDto)
+}
+
+class SeatController {
+    - SeatService seatService
+    + ResponseEntity<ResponseDto<SeatDto>> insertSeat(SeatDto)
+    + ResponseEntity<ResponseDto<String>> updateSeat(int, SeatDto)
+    + ResponseEntity<ResponseDto<String>> updateSeatStatus(int, boolean)
+    + ResponseEntity<ResponseDto<String>> deleteSeat(int)
+    + ResponseEntity<ResponseDto<List<SeatDto>>> getAllSeats()
+    + ResponseEntity<ResponseDto<SeatDto>> getSeatById(int)
+}
+
+class SectionController {
+    - SectionService sectionService
+    + ResponseDto<SectionDto> insertSection(SectionDto)
+    + List<SectionDto> getAllSections()
+    + ResponseDto<SectionDto> updateSection(SectionDto)
+    + ResponseDto<SectionDto> deleteSection(int)
+    + ResponseDto<SectionDto> getSectionById(int)
+}
+
+class TicketController {
+    - TicketService ticketService
+    + ResponseEntity<ResponseDto<String>> createTicketWithSeats(TicketDto)
+    + ResponseEntity<ResponseDto<String>> cancelTicket(int)
+    + ResponseEntity<ResponseDto<TicketDto>> getTicketById(int)
+    + ResponseEntity<ResponseDto<List<TicketDto>>> getTicketByEvent(int)
+    + ResponseEntity<ResponseDto<List<TicketDto>>> getTicketByUser(int)
+}
+
+class UserController {
+    - UserService userService
+    + ResponseDto<String> updateTelephone(int, String)
+    + ResponseDto<String> updateBirthDate(int, Date)
+    + ResponseDto<String> updateAddress(int, Integer)
+    + ResponseDto<String> deleteUserAccount(int)
+    + ResponseDto<String> deactivateUser(int)
+    + ResponseDto<String> reactivateUser(int)
+    + ResponseDto<UserDto> getUserById(int)
+    + ResponseDto<List<UserDto>> getUsersByName(String)
+    + ResponseDto<List<UserDto>> getAllUsers()
+}
+
+@enduml

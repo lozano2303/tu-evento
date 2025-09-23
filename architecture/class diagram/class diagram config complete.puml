@@ -1,0 +1,43 @@
+@startuml Complete Config Class Diagram
+
+class ApiExceptionHandler {
+    + ResponseEntity<Object> handleException(Exception)
+}
+
+class applicationConfig {
+    - LoginRepository user
+    + AuthenticationManager authenticationManager(AuthenticationConfiguration)
+    + AuthenticationProvider getAuthenticationProvider()
+    + PasswordEncoder passwordEncoder()
+    + UserDetailsService userDetailsService()
+}
+
+class CorsConfig {
+    + CorsFilter corsFilter()
+}
+
+class EmailConfig {
+    - String host
+    - String username
+    - String password
+    - String port
+    + JavaMailSender javaMailSender()
+}
+
+class OAuth2LoginSuccessHandler {
+    - LoginServiceImpl userService
+    + void onAuthenticationSuccess(HttpServletRequest, HttpServletResponse, Authentication)
+}
+
+class SecurityConfig {
+    - AuthenticationProvider authProvider
+    - jwtAuthenticationFilter jwtAuthenticationFilter
+    - customOauht2UserService customOAuth2UserService
+    + SecurityFilterChain securityFilterChain(HttpSecurity)
+}
+
+class SwaggerConfig {
+    + OpenAPI customOpenAPI()
+}
+
+@enduml

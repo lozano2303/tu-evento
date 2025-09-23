@@ -1,0 +1,95 @@
+@startuml Complete Repository Class Diagram
+
+interface AccountActivationRepository {
+    + Optional<AccountActivation> findByUserID_UserID(int)
+}
+
+interface AddressRepository {
+}
+
+interface CategoryEventRepository {
+    + List<CategoryEvent> findByEvent_Id(int)
+    + List<CategoryEvent> findByCategory_CategoryID(int)
+    + boolean existsByCategory_CategoryIDAndEvent_Id(int, int)
+    + void deleteByEvent_Id(int)
+    + void deleteByCategory_CategoryID(int)
+}
+
+interface CategoryRepository {
+    + List<Category> findByParentCategoryIsNull()
+    + List<Category> findByParentCategory_CategoryID(Integer)
+    + List<Category> findByNameContainingIgnoreCase(String)
+}
+
+interface CityRepository {
+}
+
+interface DepartmentRepository {
+}
+
+interface EventLayoutRepository {
+}
+
+interface EventRatingRepository {
+    + Optional<EventRating> findByComment(String)
+    + Optional<EventRating> findByEventId(Event)
+    + Optional<EventRating> findByUserId(User)
+}
+
+interface EventRepository {
+    + Optional<Event> findByEventNameAndStatusNot(String, int)
+    + Optional<Event> findByStartDateAndStatusNot(LocalDate, int)
+    + Optional<Event> findByFinishDateAndStatusNot(LocalDate, int)
+    + List<Event> findAllByStatusNot(int)
+    + Optional<Event> findByStatus(int)
+    + Optional<Event> findByEventNameAndStartDateAndFinishDateAndStatus(String, LocalDate, LocalDate, int)
+}
+
+interface LocationRepository {
+}
+
+interface LoginRepository {
+    + Optional<Login> findByEmail(String)
+    + Optional<Login> findByUsername(String)
+    + Optional<Login> findByUserID(User)
+}
+
+interface NotificationRepository {
+    + List<Notification> findByEvent(Event)
+}
+
+interface NotificationUserRepository {
+    + void findByUser(User)
+}
+
+interface OrganizerPetitionRepository {
+    + boolean existsByUserID_UserID(int)
+}
+
+interface RecoverPasswordRepository {
+    + Optional<RecoverPassword> findByCode(String)
+}
+
+interface SeatRepository {
+}
+
+interface SeatTicketRepository {
+    + List<SeatTicket> findByTicket(Ticket)
+    + List<SeatTicket> findBySeat(Seat)
+}
+
+interface SectionRepository {
+}
+
+interface TicketRepository {
+    + List<Ticket> findByEventId(Event)
+    + List<Ticket> findByUserId(User)
+    + List<Ticket> findByStatus(int)
+}
+
+interface UserRepository {
+    + List<User> findByFullNameContainingIgnoreCase(String)
+    + List<User> findByFullName(String)
+}
+
+@enduml

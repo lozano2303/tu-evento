@@ -1,0 +1,66 @@
+@startuml Simple Service Class Diagram
+
+class AccountActivationService {
+}
+
+class AddressService {
+}
+
+class CategoryEventService {
+}
+
+class CategoryService {
+}
+
+class CityService {
+}
+
+class DepartmentService {
+}
+
+class EventLayoutService {
+}
+
+class EventRatingService {
+}
+
+class EventService {
+}
+
+class LocationService {
+}
+
+class LoginService {
+}
+
+class NotificationService {
+}
+
+class NotificationUserService {
+}
+
+class OrganizerPetitionService {
+}
+
+class RecoverPasswordService {
+}
+
+class RegisterService {
+}
+
+class SeatService {
+}
+
+class SectionService {
+}
+
+class TicketService {
+}
+
+class UserDetailsService {
+}
+
+class UserService {
+}
+
+@enduml

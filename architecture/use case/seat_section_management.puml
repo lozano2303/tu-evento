@@ -1,0 +1,47 @@
+@startuml Seat and Section Management Use Case Diagram
+
+left to right direction
+
+actor "Organizer User" as Organizer
+actor "Administrator" as Admin
+
+rectangle "TuEvento" {
+    usecase "Create Section" as UC1
+    usecase "View All Sections" as UC2
+    usecase "Update Section" as UC3
+    usecase "Delete Section" as UC4
+    usecase "View Section by ID" as UC5
+    usecase "Create Seat" as UC6
+    usecase "Update Seat" as UC7
+    usecase "Update Seat Status" as UC8
+    usecase "Delete Seat" as UC9
+    usecase "View All Seats" as UC10
+    usecase "View Seat by ID" as UC11
+}
+
+Organizer --> UC1
+Organizer --> UC2
+Organizer --> UC3
+Organizer --> UC6
+Organizer --> UC7
+Organizer --> UC8
+
+Admin --> UC4
+Admin --> UC5
+Admin --> UC9
+Admin --> UC10
+Admin --> UC11
+
+note right of UC1
+    Define price per section
+end note
+
+note right of UC6
+    Linked to section and event layout
+end note
+
+note right of UC8
+    Changes between available/occupied
+end note
+
+@enduml

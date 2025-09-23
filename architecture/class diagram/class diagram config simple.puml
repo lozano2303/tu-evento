@@ -1,0 +1,24 @@
+@startuml Simple Config Class Diagram
+
+class ApiExceptionHandler {
+}
+
+class applicationConfig {
+}
+
+class CorsConfig {
+}
+
+class EmailConfig {
+}
+
+class OAuth2LoginSuccessHandler {
+}
+
+class SecurityConfig {
+}
+
+class SwaggerConfig {
+}
+
+@enduml

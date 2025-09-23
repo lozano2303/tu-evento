@@ -1,0 +1,57 @@
+@startuml Simple Controller Class Diagram
+
+class AccountActivationController {
+}
+
+class AddressController {
+}
+
+class CategoryController {
+}
+
+class CategoryEventController {
+}
+
+class CityController {
+}
+
+class DepartmentController {
+}
+
+class EventController {
+}
+
+class EventLayoutController {
+}
+
+class EventRatingController {
+}
+
+class LocationController {
+}
+
+class LoginController {
+}
+
+class NotificationController {
+}
+
+class OrganizerPetitionController {
+}
+
+class RegisterController {
+}
+
+class SeatController {
+}
+
+class SectionController {
+}
+
+class TicketController {
+}
+
+class UserController {
+}
+
+@enduml

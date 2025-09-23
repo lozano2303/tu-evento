@@ -1,0 +1,39 @@
+@startuml User Management Use Case Diagram
+
+left to right direction
+
+actor "User" as User
+actor "Administrator" as Admin
+
+rectangle "TuEvento" {
+    usecase "Update Phone" as UC1
+    usecase "Update Birth Date" as UC2
+    usecase "Update Address" as UC3
+    usecase "Delete User Account" as UC4
+    usecase "Deactivate User" as UC5
+    usecase "Reactivate User" as UC6
+    usecase "View User by ID" as UC7
+    usecase "Search Users by Name" as UC8
+    usecase "View All Users" as UC9
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+
+note right of UC4
+    Soft delete, marks as inactive
+end note
+
+note right of UC5
+    Temporarily deactivates the account
+end note
+
+@enduml

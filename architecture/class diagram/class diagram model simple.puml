@@ -1,0 +1,102 @@
+@startuml Simple Class Diagram
+
+class User {
+}
+
+class Address {
+}
+
+class City {
+}
+
+class Department {
+}
+
+class Location {
+}
+
+class Event {
+}
+
+class EventLayout {
+}
+
+class Seat {
+}
+
+class Section {
+}
+
+class Ticket {
+}
+
+class EventRating {
+}
+
+class Notification {
+}
+
+class NotificationUser {
+}
+
+class Login {
+}
+
+class AccountActivation {
+}
+
+class OrganizerPetition {
+}
+
+class RecoverPassword {
+}
+
+class Category {
+}
+
+class CategoryEvent {
+}
+
+class SeatTicket {
+}
+
+enum Role {
+    ADMIN
+    USER
+}
+
+class CategoryEventId {
+}
+
+class SeatTicketId {
+}
+
+' Relationships
+User --> Address : address
+Address --> City : city
+City --> Department : department
+Location --> Address : address
+Event --> User : userID
+Event --> Location : locationID
+EventLayout --> Event : eventID
+Seat --> Section : sectionID
+Seat --> EventLayout : eventLayoutID
+Ticket --> Event : eventId
+Ticket --> User : userId
+EventRating --> User : userId
+EventRating --> Event : eventId
+Notification --> Event : event
+NotificationUser --> User : user
+NotificationUser --> Notification : notification
+Login --> User : userID
+AccountActivation --> User : userID
+OrganizerPetition --> User : userID
+RecoverPassword --> User : userID
+Category --> Category : parentCategory
+Category --> "*" Category : subCategories
+CategoryEvent --> Category : category
+CategoryEvent --> Event : event
+SeatTicket --> Seat : seat
+SeatTicket --> Ticket : ticket
+
+@enduml
