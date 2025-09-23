@@ -58,11 +58,14 @@ export default function LoginScreen() {
 
         {/* Inputs */}
         <Input
-          label="Ingresa tu Correo Electronico"
-          placeholder="Correo o nombre"
+          label="Correo electrónico o nombre de usuario"
+          placeholder="Ingresa tu correo"
           value={email}
           onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
+
         <Input
           label="Ingresa tu contraseña"
           placeholder="Contraseña"
@@ -75,8 +78,8 @@ export default function LoginScreen() {
         <Button label="Iniciar" onPress={handleLogin} />
 
         {/* Texto inferior alineado a la izquierda */}
-        <View className="mt-6">
-          <Text className="text-white text-left mb-2">
+        <View className="mt-4">
+          <Text className="text-white text-left mb-1">
             ¿No tienes una cuenta?
           </Text>
           {/* Navegar a RegisterScreen */}
@@ -87,7 +90,7 @@ export default function LoginScreen() {
 
         {/*Recuperar contraseña alineado a la izquierda */}
         <View className="mt-4">
-          <Text className="text-white text-left mb-2">
+          <Text className="text-white text-left mb-1">
             ¿Olvidaste tu contraseña?
           </Text>
           <TouchableOpacity onPress={handleGoToForgotPassword}>
@@ -97,14 +100,15 @@ export default function LoginScreen() {
 
         {/* Línea divisoria */}
         <Text className="text-white text-sm text-center my-6">
-          __________________________O____________________________
+          ___________________________________________________________
         </Text>
 
         {/* Texto "Inicia sesión con:" */}
-        <Text className="text-gray-300 text-lg text-left mb-3 font-semibold">
+         {/* Texto "Inicia sesión con:" centrado */}
+        <Text className="text-gray-300 text-lg text-center mb-4 font-semibold">
           Inicia sesión con:
         </Text>
-
+        
         {/* Botones de redes sociales con solo iconos */}
         <View className="flex-row justify-center items-center mb-4" style={{ gap: 20 }}>
           <RedSocialButton 
@@ -122,7 +126,7 @@ export default function LoginScreen() {
         </View>
 
         {/* Terminos y condiciones */}
-        <Text className="text-white text-base text-center mt-4 px-4">
+        <Text className="text-white text-base text-center mt-3 px-3">
           Al iniciar sesión, aceptas nuestros{" "}
           <Text style={{ color: '#B06CFF' }} className="font-semibold">Términos y condiciones</Text>
         </Text>
