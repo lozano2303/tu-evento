@@ -1,33 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search, ChevronDown } from 'lucide-react';
-
-const popularEvents = [
-  {
-    id: 1,
-    title: "Concierto de ópera",
-    image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=400&h=250&fit=crop",
-    city: "Bogotá",
-    day: "Viernes",
-    category: "Música"
-  },
-  {
-    id: 2,
-    title: "Concierto de música",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=250&fit=crop",
-    city: "Medellín",
-    day: "Sábado",
-    category: "Música"
-  },
-  {
-    id: 3,
-    title: "Linkin Park",
-    image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=250&fit=crop",
-    city: "Cali",
-    day: "Domingo",
-    category: "Música"
-  }
-];
+import { getAllEvents } from '../../services/EventService.js';
 
 const TuEvento = () => {
   const navigate = useNavigate();
@@ -41,7 +15,10 @@ const TuEvento = () => {
   const [showDayDropdown, setShowDayDropdown] = useState(false);
   const [showOrderDropdown, setShowOrderDropdown] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const [filteredEvents, setFilteredEvents] = useState(popularEvents);
+  const [events, setEvents] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Refs para los dropdowns
   const cityRef = useRef(null);
@@ -72,12 +49,36 @@ const TuEvento = () => {
     };
   }, []);
 
+  // Cargar eventos del backend
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        setLoading(true);
+        const result = await getAllEvents();
+        if (result.success) {
+          setEvents(result.data);
+          setFilteredEvents(result.data);
+        } else {
+          setError(result.message || 'Error al cargar eventos');
+        }
+      } catch (err) {
+        setError('Error de conexión al cargar eventos');
+        console.error('Error loading events:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvents();
+  }, []);
+
   const handleFilter = () => {
-    let filtered = popularEvents.filter(event => {
-      if (selectedCity !== 'Bogotá' && event.city !== selectedCity) return false;
-      if (selectedDay !== 'Lunes' && event.day !== selectedDay) return false;
-      if (selectedCategory !== 'Todas' && event.category !== selectedCategory) return false;
-      if (searchTerm && !event.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    let filtered = events.filter(event => {
+      // Adaptar filtros según la estructura del evento del backend
+      // Asumiendo que event tiene propiedades como name, location, etc.
+      if (selectedCity !== 'Bogotá' && event.location?.city !== selectedCity) return false;
+      if (selectedCategory !== 'Todas' && event.category?.name !== selectedCategory) return false;
+      if (searchTerm && !event.name?.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       return true;
     });
     setFilteredEvents(filtered);
@@ -307,24 +308,33 @@ const TuEvento = () => {
          
           {/* POPULARES */}
           <div className="mb-16">
-            <h2 className="text-white text-lg font-medium mb-8">POPULARES</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              {popularEvents.map(event => (
-                <div key={event.id} className="relative rounded-lg overflow-hidden">
-                  <img src={event.image} alt={event.title} className="w-full h-48 object-cover" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/60">
-                    <h3 className="text-white text-sm mb-2">{event.title}</h3>
-                    <button
-                      className="text-white px-4 py-1 text-sm rounded font-medium"
-                      style={{ backgroundColor: '#8b5cf6' }}
-                      onClick={() => navigate('/event-info')}
-                    >
-                      Reservar
-                    </button>
+            <h2 className="text-white text-lg font-medium mb-8">EVENTOS</h2>
+            {loading && <p className="text-white">Cargando eventos...</p>}
+            {error && <p className="text-red-500">{error}</p>}
+            {!loading && !error && (
+              <div className="grid md:grid-cols-3 gap-6">
+                {filteredEvents.map(event => (
+                  <div key={event.id} className="relative rounded-lg overflow-hidden">
+                    <img
+                      src={event.image || "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop"}
+                      alt={event.name}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/60">
+                      <h3 className="text-white text-sm mb-2">{event.name}</h3>
+                      <p className="text-gray-300 text-xs mb-2">{event.location?.city}</p>
+                      <button
+                        className="text-white px-4 py-1 text-sm rounded font-medium"
+                        style={{ backgroundColor: '#8b5cf6' }}
+                        onClick={() => navigate(`/event-info?id=${event.id}`)}
+                      >
+                        Ver detalles
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
           
           {/* COMENTARIOS DE LA COMUNIDAD */}

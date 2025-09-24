@@ -10,8 +10,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import TuEvento.Backend.config.OAuth2LoginSuccessHandler;
 
-import TuEvento.Backend.service.oauth.customOauht2UserService;
+import TuEvento.Backend.service.oauth.CustomOauht2UserService;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -22,7 +23,10 @@ public class SecurityConfig {
     private final TuEvento.Backend.jwt.jwtAuthenticationFilter jwtAuthenticationFilter;
     @Autowired
     @Lazy
-    private customOauht2UserService customOAuth2UserService;
+    private CustomOauht2UserService customOAuth2UserService;
+    @Autowired
+    @Lazy
+    private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -65,6 +69,7 @@ public class SecurityConfig {
             .formLogin(form -> form.disable())
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                .successHandler(oAuth2LoginSuccessHandler)
                 // ⬇️ IMPORTANTE: Deshabilitar OAuth2 para rutas públicas
                 .authorizationEndpoint(authorization -> authorization
                     .baseUri("/oauth2/authorization") // Mantener solo para esta ruta

@@ -1,81 +1,120 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, FileText, Eye, Check, X, LogOut, Trash2, Download } from 'lucide-react';
+import { getAllPetitions, updatePetitionStatus, downloadPetitionDocument } from '../../services/AdminPetitionService.js';
+import { getUserById } from '../../services/Login.js';
 
 const AdminDashboard = () => {
   const [paginaActiva, setPaginaActiva] = useState('bandeja'); // 'bandeja' o 'perfil'
-  const [solicitudesPendientes, setSolicitudesPendientes] = useState([
-    {
-      id: 1,
-      empresa: "Soluciones Tecnológicas Inc.",
-      remitente: "Alejandro Pérez",
-      idFiscal: "700-521-9",
-      tipoEvento: "Conferencia de Tecnología",
-      fechaSolicitud: "2024-09-15",
-      descripcion: "Evento corporativo sobre innovaciones en IA y blockchain",
-      archivos: [
-        { nombre: "RUT_Soluciones_Tech.pdf", tipo: "RUT" },
-        { nombre: "Triptico_Empresa.pdf", tipo: "Tríptico" }
-      ],
-      status: "pendiente"
-    },
-    {
-      id: 2,
-      empresa: "Innovaciones Globales LLC",
-      remitente: "Sofia Ramírez",
-      idFiscal: "987654-2",
-      tipoEvento: "Seminario de Negocios",
-      fechaSolicitud: "2024-09-18",
-      descripcion: "Seminario sobre estrategias de marketing digital",
-      archivos: [
-        { nombre: "RUT_Innovaciones_Global.pdf", tipo: "RUT" },
-        { nombre: "Brochure_Corporativo.pdf", tipo: "Tríptico" }
-      ],
-      status: "pendiente"
-    },
-    {
-      id: 3,
-      empresa: "Eventos Musicales S.A.",
-      remitente: "Carlos Mendoza",
-      idFiscal: "456789-1",
-      tipoEvento: "Concierto",
-      fechaSolicitud: "2024-09-20",
-      descripcion: "Concierto de música rock en vivo",
-      archivos: [
-        { nombre: "RUT_Eventos_Musicales.pdf", tipo: "RUT" },
-        { nombre: "Portfolio_Eventos.pdf", tipo: "Tríptico" }
-      ],
-      status: "pendiente"
-    }
-  ]);
+  const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
   const [mostrarDetalle, setMostrarDetalle] = useState(false);
+
+  useEffect(() => {
+    loadPetitions();
+  }, []);
+
+  const loadPetitions = async () => {
+    try {
+      setLoading(true);
+      const result = await getAllPetitions();
+      if (result.success) {
+        // Obtener información completa de cada usuario
+        const petitionsWithUsers = await Promise.all(
+          result.data.map(async (petition) => {
+            try {
+              const userResult = await getUserById(petition.userID);
+              if (userResult.success) {
+                return {
+                  id: `petition-${petition.petitionID}`, // ID único usando petitionID
+                  petitionId: petition.petitionID, // Usamos petitionID real
+                  empresa: `Usuario ${petition.userID}`,
+                  remitente: userResult.data.fullName || `Usuario ${petition.userID}`,
+                  idFiscal: `ID: ${petition.userID}`,
+                  tipoEvento: 'Solicitud de Organizador',
+                  fechaSolicitud: new Date().toLocaleDateString(), // Fecha actual ya que no viene del backend
+                  descripcion: 'Solicitud para convertirse en organizador de eventos',
+                  archivos: [
+                    { nombre: 'documento.pdf', tipo: 'Documento de Identidad' }
+                  ],
+                  status: petition.status === 0 ? 'pendiente' : petition.status === 1 ? 'aprobado' : 'rechazado',
+                  userData: userResult.data
+                };
+              }
+            } catch (err) {
+              console.error('Error obteniendo usuario:', err);
+            }
+            return null;
+          })
+        );
+
+        setSolicitudesPendientes(petitionsWithUsers.filter(p => p !== null));
+      } else {
+        setError(result.message || 'Error cargando peticiones');
+      }
+    } catch (err) {
+      setError('Error de conexión');
+      console.error('Error loading petitions:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleVerSolicitud = (solicitud) => {
     setSolicitudSeleccionada(solicitud);
     setMostrarDetalle(true);
   };
 
-  const handleAprobar = (id) => {
-    setSolicitudesPendientes(prev => 
-      prev.map(solicitud => 
-        solicitud.id === id 
-          ? { ...solicitud, status: 'aprobado' }
-          : solicitud
-      )
-    );
-    setMostrarDetalle(false);
+  const handleAprobar = async (id) => {
+    try {
+      // El backend espera el userID, no el petitionID
+      const solicitud = solicitudesPendientes.find(s => s.id === id);
+      if (!solicitud) return;
+
+      const result = await updatePetitionStatus(solicitud.petitionId, 1); // 1 = APPROVED
+      if (result.success) {
+        setSolicitudesPendientes(prev =>
+          prev.map(solicitud =>
+            solicitud.id === id
+              ? { ...solicitud, status: 'aprobado' }
+              : solicitud
+          )
+        );
+        setMostrarDetalle(false);
+      } else {
+        setError(result.message || 'Error aprobando petición');
+      }
+    } catch (err) {
+      setError('Error de conexión');
+      console.error('Error approving petition:', err);
+    }
   };
 
-  const handleRechazar = (id) => {
-    setSolicitudesPendientes(prev => 
-      prev.map(solicitud => 
-        solicitud.id === id 
-          ? { ...solicitud, status: 'rechazado' }
-          : solicitud
-      )
-    );
-    setMostrarDetalle(false);
+  const handleRechazar = async (id) => {
+    try {
+      // El backend espera el userID, no el petitionID
+      const solicitud = solicitudesPendientes.find(s => s.id === id);
+      if (!solicitud) return;
+
+      const result = await updatePetitionStatus(solicitud.petitionId, 2); // 2 = REJECTED
+      if (result.success) {
+        setSolicitudesPendientes(prev =>
+          prev.map(solicitud =>
+            solicitud.id === id
+              ? { ...solicitud, status: 'rechazado' }
+              : solicitud
+          )
+        );
+        setMostrarDetalle(false);
+      } else {
+        setError(result.message || 'Error rechazando petición');
+      }
+    } catch (err) {
+      setError('Error de conexión');
+      console.error('Error rejecting petition:', err);
+    }
   };
 
   const solicitudesActivas = solicitudesPendientes.filter(s => s.status === 'pendiente');
@@ -171,75 +210,93 @@ const AdminDashboard = () => {
             </>
           ) : (
             <>
+              {error && (
+                <div className="bg-red-600 text-white p-4 rounded-lg mb-6">
+                  {error}
+                  <button
+                    onClick={() => setError(null)}
+                    className="float-right ml-4"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+
               {!mostrarDetalle ? (
                 <>
                   <h1 className="text-white text-2xl font-bold mb-8">Panel de Administración</h1>
-                  
+
                   <div className="mb-6">
                     <h2 className="text-white text-lg font-semibold mb-4">Solicitudes Pendientes</h2>
-                    
-                    <div className="space-y-4">
-                      {solicitudesActivas.map((solicitud) => (
-                        <div key={solicitud.id} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                          <div className="mb-4">
-                            <h3 className="text-white font-semibold text-lg mb-2">Empresa: {solicitud.empresa}</h3>
-                            <div className="text-gray-300 text-sm space-y-1">
-                              <p><span className="text-gray-400">Remitente:</span> {solicitud.remitente}</p>
-                              <p><span className="text-gray-400">ID Fiscal:</span> {solicitud.idFiscal}</p>
-                              <p><span className="text-gray-400">Tipo de Evento:</span> {solicitud.tipoEvento}</p>
-                            </div>
-                          </div>
 
-                          {/* Archivos adjuntos */}
-                          <div className="mb-4">
-                            <h4 className="text-gray-400 text-sm mb-2">Archivos adjuntos:</h4>
-                            <div className="flex gap-2">
-                              {solicitud.archivos.map((archivo, index) => (
-                                <div key={index} className="flex items-center gap-2 bg-gray-700 px-3 py-1 rounded-full text-xs">
-                                  <FileText className="w-3 h-3 text-blue-400" />
-                                  <span className="text-gray-300">{archivo.tipo}</span>
-                                  <button className="text-blue-400 hover:text-blue-300 transition-colors">
-                                    <Download className="w-3 h-3" />
-                                  </button>
+                    {loading ? (
+                      <p className="text-gray-400">Cargando solicitudes...</p>
+                    ) : (
+                      <>
+                        <div className="space-y-4">
+                          {solicitudesActivas.map((solicitud) => (
+                            <div key={solicitud.id} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                              <div className="mb-4">
+                                <h3 className="text-white font-semibold text-lg mb-2">Empresa: {solicitud.empresa}</h3>
+                                <div className="text-gray-300 text-sm space-y-1">
+                                  <p><span className="text-gray-400">Remitente:</span> {solicitud.remitente}</p>
+                                  <p><span className="text-gray-400">ID Fiscal:</span> {solicitud.idFiscal}</p>
+                                  <p><span className="text-gray-400">Tipo de Evento:</span> {solicitud.tipoEvento}</p>
                                 </div>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div className="flex gap-3">
-                            <button
-                              onClick={() => handleVerSolicitud(solicitud)}
-                              className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors text-sm"
-                            >
-                              <Eye className="w-4 h-4" />
-                              Ver Solicitud
-                            </button>
-                            
-                            <button
-                              onClick={() => handleRechazar(solicitud.id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
-                            >
-                              <X className="w-4 h-4" />
-                              Rechazar
-                            </button>
-                            
-                            <button
-                              onClick={() => handleAprobar(solicitud.id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
-                            >
-                              <Check className="w-4 h-4" />
-                              Aprobar
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                              </div>
 
-                    {solicitudesActivas.length === 0 && (
-                      <div className="text-center py-12">
-                        <div className="text-gray-400 text-lg mb-2">No hay solicitudes pendientes</div>
-                        <div className="text-gray-500 text-sm">Todas las solicitudes han sido procesadas</div>
-                      </div>
+                              {/* Archivos adjuntos */}
+                              <div className="mb-4">
+                                <h4 className="text-gray-400 text-sm mb-2">Archivos adjuntos:</h4>
+                                <div className="flex gap-2">
+                                  {solicitud.archivos?.map((archivo, index) => (
+                                    <div key={index} className="flex items-center gap-2 bg-gray-700 px-3 py-1 rounded-full text-xs">
+                                      <FileText className="w-3 h-3 text-blue-400" />
+                                      <span className="text-gray-300">{archivo.tipo}</span>
+                                      <button className="text-blue-400 hover:text-blue-300 transition-colors">
+                                        <Download className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="flex gap-3">
+                                <button
+                                  onClick={() => handleVerSolicitud(solicitud)}
+                                  className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  Ver Solicitud
+                                </button>
+
+                                <button
+                                  onClick={() => handleRechazar(solicitud.id)}
+                                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  <X className="w-4 h-4" />
+                                  Rechazar
+                                </button>
+
+                                <button
+                                  onClick={() => handleAprobar(solicitud.id)}
+                                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
+                                >
+                                  <Check className="w-4 h-4" />
+                                  Aprobar
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {solicitudesActivas.length === 0 && (
+                          <div className="text-center py-12">
+                            <div className="text-gray-400 text-lg mb-2">No hay solicitudes pendientes</div>
+                            <div className="text-gray-500 text-sm">Todas las solicitudes han sido procesadas</div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </>

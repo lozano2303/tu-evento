@@ -10,7 +10,10 @@ import Events from "./components/views/Events.jsx";
 import EventsInfo from "./components/views/EventsInfo.jsx";
 import AdminLogin from "./components/views/AdminLogin.jsx";
 import AdminDashboard from "./components/views/AdminDashboard.jsx";
-import EventRequestForm from "./components/views/Forms/EventRequestForm.jsx";
+import SeatManagement from "./components/views/SeatManagement.jsx";
+import EventManagement from "./components/views/EventManagement.jsx";
+import EventForm from "./components/views/EventForm.jsx";
+import OrganizerPetitionForm from "./components/views/OrganizerPetitionForm.jsx";
 
 const App = () => {
   return (
@@ -54,7 +57,10 @@ const App = () => {
       />
       <Route path="/admin-login" element={<AdminLogin />} />
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
-      <Route path="/event-request" element={<EventRequestForm onBack={() => window.history.back()} />} />
+      <Route path="/seat-management" element={<SeatManagement />} />
+      <Route path="/event-management" element={<EventManagement />} />
+      <Route path="/create-event" element={<EventForm />} />
+      <Route path="/organizer-petition" element={<OrganizerPetitionForm />} />
     </Routes>
   );
 };
