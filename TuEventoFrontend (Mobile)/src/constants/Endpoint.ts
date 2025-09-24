@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://10.167.207.43:8080/api/v1"; //  API base URL
+const API_BASE_URL = "http://192.168.0.16:8080/api/v1"; //  API base URL
 
 export const USER_ENDPOINT = `${API_BASE_URL}/register`; // User registration endpoint
 
@@ -9,6 +9,8 @@ export const RESEND_ENDPOINT = `${API_BASE_URL}/account-activation/resend`; // R
 export const FORGOT_ENDPOINT = `${API_BASE_URL}/login/forgot`; // Forgot password endpoint
 
 export const RESET_ENDPOINT_TOKEN = `${API_BASE_URL}/login/validateResetToken`; // Validate reset token endpoint
+
+export const RESET_PASSORD_WITH_TOKEN = `${API_BASE_URL}/login/resetPasswordWithToken`; // Reset password with token endpoint
 
 export const LOGIN_ENDPOINT = `${API_BASE_URL}/login/start`; // Login endpoint
 
