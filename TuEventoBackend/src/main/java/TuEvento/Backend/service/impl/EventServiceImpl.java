@@ -449,9 +449,9 @@ public class EventServiceImpl implements EventService {
         }
     }
     @Override
-    public ResponseDto<List<EventDto>> getAllEvent() {
+    public ResponseDto<List<EventDto>> getAllEvent(int userId) {
         try {
-            List<Event> entityList = eventRepository.findAllByStatusNot(0);
+            List<Event> entityList = eventRepository.findAllByUserID_UserIDAndStatusNot(userId, 0);
             List<EventDto> dtoList = new ArrayList<>();
 
             for (Event e : entityList) {

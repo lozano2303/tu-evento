@@ -2,9 +2,11 @@ import { API_BASE_URL } from './apiconstant.js';
 
 export const getAllEvents = async () => {
   try {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${API_BASE_URL}/v1/event/getAll`, {
       method: 'GET',
       headers: {
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });

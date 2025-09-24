@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import TuEvento.Backend.dto.EventDto;
 
 import TuEvento.Backend.dto.responses.ResponseDto;
@@ -42,7 +44,11 @@ public class EventController {
         return eventService.getEventById(id);
     }
     @GetMapping("/getAll")
-    public ResponseDto<List<EventDto>> getAllEvent() {
-        return eventService.getAllEvent();
+    public ResponseDto<List<EventDto>> getAllEvent(HttpServletRequest request) {
+        Integer userId = (Integer) request.getAttribute("userID");
+        if (userId == null) {
+            return ResponseDto.error("Usuario no autenticado");
+        }
+        return eventService.getAllEvent(userId);
     }
 }
