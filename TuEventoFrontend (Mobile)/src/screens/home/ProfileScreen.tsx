@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { useState, useEffect } from 'react';
 import { getUserIdFromToken, removeToken } from '../../api/services/Token';
 import { getUserProfile } from '../../api/services/UserApi';
@@ -57,36 +57,38 @@ export default function ProfileScreen() {
   }
 
   return (
-    <View className="flex-1 bg-[#1a0033] p-6">
-      <Text className="text-white text-2xl font-bold mb-6 text-center mt-4">Perfil del Usuario </Text>
-      {profile && (
-        <View>
-          <Input
-            label="Nombre completo"
-            value={editedProfile.fullName || ''}
-            onChangeText={(value) => setEditedProfile(prev => ({ ...prev, fullName: value }))}
-          />
-          <Input
-            label="Teléfono"
-            value={editedProfile.telephone || ''}
-            onChangeText={(value) => setEditedProfile(prev => ({ ...prev, telephone: value }))}
-            keyboardType="phone-pad"
-          />
-          <Input
-            label="Fecha de nacimiento"
-            value={editedProfile.birthDate || ''}
-            onChangeText={(value) => setEditedProfile(prev => ({ ...prev, birthDate: value }))}
-          />
-          <Input
-            label="Dirección"
-            value={editedProfile.address || ''}
-            onChangeText={(value) => setEditedProfile(prev => ({ ...prev, address: value }))}
-          />
-          <Button label="Guardar Cambios" onPress={() => {}} />
-    
-          <Button label="Cerrar Sesión" onPress={handleLogout} />
-        </View>
-      )}
+    <View className="flex-1 bg-[#1a0033] justify-center items-center">
+      <View className="px-6 w-full h-full relative top-12" style={{ marginTop: 180 }}>
+        <Text className="text-white text-2xl font-bold mb-6 text-center mt-4">Perfil del Usuario </Text>
+        {profile && (
+          <View>
+            <Input
+              label="Nombre completo"
+              value={editedProfile.fullName || ''}
+              onChangeText={(value) => setEditedProfile(prev => ({ ...prev, fullName: value }))}
+            />
+            <Input
+              label="Teléfono"
+              value={editedProfile.telephone || ''}
+              onChangeText={(value) => setEditedProfile(prev => ({ ...prev, telephone: value }))}
+              keyboardType="phone-pad"
+            />
+            <Input
+              label="Fecha de nacimiento"
+              value={editedProfile.birthDate || ''}
+              onChangeText={(value) => setEditedProfile(prev => ({ ...prev, birthDate: value }))}
+            />
+            <Input
+              label="Dirección"
+              value={editedProfile.address || ''}
+              onChangeText={(value) => setEditedProfile(prev => ({ ...prev, address: value }))}
+            />
+            <Button label="Guardar Cambios" onPress={() => {}} />
+            <Button label="Cerrar Sesión" onPress={handleLogout} />
+          </View>
+        )}
+      </View>
+
     </View>
   );
 }
