@@ -1,5 +1,6 @@
 package TuEvento.Backend.service.impl;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -13,7 +14,9 @@ import TuEvento.Backend.dto.SectionDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
 
 import TuEvento.Backend.model.Section;
+import TuEvento.Backend.model.Event;
 import TuEvento.Backend.repository.SectionRepository;
+import TuEvento.Backend.repository.EventRepository;
 import TuEvento.Backend.service.SectionService;
 
 
@@ -23,12 +26,16 @@ public class SectionServiceImpl implements SectionService {
     @Autowired
     private SectionRepository sectionRepository;
 
+    @Autowired
+    private EventRepository eventRepository;
+
     @Override
     public ResponseDto<SectionDto> insertSection(SectionDto sectionDto) {
         try {
             Section entity = new Section();
+            entity.setEventID(eventRepository.findById(sectionDto.getEventId()).orElseThrow(() -> new RuntimeException("Event not found")));
             entity.setSectionName(sectionDto.getSectionName());
-            entity.setPrice(sectionDto.getPrice());
+            entity.setPrice(BigDecimal.valueOf(sectionDto.getPrice()));
             sectionRepository.save(entity);
 
             return ResponseDto.ok("Section insertada exitosamente");
@@ -47,11 +54,11 @@ public class SectionServiceImpl implements SectionService {
     }
 
     private SectionDto toDto(Section section) {
-        return new SectionDto(
-            section.getSectionID(),
-            section.getSectionName(),
-            section.getPrice()
-        );
+        SectionDto dto = new SectionDto();
+        dto.setSectionID(section.getSectionID());
+        dto.setSectionName(section.getSectionName());
+        dto.setPrice(section.getPrice().doubleValue());
+        return dto;
     }
     @Override
     public ResponseDto<SectionDto> updateSection(SectionDto sectionDto) {
@@ -60,7 +67,7 @@ public class SectionServiceImpl implements SectionService {
             if (section.isPresent()) {
                 Section entity = section.get();
                 entity.setSectionName(sectionDto.getSectionName());
-                entity.setPrice(sectionDto.getPrice());
+                entity.setPrice(BigDecimal.valueOf(sectionDto.getPrice()));
                 sectionRepository.save(entity);
 
                 return ResponseDto.ok("Section actualizada exitosamente");
@@ -92,10 +99,7 @@ public class SectionServiceImpl implements SectionService {
     public ResponseDto<SectionDto> getSectionById(int id) {
         Optional<Section> section = sectionRepository.findById(id);
         if (section.isPresent()) {
-            SectionDto dto = new SectionDto();
-            dto.setSectionID(section.get().getSectionID());
-            dto.setSectionName(section.get().getSectionName());
-            dto.setPrice(section.get().getPrice());
+            SectionDto dto = toDto(section.get());
             return ResponseDto.ok("Section encontrada", dto);
         } else {
             return ResponseDto.error("Section no encontrada");

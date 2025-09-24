@@ -228,7 +228,19 @@ public class EventServiceImpl implements EventService {
 
             eventRepository.save(entity);
 
-            return ResponseDto.ok("Evento creado exitosamente");
+            // Crear DTO de respuesta con el ID generado
+            EventDto responseDto = new EventDto(
+                entity.getId(),
+                entity.getUserID(),
+                entity.getLocationID(),
+                entity.getEventName(),
+                entity.getDescription(),
+                entity.getStartDate(),
+                entity.getFinishDate(),
+                entity.getStatus()
+            );
+
+            return ResponseDto.ok("Evento creado exitosamente", responseDto);
 
         } catch (DataAccessException e) {
             System.err.println("Error de base de datos en creación de evento: " + e.getMessage());
@@ -418,14 +430,16 @@ public class EventServiceImpl implements EventService {
         try {
             Optional<Event> event = eventRepository.findById(id);
             if (event.isPresent()) {
-                EventDto dto = new EventDto();
-                dto.setUserID(event.get().getUserID());
-                dto.setLocationID(event.get().getLocationID());
-                dto.setEventName(event.get().getEventName());
-                dto.setDescription(event.get().getDescription());
-                dto.setStartDate(event.get().getStartDate());
-                dto.setFinishDate(event.get().getFinishDate());
-                dto.setStatus(event.get().getStatus());
+                EventDto dto = new EventDto(
+                    event.get().getId(),
+                    event.get().getUserID(),
+                    event.get().getLocationID(),
+                    event.get().getEventName(),
+                    event.get().getDescription(),
+                    event.get().getStartDate(),
+                    event.get().getFinishDate(),
+                    event.get().getStatus()
+                );
                 return ResponseDto.ok("Evento encontrado", dto);
             } else {
                 return ResponseDto.error("Evento no encontrado");
@@ -441,14 +455,16 @@ public class EventServiceImpl implements EventService {
             List<EventDto> dtoList = new ArrayList<>();
 
             for (Event e : entityList) {
-                EventDto dtoEvent = new EventDto();
-                dtoEvent.setUserID(e.getUserID());
-                dtoEvent.setLocationID(e.getLocationID());
-                dtoEvent.setEventName(e.getEventName());
-                dtoEvent.setDescription(e.getDescription());
-                dtoEvent.setStartDate(e.getStartDate());
-                dtoEvent.setFinishDate(e.getFinishDate());
-                dtoEvent.setStatus(e.getStatus());
+                EventDto dtoEvent = new EventDto(
+                    e.getId(),
+                    e.getUserID(),
+                    e.getLocationID(),
+                    e.getEventName(),
+                    e.getDescription(),
+                    e.getStartDate(),
+                    e.getFinishDate(),
+                    e.getStatus()
+                );
                 dtoList.add(dtoEvent);
             }
 

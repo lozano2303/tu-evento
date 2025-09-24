@@ -224,13 +224,21 @@ const EventForm = () => {
             <p className="text-gray-300 mb-6">
               El evento "{createdEvent.eventName}" ha sido creado exitosamente.
             </p>
-            <button
-              onClick={handleFloorPlanDesigner}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors mx-auto"
-            >
-              <MapPin className="w-4 h-4" />
-              Maquetar
-            </button>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => navigate('/event-management')}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors"
+              >
+                Ver Eventos
+              </button>
+              <button
+                onClick={handleFloorPlanDesigner}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <MapPin className="w-4 h-4" />
+                Maquetar
+              </button>
+            </div>
           </div>
         </div>
       </div>

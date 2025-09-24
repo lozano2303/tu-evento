@@ -9,7 +9,7 @@ const ELEMENT_CONSTANTS = {
   CIRCLE_STROKE_WIDTH: 3,
 };
 
-const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, units, elements = [] }) => {
+const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, units, elements = [], onLabelEdit, isSeatSelectionMode = false }) => {
   const handleClick = (e) => {
     e.stopPropagation();
     onSelect && onSelect(element.id);
@@ -19,7 +19,7 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
     onClick: handleClick,
     style: {
       cursor: isSelected ? "move" : "pointer",
-      transition: 'transform 0.1s ease'
+      pointerEvents: isSeatSelectionMode && (element.type === 'section' || element.type === 'zone') ? 'none' : 'auto',
     },
     opacity: isSelected ? 0.9 : 1,
     strokeWidth: isSelected ? 3 : element.strokeWidth || 2,
@@ -66,9 +66,14 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
         fontFamily="Arial, sans-serif"
         fontWeight={fontWeight}
         fill="#1f2937"
-        pointerEvents="none"
+        pointerEvents="auto"
+        onClick={(e) => {
+          e.stopPropagation();
+          onLabelEdit && onLabelEdit(element.id);
+        }}
         style={{
           textShadow: "1px 1px 2px rgba(255,255,255,0.9)",
+          cursor: 'pointer'
         }}
       >
         {element.meta.label}
@@ -79,7 +84,9 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
   const renderElement = () => {
     switch (element.type) {
       case "zone":
+      case "section":
       case "stage": {
+        const isSection = element.type === 'section';
         return (
           <g data-element-id={element.id} transform={transform} {...baseProps}>
             <rect
@@ -88,10 +95,28 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
               width={element.width}
               height={element.height}
               rx={2}
-              fill={element.fill}
+              fill={isSection ? 'transparent' : element.fill}
               stroke={element.stroke}
+              strokeWidth={isSection ? 2 : 1}
+              strokeDasharray={isSection ? '5,5' : undefined}
             />
-            {renderLabelElement(element.x, element.y)}
+            {renderLabelElement(element.x, element.y - (isSection ? 10 : 0))}
+            {isSection && element.meta && (
+              <text
+                x={element.x}
+                y={element.y + 5}
+                textAnchor="middle"
+                fontSize="12"
+                fontWeight="bold"
+                fill="#1f2937"
+                pointerEvents="none"
+                style={{
+                  textShadow: "1px 1px 2px rgba(255,255,255,0.9)",
+                }}
+              >
+                {element.meta.category || 'General'} - ${element.meta.price || 0}
+              </text>
+            )}
             {isSelected && element.width && element.height && (
               <>
                 {/* Líneas de dimensión horizontal */}
@@ -178,18 +203,50 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
         const startX = element.x - (element.width || 0) / 2 + ELEMENT_CONSTANTS.CHAIR_SPACING / 2;
         const chairs = [];
 
+        // Generar posiciones de asientos individuales
+        const seatPositions = [];
+        for (let i = 0; i < numChairs; i++) {
+          const chairX = startX + i * ELEMENT_CONSTANTS.CHAIR_SPACING;
+          seatPositions.push({
+            id: `${element.id}-seat-${i}`,
+            x: chairX,
+            y: element.y,
+            seatNumber: i + 1,
+            row: element.meta?.row || 'A',
+            status: 'AVAILABLE'
+          });
+        }
+
+        // Almacenar las posiciones de asientos en el elemento para que DrawingCanvas pueda acceder
+        if (!element.seatPositions) {
+          element.seatPositions = seatPositions;
+        }
+
         for (let i = 0; i < numChairs; i++) {
           const chairX = startX + i * ELEMENT_CONSTANTS.CHAIR_SPACING;
           chairs.push(
-            <circle
-              key={i}
-              cx={chairX}
-              cy={element.y}
-              r={ELEMENT_CONSTANTS.CHAIR_RADIUS}
-              fill="#6b7280"
-              stroke="#374151"
-              strokeWidth="1"
-            />
+            <g key={i} style={{ cursor: 'pointer' }}>
+              <rect
+                x={chairX - ELEMENT_CONSTANTS.CHAIR_RADIUS}
+                y={element.y - ELEMENT_CONSTANTS.CHAIR_RADIUS}
+                width={ELEMENT_CONSTANTS.CHAIR_RADIUS * 2}
+                height={ELEMENT_CONSTANTS.CHAIR_RADIUS * 2}
+                fill="#6b7280"
+                stroke="#374151"
+                strokeWidth="1"
+                rx="2"
+              />
+              <text
+                x={chairX}
+                y={element.y + 3}
+                textAnchor="middle"
+                fontSize="8"
+                fill="white"
+                pointerEvents="none"
+              >
+                {element.meta?.row || 'A'}{i + 1}
+              </text>
+            </g>
           );
         }
 
@@ -358,4 +415,4 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
   return <>{renderElement()}</>;
 };
 
-export default CanvasElement;
+export default React.memo(CanvasElement);

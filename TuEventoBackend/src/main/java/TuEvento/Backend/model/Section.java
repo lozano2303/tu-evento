@@ -8,6 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 
 @Entity(name = "section")
 public class Section {
@@ -15,6 +17,10 @@ public class Section {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sectionID", nullable = false)
     private int sectionID;
+
+    @ManyToOne
+    @JoinColumn(name="eventID", nullable = false)
+    private Event eventID;
 
     @Column(name = "sectionName", nullable = false, length = 50)
     private String sectionName;
@@ -43,6 +49,12 @@ public class Section {
     }
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+    public Event getEventID() {
+        return eventID;
+    }
+    public void setEventID(Event eventID) {
+        this.eventID = eventID;
     }
 
 }

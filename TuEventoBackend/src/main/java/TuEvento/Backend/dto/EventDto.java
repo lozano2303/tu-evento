@@ -6,6 +6,7 @@ import TuEvento.Backend.model.Location;
 import TuEvento.Backend.model.User;
 
 public class EventDto {
+    private int id;
     private User userID;
     private Location locationID;
     private String eventName;
@@ -14,7 +15,8 @@ public class EventDto {
     private LocalDate finishDate;
     private int status;
     public EventDto() {}
-    public EventDto(User userID, Location locationID, String eventName, String description, LocalDate startDate, LocalDate finishDate, int status) {
+    public EventDto(int id, User userID, Location locationID, String eventName, String description, LocalDate startDate, LocalDate finishDate, int status) {
+        this.id = id;
         this.userID = userID;
         this.locationID = locationID;
         this.eventName = eventName;
@@ -58,6 +60,12 @@ public class EventDto {
     }
     public void setFinishDate(LocalDate finishDate) {
         this.finishDate = finishDate;
+    }
+    public int getId() {
+        return id;
+    }
+    public void setId(int id) {
+        this.id = id;
     }
     public int getStatus() {
         return status;

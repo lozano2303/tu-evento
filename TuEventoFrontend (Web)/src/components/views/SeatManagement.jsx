@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Users, MapPin } from 'lucide-react';
 import { getSeatsBySection, updateSeatStatus, createSeat, updateSeat, deleteSeat } from '../../services/SeatService.js';
 import { getAllSections } from '../../services/SectionService.js';
+import { getEventLayoutByEventId } from '../../services/EventLayoutService.js';
 
 const SeatManagement = () => {
   const navigate = useNavigate();
@@ -142,6 +143,58 @@ const SeatManagement = () => {
     }
   };
 
+  const generateSeatsFromLayout = async () => {
+    if (!eventId || !selectedSection) return;
+
+    try {
+      setLoading(true);
+      const layoutResult = await getEventLayoutByEventId(eventId);
+
+      if (layoutResult.success && layoutResult.data?.layoutData?.elements) {
+        const elements = layoutResult.data.layoutData.elements;
+        const seatRows = elements.filter(el => el.type === 'seatRow');
+
+        let seatsCreated = 0;
+
+        for (const seatRow of seatRows) {
+          if (seatRow.seatPositions) {
+            for (const seatPos of seatRow.seatPositions) {
+              const seatData = {
+                seatNumber: seatPos.seatNumber.toString(),
+                row: seatPos.row,
+                status: 'AVAILABLE',
+                section: { id: selectedSection.id },
+                x: Math.round(seatPos.x),
+                y: Math.round(seatPos.y)
+              };
+
+              try {
+                await createSeat(seatData);
+                seatsCreated++;
+              } catch (error) {
+                console.log('Seat might already exist:', error);
+              }
+            }
+          }
+        }
+
+        if (seatsCreated > 0) {
+          alert(`¡${seatsCreated} asientos generados exitosamente desde el layout!`);
+          loadSeats();
+        } else {
+          alert('No se encontraron filas de asientos en el layout o ya existen todos los asientos.');
+        }
+      } else {
+        setError('No se encontró layout para este evento');
+      }
+    } catch (err) {
+      setError('Error generando asientos desde layout');
+      console.error('Error generating seats from layout:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'AVAILABLE': return 'bg-green-100 text-green-800';
@@ -183,17 +236,28 @@ const SeatManagement = () => {
             </button>
             <h1 className="text-2xl font-bold">Gestión de Asientos</h1>
           </div>
-          <button
-            onClick={() => {
-              setEditingSeat(null);
-              setFormData({ seatNumber: '', row: '', status: 'AVAILABLE' });
-              setShowCreateModal(true);
-            }}
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Asiento
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={generateSeatsFromLayout}
+              disabled={loading}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 px-4 py-2 rounded-lg transition-colors"
+              title="Generar asientos desde el layout del evento"
+            >
+              <MapPin className="w-4 h-4" />
+              Generar desde Layout
+            </button>
+            <button
+              onClick={() => {
+                setEditingSeat(null);
+                setFormData({ seatNumber: '', row: '', status: 'AVAILABLE' });
+                setShowCreateModal(true);
+              }}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Nuevo Asiento
+            </button>
+          </div>
         </div>
       </div>
 

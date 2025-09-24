@@ -12,7 +12,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import TuEvento.Backend.config.OAuth2LoginSuccessHandler;
 
-import TuEvento.Backend.service.oauth.CustomOauht2UserService;
+import TuEvento.Backend.service.oauth.customOauht2UserService;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -23,7 +23,7 @@ public class SecurityConfig {
     private final TuEvento.Backend.jwt.jwtAuthenticationFilter jwtAuthenticationFilter;
     @Autowired
     @Lazy
-    private CustomOauht2UserService customOAuth2UserService;
+    private customOauht2UserService customOAuth2UserService;
     @Autowired
     @Lazy
     private OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;

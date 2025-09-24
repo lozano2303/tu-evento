@@ -2,6 +2,10 @@ import { useRef, useState, useEffect, useCallback } from "react"
 import CanvasElement from "./CanvasElement"
 import useDragAndDrop from "../components/views/Hooks/useDragAndDrop.js"
 
+const ELEMENT_CONSTANTS = {
+  CHAIR_RADIUS: 15
+}
+
 const DrawingCanvas = ({
   elements = [],
   selectedElementId = null,
@@ -12,6 +16,17 @@ const DrawingCanvas = ({
   activeTool,
   setActiveTool,
   units,
+  seats = [],
+  selectedSeats = [],
+  onSeatSelect,
+  isSeatSelectionMode = false,
+  selectedSeatPositions = new Set(),
+  onSeatPositionSelect,
+  zoom: externalZoom,
+  setZoom: externalSetZoom,
+  offset: externalOffset,
+  setOffset: externalSetOffset,
+  onLabelEdit,
 }) => {
   const svgRef = useRef(null)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -30,8 +45,12 @@ const DrawingCanvas = ({
 
   const viewWidth = 2000
   const viewHeight = 1200
-  const [zoom, setZoom] = useState(1)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [internalZoom, setInternalZoom] = useState(1)
+  const [internalOffset, setInternalOffset] = useState({ x: 0, y: 0 })
+  const zoom = externalZoom !== undefined ? externalZoom : internalZoom
+  const setZoom = externalSetZoom || setInternalZoom
+  const offset = externalOffset !== undefined ? externalOffset : internalOffset
+  const setOffset = externalSetOffset || setInternalOffset
   const [isPanning, setIsPanning] = useState(false)
   const panOrigin = useRef({ x: 0, y: 0, offset: { x: 0, y: 0 } })
 
@@ -109,6 +128,34 @@ const DrawingCanvas = ({
     return null
   }
 
+  const getSeatAt = (pos) => {
+    const { x: px, y: py } = pos
+
+    // Primero buscar en asientos reales de la base de datos
+    for (const seat of seats) {
+      const seatSize = 30
+      if (px >= seat.x - seatSize/2 && px <= seat.x + seatSize/2 &&
+          py >= seat.y - seatSize/2 && py <= seat.y + seatSize/2) {
+        return seat
+      }
+    }
+
+    // Luego buscar en posiciones generadas por seatRow
+    for (const element of elements) {
+      if (element.type === 'seatRow' && element.seatPositions) {
+        for (const seatPos of element.seatPositions) {
+          const seatSize = ELEMENT_CONSTANTS.CHAIR_RADIUS * 2
+          if (px >= seatPos.x - seatSize/2 && px <= seatPos.x + seatSize/2 &&
+              py >= seatPos.y - seatSize/2 && py <= seatPos.y + seatSize/2) {
+            return seatPos
+          }
+        }
+      }
+    }
+
+    return null
+  }
+
   const isPointInElement = (point, element) => {
     const { x: px, y: py } = point
 
@@ -117,17 +164,6 @@ const DrawingCanvas = ({
       const thickness = element.thickness || 15
       const distance = distanceFromPointToLine(px, py, x1, y1, x2, y2)
       return distance <= thickness / 2 + 10
-    } else if (element.type === 'curvedWall') {
-      if (!element.points || element.points.length < 2) return false
-      const thickness = element.strokeWidth || 3
-
-      for (let i = 0; i < element.points.length - 1; i++) {
-        const p1 = element.points[i]
-        const p2 = element.points[i + 1]
-        const distance = distanceFromPointToLine(px, py, p1.x, p1.y, p2.x, p2.y)
-        if (distance <= thickness * 2 + 10) return true
-      }
-      return false
     } else if (element.type === 'chair') {
       const chairSize = 50
       return px >= element.x - chairSize / 2 &&
@@ -140,11 +176,6 @@ const DrawingCanvas = ({
              px <= element.x + doorSize / 2 &&
              py >= element.y - doorSize / 2 &&
              py <= element.y + doorSize / 2
-    } else if (element.type === 'circle') {
-      const dx = px - element.x
-      const dy = py - element.y
-      const distance = Math.sqrt(dx * dx + dy * dy)
-      return distance <= (element.radius || 50)
     } else {
       const maxDim = Math.max(element.width || 0, element.height || 0) * 1.5
       return px >= element.x - maxDim / 2 &&
@@ -205,6 +236,16 @@ const DrawingCanvas = ({
 
     const pos = toViewCoords(e.clientX, e.clientY)
 
+    // Modo selección de asientos
+    if (isSeatSelectionMode) {
+      // Verificar si se hizo clic en un asiento
+      const clickedSeat = getSeatAt(pos)
+      if (clickedSeat && clickedSeat.status === 'AVAILABLE') {
+        onSeatSelect && onSeatSelect(clickedSeat.id)
+      }
+      return
+    }
+
     const clickedElement = getElementAt(pos)
 
     if (clickedElement) {
@@ -230,7 +271,7 @@ const DrawingCanvas = ({
     // Crear nuevo elemento
     setStartPoint(pos)
 
-    if (["zone", "seatRow", "chair", "door", "exit", "stage", "field", "bleacher"].includes(activeTool)) {
+    if (["zone", "section", "seatRow", "chair", "door", "exit", "stage", "field", "bleacher"].includes(activeTool)) {
       const newEl = {
         id: Date.now(),
         type: activeTool,
@@ -240,7 +281,7 @@ const DrawingCanvas = ({
         height: 0,
         fill: getDefaultFill(activeTool),
         stroke: getDefaultStroke(activeTool),
-        meta: { label: activeTool },
+        meta: activeTool === 'section' ? { label: 'Nueva Sección', category: 'General' } : { label: activeTool },
       }
       setIsDrawing(true)
       setCurrentElement(newEl)
@@ -256,17 +297,6 @@ const DrawingCanvas = ({
         strokeWidth: 3,
         thickness: 15,
         meta: { label: "Pared" },
-      }
-      setIsDrawing(true)
-      setCurrentElement(newEl)
-    } else if (activeTool === "curvedWall") {
-      const newEl = {
-        id: Date.now(),
-        type: "curvedWall",
-        points: [{ x: pos.x, y: pos.y }],
-        stroke: "#dc2626",
-        strokeWidth: 3,
-        meta: { label: "Muro curvo" },
       }
       setIsDrawing(true)
       setCurrentElement(newEl)
@@ -297,13 +327,7 @@ const DrawingCanvas = ({
 
     const updated = { ...currentElement }
 
-    if (activeTool === "circle") {
-      const dx = pos.x - startPoint.x
-      const dy = pos.y - startPoint.y
-      updated.radius = Math.sqrt(dx * dx + dy * dy)
-      updated.x = startPoint.x
-      updated.y = startPoint.y
-    } else if (["zone", "seatRow", "chair", "door", "exit", "stage"].includes(activeTool)) {
+    if (["zone", "seatRow", "chair", "door", "exit", "stage"].includes(activeTool)) {
       // Calcular dimensiones del rectángulo
       const width = pos.x - startPoint.x
       const height = pos.y - startPoint.y
@@ -324,16 +348,6 @@ const DrawingCanvas = ({
     } else if (activeTool === "wall") {
       updated.x2 = pos.x
       updated.y2 = pos.y
-    } else if (activeTool === "curvedWall") {
-      // Para muros curvos, solo agregar puntos si hay suficiente distancia
-      const lastPoint = updated.points[updated.points.length - 1]
-      const distance = Math.sqrt(
-        Math.pow(pos.x - lastPoint.x, 2) + Math.pow(pos.y - lastPoint.y, 2)
-      )
-      
-      if (distance > 10) {
-        updated.points = [...updated.points, { x: pos.x, y: pos.y }]
-      }
     }
 
     setCurrentElement(updated)
@@ -354,17 +368,10 @@ const DrawingCanvas = ({
 
     // Terminar dibujo
     if (isDrawing && currentElement) {
-      // Para muros curvos, no crear automáticamente
-      if (activeTool === "curvedWall") {
-        return
-      }
-      
       // Validar que el elemento tenga dimensiones mínimas
       let isValidElement = true
-      
-      if (activeTool === "circle") {
-        isValidElement = currentElement.radius > 10
-      } else if (["zone", "seatRow", "exit", "stage"].includes(activeTool)) {
+
+      if (["zone", "seatRow", "exit", "stage"].includes(activeTool)) {
         isValidElement = currentElement.width > 10 && currentElement.height > 10
       } else if (activeTool === "wall") {
         const dx = currentElement.x2 - currentElement.x1
@@ -372,11 +379,11 @@ const DrawingCanvas = ({
         const length = Math.sqrt(dx * dx + dy * dy)
         isValidElement = length > 10
       }
-      
+
       if (isValidElement) {
         onCreate && onCreate(currentElement)
       }
-      
+
       setIsDrawing(false)
       setCurrentElement(null)
       setStartPoint(null)
@@ -385,15 +392,6 @@ const DrawingCanvas = ({
 
   const handleDoubleClick = (e) => {
     e.preventDefault()
-
-    if (isDrawing && activeTool === "curvedWall" && currentElement) {
-      if (currentElement.points.length >= 2) {
-        onCreate && onCreate(currentElement)
-      }
-      setIsDrawing(false)
-      setCurrentElement(null)
-      setStartPoint(null)
-    }
   }
 
   const handleWheel = (e) => {
@@ -427,9 +425,9 @@ const DrawingCanvas = ({
   const getDefaultFill = (type) => {
     switch (type) {
       case 'zone': return 'url(#zonePattern)'
+      case 'section': return 'url(#sectionGradient)'
       case 'seatRow': return 'url(#seatRowPattern)'
-      case 'stage': return 'url(#stagePattern)'
-      case 'circle': return '#f97316'
+      case 'stage': return 'url(#stageGradient)'
       case 'exit': return 'url(#exitPattern)'
       default: return 'transparent'
     }
@@ -438,9 +436,9 @@ const DrawingCanvas = ({
   const getDefaultStroke = (type) => {
     switch (type) {
       case 'zone': return '#3b82f6'
+      case 'section': return '#8b5cf6'
       case 'seatRow': return '#22c55e'
       case 'stage': return '#ef4444'
-      case 'circle': return '#f97316'
       case 'exit': return '#f59e0b'
       default: return '#000'
     }
@@ -449,6 +447,7 @@ const DrawingCanvas = ({
   const getCursor = () => {
     if (isPanning) return 'grabbing'
     if (isDragging) return 'grabbing'
+    if (isSeatSelectionMode) return 'pointer'
     if (activeTool === 'select' || !activeTool) return 'pointer'
     return 'crosshair'
   }
@@ -477,6 +476,10 @@ const DrawingCanvas = ({
           <pattern id="zonePattern" patternUnits="userSpaceOnUse" width="20" height="20">
             <circle cx="10" cy="10" r="2" fill="#3b82f6" opacity="0.3"/>
           </pattern>
+          <pattern id="sectionPattern" patternUnits="userSpaceOnUse" width="20" height="20">
+            <rect x="2" y="2" width="16" height="16" fill="#8b5cf6" opacity="0.3"/>
+            <rect x="6" y="6" width="8" height="8" fill="#8b5cf6" opacity="0.5"/>
+          </pattern>
           <pattern id="seatRowPattern" patternUnits="userSpaceOnUse" width="20" height="20">
             <rect x="5" y="5" width="10" height="10" fill="#22c55e" opacity="0.3"/>
           </pattern>
@@ -487,27 +490,154 @@ const DrawingCanvas = ({
           <pattern id="exitPattern" patternUnits="userSpaceOnUse" width="20" height="20">
             <polygon points="10,2 18,10 10,18 2,10" fill="#f59e0b" opacity="0.3"/>
           </pattern>
-          <pattern id="circlePattern" patternUnits="userSpaceOnUse" width="20" height="20">
-            <circle cx="10" cy="10" r="8" fill="#f97316" opacity="0.3"/>
-          </pattern>
+
+          <linearGradient id="sectionGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.8 }} />
+            <stop offset="100%" style={{ stopColor: '#a855f7', stopOpacity: 0.6 }} />
+          </linearGradient>
+
+          <linearGradient id="stageGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: '#ef4444', stopOpacity: 0.8 }} />
+            <stop offset="100%" style={{ stopColor: '#f87171', stopOpacity: 0.6 }} />
+          </linearGradient>
 
         </defs>
 
 
 
 
-        {elements.map((el) => (
-          <CanvasElement
-            key={el.id}
-            element={el}
-            isSelected={selectedElementId === el.id}
-            onSelect={onSelect}
-            onUpdate={onUpdate}
-            onDelete={onDelete}
-            units={units}
-            elements={elements}
-          />
-        ))}
+        {[...elements]
+          .sort((a, b) => {
+            // Render sections and zones last so they appear above other elements
+            const order = { section: 3, zone: 2, stage: 1 };
+            return (order[a.type] || 0) - (order[b.type] || 0);
+          })
+          .map((el) => (
+            <CanvasElement
+              key={el.id}
+              element={el}
+              isSelected={selectedElementId === el.id}
+              onSelect={onSelect}
+              onUpdate={onUpdate}
+              onDelete={onDelete}
+              units={units}
+              elements={elements}
+              onLabelEdit={onLabelEdit}
+              isSeatSelectionMode={isSeatSelectionMode}
+            />
+          ))}
+
+        {/* Renderizar asientos cuando está en modo selección */}
+        {isSeatSelectionMode && (
+          <>
+            {/* Asientos reales de la base de datos */}
+            {seats.map((seat) => {
+              const isSelected = selectedSeats.includes(seat.id)
+              const isOccupied = seat.status === 'OCCUPIED'
+              const isReserved = seat.status === 'RESERVED'
+
+              let fillColor = '#22c55e' // Verde para disponible
+              if (isSelected) fillColor = '#3b82f6' // Azul para seleccionado
+              else if (isOccupied) fillColor = '#ef4444' // Rojo para ocupado
+              else if (isReserved) fillColor = '#f59e0b' // Amarillo para reservado
+
+              return (
+                <g key={seat.id} data-seat-id={seat.id}>
+                  <rect
+                    x={seat.x - 15}
+                    y={seat.y - 15}
+                    width={30}
+                    height={30}
+                    fill={fillColor}
+                    stroke="#374151"
+                    strokeWidth={2}
+                    rx={4}
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                  />
+                  <text
+                    x={seat.x}
+                    y={seat.y + 4}
+                    textAnchor="middle"
+                    fontSize="12"
+                    fontWeight="bold"
+                    fill="white"
+                    pointerEvents="none"
+                  >
+                    {seat.seatNumber}
+                  </text>
+                  {isSelected && (
+                    <circle
+                      cx={seat.x + 8}
+                      cy={seat.y - 8}
+                      r={6}
+                      fill="#ffffff"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      className="pointer-events-none"
+                    />
+                  )}
+                </g>
+              )
+            })}
+
+            {/* Asientos generados por seatRow */}
+            {elements
+              .filter(el => el.type === 'seatRow' && el.seatPositions)
+              .map(el => el.seatPositions.map((seatPos, index) => {
+                const seatKey = `${el.id}-${index}`;
+                const isSelected = selectedSeatPositions.has(seatKey);
+                const isOccupied = seatPos.status === 'OCCUPIED';
+                const isReserved = seatPos.status === 'RESERVED';
+
+                let fillColor = '#22c55e'; // Verde para disponible
+                if (isSelected) fillColor = '#10b981'; // Verde más brillante para seleccionado
+                else if (isOccupied) fillColor = '#ef4444'; // Rojo para ocupado
+                else if (isReserved) fillColor = '#f59e0b'; // Amarillo para reservado
+
+                return (
+                  <g
+                    key={seatPos.id}
+                    data-seat-id={seatPos.id}
+                    onClick={() => onSeatPositionSelect && onSeatPositionSelect(el.id, index)}
+                    className="cursor-pointer"
+                  >
+                    <circle
+                      cx={seatPos.x}
+                      cy={seatPos.y}
+                      r={ELEMENT_CONSTANTS.CHAIR_RADIUS}
+                      fill={fillColor}
+                      stroke="#374151"
+                      strokeWidth={2}
+                      className="hover:opacity-80 transition-opacity"
+                    />
+                    <text
+                      x={seatPos.x}
+                      y={seatPos.y + 4}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fontWeight="bold"
+                      fill="white"
+                      pointerEvents="none"
+                    >
+                      {seatPos.row}{seatPos.seatNumber}
+                    </text>
+                    {isSelected && (
+                      <circle
+                        cx={seatPos.x + ELEMENT_CONSTANTS.CHAIR_RADIUS * 0.5}
+                        cy={seatPos.y - ELEMENT_CONSTANTS.CHAIR_RADIUS * 0.5}
+                        r={5}
+                        fill="#22c55e"
+                        stroke="#ffffff"
+                        strokeWidth={2}
+                        className="pointer-events-none"
+                      />
+                    )}
+                  </g>
+                );
+              }))
+            }
+          </>
+        )}
 
         {currentElement && (
           <CanvasElement
@@ -538,7 +668,8 @@ const DrawingCanvas = ({
       {/* Ayuda contextual */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg shadow-md border border-blue-200">
         <div className="text-sm text-center">
-          {activeTool === 'select' ? '🖱️ Selecciona y arrastra elementos | Ctrl+Z/Y deshacer/rehacer | Ctrl+C/V copiar/pegar | Delete eliminar' :
+          {isSeatSelectionMode ? '🎯 Haz clic en asientos individuales para seleccionar/deseleccionar | Clic derecho pan | Rueda zoom' :
+           activeTool === 'select' ? '🖱️ Selecciona y arrastra elementos | Ctrl+Z/Y deshacer/rehacer | Ctrl+C/V copiar/pegar | Delete eliminar' :
            '🎨 Haz clic para colocar elementos | Clic derecho pan | Rueda zoom | Ctrl+Z deshacer'}
         </div>
       </div>

@@ -95,7 +95,7 @@ const EventManagement = () => {
                 <Users className="w-8 h-8 text-green-400" />
                 <div>
                   <p className="text-2xl font-bold">
-                    {events.filter(e => new Date(e.eventDate) > new Date()).length}
+                    {events.filter(e => new Date(e.startDate) > new Date()).length}
                   </p>
                   <p className="text-gray-400 text-sm">Próximos</p>
                 </div>
@@ -106,7 +106,7 @@ const EventManagement = () => {
                 <MapPin className="w-8 h-8 text-blue-400" />
                 <div>
                   <p className="text-2xl font-bold">
-                    {new Set(events.map(e => e.location?.city)).size}
+                    {new Set(events.map(e => e.locationID?.address?.city?.name)).size}
                   </p>
                   <p className="text-gray-400 text-sm">Ciudades</p>
                 </div>
@@ -117,7 +117,7 @@ const EventManagement = () => {
                 <Settings className="w-8 h-8 text-orange-400" />
                 <div>
                   <p className="text-2xl font-bold">
-                    {events.filter(e => e.eventLayout).length}
+                    {events.filter(e => e.eventLayout || e.locationID).length}
                   </p>
                   <p className="text-gray-400 text-sm">Con Maquetación</p>
                 </div>
@@ -151,15 +151,15 @@ const EventManagement = () => {
                   <div key={event.id} className="p-6 hover:bg-gray-700/50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold mb-2">{event.name}</h3>
+                        <h3 className="text-lg font-semibold mb-2">{event.eventName}</h3>
                         <div className="flex items-center gap-4 text-sm text-gray-400">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            {event.eventDate ? new Date(event.eventDate).toLocaleDateString() : 'Fecha no definida'}
+                            {event.startDate ? new Date(event.startDate).toLocaleDateString() : 'Fecha no definida'}
                           </span>
                           <span className="flex items-center gap-1">
                             <MapPin className="w-4 h-4" />
-                            {event.location?.city || 'Ubicación no definida'}
+                            {event.locationID?.address?.city?.name || event.locationID?.name || 'Ubicación no definida'}
                           </span>
                         </div>
                         <p className="text-gray-300 mt-2">{event.description}</p>

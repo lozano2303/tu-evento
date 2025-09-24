@@ -106,9 +106,166 @@ const TuEvento = () => {
 
   return (
     <div className="min-h-screen text-white" style={{ backgroundColor: '#1a1a1a' }}>
-      
-      {/* Hero Section con Sistema de Filtros */}
-      <section className="relative h-140">
+
+      {/* SISTEMA DE FILTROS - Barra morada arriba debajo de la nav */}
+      <div className="bg-purple-900/95 backdrop-blur-sm border-b border-purple-700">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
+
+            {/* Buscar */}
+            <div className="relative">
+              <div className="flex items-center bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 hover:border-purple-400 transition-colors">
+                <Search className="w-4 h-4 text-purple-200 mr-2" />
+                <input
+                  type="text"
+                  placeholder="Buscar eventos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="bg-transparent text-white placeholder-purple-200 outline-none w-48"
+                />
+              </div>
+            </div>
+
+            {/* Ciudad */}
+            <div className="relative" ref={cityRef}>
+              <button
+                onClick={() => setShowCityDropdown(!showCityDropdown)}
+                className="flex items-center bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 hover:border-purple-400 transition-colors text-white"
+              >
+                <span className="mr-2">🏙️</span>
+                <span>{selectedCity}</span>
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </button>
+              {showCityDropdown && (
+                <div className="absolute top-full mt-2 bg-purple-900 border border-purple-600 rounded-lg shadow-xl z-50 w-48 max-h-48 overflow-y-auto">
+                  {colombianCities.map((city) => (
+                    <button
+                      key={city}
+                      onClick={() => {
+                        setSelectedCity(city);
+                        setShowCityDropdown(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-white hover:bg-purple-700 transition-colors"
+                    >
+                      {city}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Día */}
+            <div className="relative" ref={dayRef}>
+              <button
+                onClick={() => setShowDayDropdown(!showDayDropdown)}
+                className="flex items-center bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 hover:border-purple-400 transition-colors text-white"
+              >
+                <span className="mr-2">📅</span>
+                <span>{selectedDay}</span>
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </button>
+              {showDayDropdown && (
+                <div className="absolute top-full mt-2 bg-purple-900 border border-purple-600 rounded-lg shadow-xl z-50 w-40">
+                  {daysOfWeek.map((day) => (
+                    <button
+                      key={day}
+                      onClick={() => {
+                        setSelectedDay(day);
+                        setShowDayDropdown(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-white hover:bg-purple-700 transition-colors"
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Orden */}
+            <div className="relative" ref={orderRef}>
+              <button
+                onClick={() => setShowOrderDropdown(!showOrderDropdown)}
+                className="flex items-center bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 hover:border-purple-400 transition-colors text-white"
+              >
+                <span className="mr-2">🔄</span>
+                <span>{selectedOrder}</span>
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </button>
+              {showOrderDropdown && (
+                <div className="absolute top-full mt-2 bg-purple-900 border border-purple-600 rounded-lg shadow-xl z-50 w-44">
+                  {orderOptions.map((order) => (
+                    <button
+                      key={order}
+                      onClick={() => {
+                        setSelectedOrder(order);
+                        setShowOrderDropdown(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-white hover:bg-purple-700 transition-colors"
+                    >
+                      {order}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Categorías */}
+            <div className="relative" ref={categoryRef}>
+              <button
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className="flex items-center bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 hover:border-purple-400 transition-colors text-white"
+              >
+                <span className="mr-2">🏷️</span>
+                <span>{selectedCategory}</span>
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </button>
+              {showCategoryDropdown && (
+                <div className="absolute top-full mt-2 bg-purple-900 border border-purple-600 rounded-lg shadow-xl z-50 w-44">
+                  {eventCategories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => {
+                        setSelectedCategory(category);
+                        setShowCategoryDropdown(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-white hover:bg-purple-700 transition-colors"
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Próximos */}
+            <button
+              onClick={() => setActiveFilter('Próximos')}
+              className={`flex items-center bg-purple-800/50 rounded-full px-4 py-2 border transition-colors text-white ${
+                activeFilter === 'Próximos'
+                  ? 'border-purple-400 bg-purple-500/30'
+                  : 'border-purple-600 hover:border-purple-400'
+              }`}
+            >
+              <span className="mr-2">⏰</span>
+              <span>Próximos</span>
+            </button>
+
+            {/* Filtrar */}
+            <button
+              onClick={handleFilter}
+              className="flex items-center bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 hover:border-purple-400 transition-colors text-white"
+            >
+              <span className="mr-2">🔍</span>
+              <span>Filtrar</span>
+            </button>
+
+          </div>
+        </div>
+      </div>
+
+      {/* Hero Section */}
+      <section className="relative h-96">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
@@ -121,165 +278,6 @@ const TuEvento = () => {
             background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.7) 0%, rgba(168, 85, 247, 0.6) 25%, rgba(217, 70, 239, 0.5) 50%, rgba(236, 72, 153, 0.4) 75%, rgba(219, 39, 119, 0.3) 100%)'
           }}
         />
-        
-        {/* SISTEMA DE FILTROS - Barra horizontal en la PARTE SUPERIOR */}
-        <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10">
-          <div className="bg-purple-800/90 backdrop-blur-md rounded-full border border-purple-600/50 shadow-xl">
-            <div className="px-6 py-3">
-              <div className="flex items-center justify-center gap-3">
-
-                {/* Buscar */}
-                <div className="relative">
-                  <div className="flex items-center bg-purple-700/40 rounded-full px-3 py-1.5 border border-purple-600/30 hover:border-purple-500/50 transition-colors">
-                    <Search className="w-3 h-3 text-gray-300 mr-2" />
-                    <input
-                      type="text"
-                      placeholder="Buscar..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="bg-transparent text-white placeholder-gray-400 outline-none w-24 text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* Ciudad */}
-                <div className="relative" ref={cityRef}>
-                  <button
-                    onClick={() => setShowCityDropdown(!showCityDropdown)}
-                    className="flex items-center bg-purple-700/40 rounded-full px-3 py-1.5 border border-purple-600/30 hover:border-purple-500/50 transition-colors text-white text-sm"
-                  >
-                    <span className="mr-1">🏙️</span>
-                    <span>{selectedCity}</span>
-                    <ChevronDown className="w-3 h-3 ml-1" />
-                  </button>
-                  {showCityDropdown && (
-                    <div className="absolute top-full mt-2 bg-purple-800/95 backdrop-blur-md border border-purple-600 rounded-xl shadow-xl z-50 w-36 max-h-32 overflow-y-auto">
-                      {colombianCities.map((city) => (
-                        <button
-                          key={city}
-                          onClick={() => {
-                            setSelectedCity(city);
-                            setShowCityDropdown(false);
-                          }}
-                          className="w-full text-left px-3 py-1.5 text-white hover:bg-purple-600 transition-colors text-sm first:rounded-t-xl last:rounded-b-xl"
-                        >
-                          {city}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Día */}
-                <div className="relative" ref={dayRef}>
-                  <button
-                    onClick={() => setShowDayDropdown(!showDayDropdown)}
-                    className="flex items-center bg-purple-700/40 rounded-full px-3 py-1.5 border border-purple-600/30 hover:border-purple-500/50 transition-colors text-white text-sm"
-                  >
-                    <span className="mr-1">📅</span>
-                    <span>{selectedDay}</span>
-                    <ChevronDown className="w-3 h-3 ml-1" />
-                  </button>
-                  {showDayDropdown && (
-                    <div className="absolute top-full mt-2 bg-purple-800/95 backdrop-blur-md border border-purple-600 rounded-xl shadow-xl z-50 w-32">
-                      {daysOfWeek.map((day) => (
-                        <button
-                          key={day}
-                          onClick={() => {
-                            setSelectedDay(day);
-                            setShowDayDropdown(false);
-                          }}
-                          className="w-full text-left px-3 py-1.5 text-white hover:bg-purple-600 transition-colors text-sm first:rounded-t-xl last:rounded-b-xl"
-                        >
-                          {day}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Orden */}
-                <div className="relative" ref={orderRef}>
-                  <button
-                    onClick={() => setShowOrderDropdown(!showOrderDropdown)}
-                    className="flex items-center bg-purple-700/40 rounded-full px-3 py-1.5 border border-purple-600/30 hover:border-purple-500/50 transition-colors text-white text-sm"
-                  >
-                    <span className="mr-1">🔄</span>
-                    <span className="truncate max-w-20">{selectedOrder}</span>
-                    <ChevronDown className="w-3 h-3 ml-1" />
-                  </button>
-                  {showOrderDropdown && (
-                    <div className="absolute top-full mt-2 bg-purple-800/95 backdrop-blur-md border border-purple-600 rounded-xl shadow-xl z-50 w-36">
-                      {orderOptions.map((order) => (
-                        <button
-                          key={order}
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setShowOrderDropdown(false);
-                          }}
-                          className="w-full text-left px-3 py-1.5 text-white hover:bg-purple-600 transition-colors text-sm first:rounded-t-xl last:rounded-b-xl"
-                        >
-                          {order}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Categorías */}
-                <div className="relative" ref={categoryRef}>
-                  <button
-                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                    className="flex items-center bg-purple-700/40 rounded-full px-3 py-1.5 border border-purple-600/30 hover:border-purple-500/50 transition-colors text-white text-sm"
-                  >
-                    <span className="mr-1">🏷️</span>
-                    <span>{selectedCategory}</span>
-                    <ChevronDown className="w-3 h-3 ml-1" />
-                  </button>
-                  {showCategoryDropdown && (
-                    <div className="absolute top-full mt-2 bg-purple-800/95 backdrop-blur-md border border-purple-600 rounded-xl shadow-xl z-50 w-32">
-                      {eventCategories.map((category) => (
-                        <button
-                          key={category}
-                          onClick={() => {
-                            setSelectedCategory(category);
-                            setShowCategoryDropdown(false);
-                          }}
-                          className="w-full text-left px-3 py-1.5 text-white hover:bg-purple-600 transition-colors text-sm first:rounded-t-xl last:rounded-b-xl"
-                        >
-                          {category}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Próximos */}
-                <button
-                  onClick={() => setActiveFilter('Próximos')}
-                  className={`flex items-center rounded-full px-3 py-1.5 border transition-colors text-white text-sm ${
-                    activeFilter === 'Próximos'
-                      ? 'border-purple-400 bg-purple-500/30'
-                      : 'bg-purple-700/40 border-purple-600/30 hover:border-purple-500/50'
-                  }`}
-                >
-                  <span className="mr-1">⏰</span>
-                  <span>Próximos</span>
-                </button>
-
-                {/* Filtrar */}
-                <button
-                  onClick={handleFilter}
-                  className="flex items-center bg-purple-700/40 rounded-full px-3 py-1.5 border border-purple-600/30 hover:border-purple-500/50 transition-colors text-white text-sm"
-                >
-                  <span className="mr-1">🔍</span>
-                  <span>Filtrar</span>
-                </button>
-
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* Contenido principal */}

@@ -48,7 +48,10 @@ public class SeatServiceImpl implements SeatService {
             seat.setSectionID(sectionOpt.get());
             seat.setEventLayoutID(eventLayoutOpt.get());
             seat.setSeatNumber(seatDto.getSeatNumber());
-            seat.setStatus(seatDto.isStatus()); // ← ahora configurable desde el DTO
+            seat.setRow(seatDto.getRow());
+            seat.setX(seatDto.getX());
+            seat.setY(seatDto.getY());
+            seat.setStatus("AVAILABLE".equals(seatDto.getStatus()) ? false : true); // Convert string to boolean
 
             seatRepository.save(seat);
 
@@ -56,7 +59,10 @@ public class SeatServiceImpl implements SeatService {
                 seat.getSectionID().getSectionID(),
                 seat.getEventLayoutID().getId(),
                 seat.getSeatNumber(),
-                seat.isStatus()
+                seat.getRow(),
+                seat.getX(),
+                seat.getY(),
+                seat.isStatus() ? "OCCUPIED" : "AVAILABLE"
             );
             return ResponseDto.ok("Asiento insertado correctamente", responseDto);
         } catch (DataAccessException e) {
@@ -89,7 +95,10 @@ public class SeatServiceImpl implements SeatService {
             seat.setSectionID(sectionOpt.get());
             seat.setEventLayoutID(eventLayoutOpt.get());
             seat.setSeatNumber(seatDto.getSeatNumber());
-            seat.setStatus(seatDto.isStatus()); // ← actualizar estado también
+            seat.setRow(seatDto.getRow());
+            seat.setX(seatDto.getX());
+            seat.setY(seatDto.getY());
+            seat.setStatus("AVAILABLE".equals(seatDto.getStatus()) ? false : true);
 
             seatRepository.save(seat);
             return ResponseDto.ok("Asiento actualizado correctamente");
@@ -131,7 +140,10 @@ public class SeatServiceImpl implements SeatService {
                         seat.getSectionID().getSectionID(),
                         seat.getEventLayoutID().getId(),
                         seat.getSeatNumber(),
-                        seat.isStatus()
+                        seat.getRow(),
+                        seat.getX(),
+                        seat.getY(),
+                        seat.isStatus() ? "OCCUPIED" : "AVAILABLE"
                 ))
                 .collect(Collectors.toList());
 
@@ -150,7 +162,10 @@ public class SeatServiceImpl implements SeatService {
                 seat.getSectionID().getSectionID(),
                 seat.getEventLayoutID().getId(),
                 seat.getSeatNumber(),
-                seat.isStatus()
+                seat.getRow(),
+                seat.getX(),
+                seat.getY(),
+                seat.isStatus() ? "OCCUPIED" : "AVAILABLE"
         );
 
         return ResponseDto.ok("Asiento encontrado", seatDto);

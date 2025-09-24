@@ -21,17 +21,29 @@ public class Seat {
     @Column(name="seatNumber", nullable=false)
     private int seatNumber;
 
+    @Column(name="row", nullable=false)
+    private String row;
+
+    @Column(name="x", precision = 10, scale = 3)
+    private double x;
+
+    @Column(name="y", precision = 10, scale = 3)
+    private double y;
+
     @Column(name="status",nullable=false, columnDefinition= "boolean default false")
     private boolean status;
 
     public Seat() {
     }
 
-    public Seat(int seatID, Section sectionID, EventLayout eventLayoutID, int seatNumber, boolean status) {
+    public Seat(int seatID, Section sectionID, EventLayout eventLayoutID, int seatNumber, String row, double x, double y, boolean status) {
         this.seatID = seatID;
         this.sectionID = sectionID;
         this.eventLayoutID = eventLayoutID;
         this.seatNumber = seatNumber;
+        this.row = row;
+        this.x = x;
+        this.y = y;
         this.status = status;
     }
 
@@ -65,6 +77,30 @@ public class Seat {
 
     public void setSeatNumber(int seatNumber) {
         this.seatNumber = seatNumber;
+    }
+
+    public String getRow() {
+        return row;
+    }
+
+    public void setRow(String row) {
+        this.row = row;
+    }
+
+    public double getX() {
+        return x;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
     }
 
     public boolean isStatus() {

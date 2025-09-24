@@ -2,22 +2,20 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MousePointer,
-  Square, 
-  Undo, 
-  Redo, 
-  Download, 
-  Upload, 
-  Trash2, 
-  Home, 
+  Square,
+  Undo,
+  Redo,
+  Download,
+  Upload,
+  Trash2,
+  Home,
   Calendar,
-  Circle,
   DoorOpen,
   LogOut,
   Ruler,
   Theater,
-  Sofa,          
-  Grid3x3,       
-  Sliders        
+  Sofa,
+  Grid3x3
 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 
@@ -25,7 +23,11 @@ import useHistory from './Hooks/useHistory';
 import useDragAndDrop from './Hooks/useDragAndDrop';
 import DrawingCanvas from '../DrawingCanvas';
 import { MapProvider, useMapState, useMapDispatch } from '../context/MapContext';
-import { saveEventLayout, getEventLayout } from '../../services/EventLayoutService.js';
+import { saveEventLayout, getEventLayoutByEventId, hasEventLayout, updateEventLayout } from '../../services/EventLayoutService.js';
+import { createSection, getAllSections } from '../../services/SectionService.js';
+import { createSeat, getSeatsBySection, updateSeatStatus } from '../../services/SeatService.js';
+import { createTicketWithSeats } from '../../services/TicketService.js';
+import { concertLayout, loadConcertLayout } from './ConcertLayout';
 
 const TopNavbar = ({ onExport, onImport, onUploadEvent, onLoadLayout, onGoHome, onGoToEvents }) => {
   return (
@@ -68,18 +70,17 @@ const TopNavbar = ({ onExport, onImport, onUploadEvent, onLoadLayout, onGoHome, 
   );
 };
 
-const ToolPanel = ({ activeTool, setActiveTool, onUndo, onRedo, canUndo, canRedo, onAddSample }) => {
+const ToolPanel = ({ activeTool, setActiveTool, onUndo, onRedo, canUndo, canRedo, onAddSample, onLoadConcert }) => {
 const tools = [
   { id: 'select', icon: MousePointer, label: 'Seleccionar' },
   { id: 'wall', icon: Ruler, label: 'Pared' },
   { id: 'zone', icon: Square, label: 'Zona' },
+  { id: 'section', icon: Grid3x3, label: 'Sección' },
   { id: 'stage', icon: Theater, label: 'Escenario' },
-  { id: 'circle', icon: Circle, label: 'Círculo' },
   { id: 'chair', icon: Sofa, label: 'Silla' },
   { id: 'seatRow', icon: Grid3x3, label: 'Fila de sillas' },
   { id: 'door', icon: DoorOpen, label: 'Puerta' },
-  { id: 'exit', icon: LogOut, label: 'Salida' },
-  { id: 'curvedWall', icon: Sliders, label: 'Pared curva' }  
+  { id: 'exit', icon: LogOut, label: 'Salida' }
 ];
 
   return (
@@ -119,11 +120,17 @@ const tools = [
           >
             <Redo size={16} className="mr-2" /> Rehacer
           </button>
-          <button 
-            onClick={onAddSample} 
+          <button
+            onClick={onAddSample}
             className="w-full flex items-center p-2 rounded text-sm hover:bg-gray-50"
           >
             <Square size={16} className="mr-2" /> Añadir ejemplo
+          </button>
+          <button
+            onClick={onLoadConcert}
+            className="w-full flex items-center p-2 rounded text-sm hover:bg-gray-50"
+          >
+            <Theater size={16} className="mr-2" /> Plantilla Concierto
           </button>
         </div>
       </div>
@@ -238,24 +245,6 @@ const PropertiesPanel = ({ selectedElement, onUpdate, onDelete, units, setUnits 
               </div>
             ))}
           </>
-        ) : selectedElement.type === 'circle' ? (
-          <>
-            {['x','y','radius'].map((prop, idx) => (
-              <div key={idx}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {prop === 'x' ? 'Posición X' :
-                   prop === 'y' ? 'Posición Y' :
-                   prop === 'radius' ? 'Radio' : ''}
-                </label>
-                <input
-                  type="text"
-                  value={inputValues[prop] || ''}
-                  onChange={(e) => handleInputChange(prop, e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded text-sm"
-                />
-              </div>
-            ))}
-          </>
         ) : (
           <>
             {['x','y','width','height'].map((prop, idx) => (
@@ -274,6 +263,35 @@ const PropertiesPanel = ({ selectedElement, onUpdate, onDelete, units, setUnits 
                 />
               </div>
             ))}
+          </>
+        )}
+
+        {selectedElement.type === 'section' && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Sección</label>
+              <input
+                type="text"
+                value={selectedElement.meta?.label || ''}
+                onChange={(e) => onUpdate(selectedElement.id, { meta: { ...selectedElement.meta, label: e.target.value } })}
+                className="w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Ej: VIP, General"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+              <select
+                value={selectedElement.meta?.category || 'General'}
+                onChange={(e) => onUpdate(selectedElement.id, { meta: { ...selectedElement.meta, category: e.target.value } })}
+                className="w-full p-2 border border-gray-300 rounded text-sm"
+              >
+                <option value="General">General</option>
+                <option value="VIP">VIP</option>
+                <option value="Premium">Premium</option>
+                <option value="Estudiante">Estudiante</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
           </>
         )}
 
@@ -310,6 +328,22 @@ const FloorPlanDesignerInner = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const eventId = urlParams.get('eventId');
 
+  // Validate eventId on component load
+  useEffect(() => {
+    if (!eventId) {
+      navigate('/event-management');
+      return;
+    }
+
+    const parsedId = parseInt(eventId);
+    if (isNaN(parsedId) || parsedId <= 0) {
+      navigate('/event-management');
+      return;
+    }
+
+    console.log('FloorPlanDesigner loaded for eventId:', parsedId);
+  }, [eventId, navigate]);
+
   const historyWrapper = useHistory(elements || []);
 
   const pushSnapshot = (newElements) => {
@@ -335,11 +369,23 @@ const FloorPlanDesignerInner = () => {
   const [clipboard, setClipboard] = useState(null);
   const [showGuide, setShowGuide] = useState(false);
   const [showMeasurements, setShowMeasurements] = useState(true);
+  const [isSeatSelectionMode, setIsSeatSelectionMode] = useState(false);
+  const [seats, setSeats] = useState([]);
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [selectedSeatPositions, setSelectedSeatPositions] = useState(new Set());
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [editingLabelId, setEditingLabelId] = useState(null);
+  const [labelInput, setLabelInput] = useState('');
 
   // Load existing layout for the event when component mounts
   useEffect(() => {
-    if (eventId) {
+    if (eventId && !isNaN(parseInt(eventId))) {
       loadLayoutFromBackend(eventId);
+    } else if (!eventId) {
+      console.warn('FloorPlanDesigner: No eventId provided in URL parameters');
+    } else {
+      console.error('FloorPlanDesigner: Invalid eventId:', eventId);
     }
   }, [eventId]);
 
@@ -364,6 +410,9 @@ const FloorPlanDesignerInner = () => {
           y: seatY,
           fill: 'transparent',
           stroke: '#6b7280',
+          row: String.fromCharCode(65 + row), // A, B, C, etc.
+          seatNumber: col + 1,
+          status: 'AVAILABLE',
           meta: {
             label: sectionName ?
               `${sectionName} F${row + 1} A${col + 1}` :
@@ -463,12 +512,12 @@ const FloorPlanDesignerInner = () => {
         's': 'select',
         'w': 'wall',
         'z': 'zone',
+        'n': 'section',
         't': 'stage',
         'c': 'chair',
         'r': 'seatRow',
         'd': 'door',
-        'e': 'exit',
-        'u': 'curvedWall'
+        'e': 'exit'
       }
 
       if (toolShortcuts[e.key.toLowerCase()]) {
@@ -490,6 +539,16 @@ const FloorPlanDesignerInner = () => {
       if (e.ctrlKey && e.key === 'y') {
         e.preventDefault()
         redo()
+        return
+      }
+      if (e.key === '+') {
+        e.preventDefault()
+        setZoom(prev => Math.min(4, prev + 0.2))
+        return
+      }
+      if (e.key === '-') {
+        e.preventDefault()
+        setZoom(prev => Math.max(0.2, prev - 0.2))
         return
       }
       if (e.ctrlKey && e.key === 'c' && selectedId) {
@@ -575,62 +634,141 @@ const FloorPlanDesignerInner = () => {
 
   const addSample = () => {
     const sample = [
-      { id: nanoid(), type: 'zone', x: 300, y: 200, width: 400, height: 200 },
+      // Stage
+      { id: nanoid(), type: 'stage', x: 500, y: 100, width: 200, height: 50, meta: { label: 'Escenario' } },
+      // Sections
+      { id: nanoid(), type: 'section', x: 300, y: 250, width: 150, height: 100, meta: { label: 'VIP', category: 'VIP' } },
+      { id: nanoid(), type: 'section', x: 500, y: 250, width: 150, height: 100, meta: { label: 'General', category: 'General' } },
+      { id: nanoid(), type: 'section', x: 700, y: 250, width: 150, height: 100, meta: { label: 'Estudiante', category: 'Estudiante' } },
+      // Seat rows
+      { id: nanoid(), type: 'seatRow', x: 300, y: 300, width: 120, height: 20, meta: { label: 'Fila VIP', row: 'A' } },
+      { id: nanoid(), type: 'seatRow', x: 500, y: 300, width: 120, height: 20, meta: { label: 'Fila General', row: 'B' } },
+      { id: nanoid(), type: 'seatRow', x: 700, y: 300, width: 120, height: 20, meta: { label: 'Fila Estudiante', row: 'C' } },
     ];
     pushSnapshot([...(elements || []), ...sample]);
   };
 
-  const saveLayoutToBackend = async (layoutName) => {
-    try {
-      const layoutData = {
-        name: eventId ? `event_${eventId}` : layoutName,
-        elements: elements,
-        exportedAt: new Date().toISOString()
-      };
+  const loadConcertSample = () => {
+    loadConcertLayout(dispatch, historyWrapper);
+  };
 
-      const result = await saveEventLayout(layoutData);
-      if (result.success) {
-        alert(eventId ? 'Layout del evento guardado exitosamente' : 'Layout guardado exitosamente en el backend');
+  const saveLayoutToBackend = async (layoutName) => {
+    // Validate that we have a valid eventId
+    if (!eventId || isNaN(parseInt(eventId))) {
+      console.error('Error: ID de evento no válido. Debe acceder al diseñador desde la gestión de eventos.');
+      return;
+    }
+
+    try {
+      // Extract sections from elements
+      const sections = elements.filter(el => el.type === 'section').map(section => ({
+        eventId: parseInt(eventId),
+        sectionName: section.meta?.label || 'Sección'
+      }));
+
+      // Save sections
+      for (const section of sections) {
+        await createSection(section);
+      }
+
+      // Check if layout exists
+      const hasLayoutResult = await hasEventLayout(eventId);
+      let eventLayoutID;
+
+      if (hasLayoutResult.success && hasLayoutResult.data) {
+        // Layout exists, get its ID and update
+        const existingLayoutResult = await getEventLayoutByEventId(eventId);
+        if (existingLayoutResult.success) {
+          eventLayoutID = existingLayoutResult.data.eventLayoutID;
+          // Update the layout
+          const updateData = {
+            layoutData: {
+              elements: elements,
+              exportedAt: new Date().toISOString(),
+              name: `event_${eventId}`
+            }
+          };
+          const updateResult = await updateEventLayout(eventLayoutID, updateData);
+          if (!updateResult.success) {
+            console.error('Error al actualizar el layout: ' + (updateResult.message || 'Error desconocido'));
+            return;
+          }
+          alert('Layout actualizado con éxito');
+        } else {
+          throw new Error('Error getting existing layout: ' + (existingLayoutResult.message || 'Unknown error'));
+        }
       } else {
-        alert('Error guardando layout: ' + (result.message || 'Error desconocido'));
+        // Create new layout
+        const layoutData = {
+          eventId: parseInt(eventId), // Event ID as number
+          layoutData: {
+            elements: elements,
+            exportedAt: new Date().toISOString(),
+            name: `event_${eventId}`
+          }
+          // createdAt will be set by backend
+        };
+
+        const layoutResult = await saveEventLayout(layoutData);
+        if (!layoutResult.success) {
+          console.error('Error al guardar el layout: ' + (layoutResult.message || 'Error desconocido'));
+          return;
+        }
+
+        eventLayoutID = layoutResult.data.eventLayoutID; // Use the correct field name
+        alert('Layout creado con éxito');
+      }
+
+      // Extract seats from seatRows
+      const seatRows = elements.filter(el => el.type === 'seatRow');
+      for (const row of seatRows) {
+        if (row.seatPositions) {
+          for (const seat of row.seatPositions) {
+            const seatData = {
+              sectionId: 1, // TODO: Associate with actual section
+              eventLayoutID: eventLayoutID,
+              seatNumber: seat.seatNumber,
+              row: seat.row,
+              x: Math.round(seat.x),
+              y: Math.round(seat.y),
+              status: seat.status || 'AVAILABLE'
+            };
+            await createSeat(seatData);
+          }
+        }
       }
     } catch (error) {
       console.error('Error saving layout to backend:', error);
-      alert('Error de conexión al guardar layout');
     }
   };
 
-  const loadLayoutFromBackend = async (layoutName) => {
+  const loadLayoutFromBackend = async (eventIdParam) => {
+    if (!eventIdParam || isNaN(parseInt(eventIdParam))) {
+      console.error('loadLayoutFromBackend: Invalid eventIdParam:', eventIdParam);
+      return;
+    }
+
     try {
-      const result = await getEventLayout(layoutName);
-      if (result.success && result.data.elements) {
-        dispatch({ type: 'SET_ELEMENTS', payload: result.data.elements });
-        historyWrapper.pushState(result.data.elements);
-        if (!eventId) {
-          alert('Layout cargado exitosamente desde el backend');
-        }
+      const result = await getEventLayoutByEventId(eventIdParam);
+      if (result.success && result.data && result.data.layoutData && result.data.layoutData.elements) {
+        dispatch({ type: 'SET_ELEMENTS', payload: result.data.layoutData.elements });
+        historyWrapper.pushState(result.data.layoutData.elements);
+        console.log('Layout cargado exitosamente desde el backend para evento:', eventIdParam);
       } else {
-        if (!eventId) {
-          alert('Error cargando layout: ' + (result.message || 'Layout no encontrado'));
-        }
-        // If loading for eventId, don't show error if layout doesn't exist (it's normal for new events)
+        console.log('No se encontró layout existente para el evento:', eventIdParam, '- Esto es normal para eventos nuevos');
+        // Don't show error for new events without layouts
       }
     } catch (error) {
       console.error('Error loading layout from backend:', error);
-      if (!eventId) {
-        alert('Error de conexión al cargar layout');
-      }
+      // Don't show user-facing error for loading failures on component mount
     }
   };
 
   const onLoadLayout = () => {
     if (eventId) {
-      loadLayoutFromBackend(`event_${eventId}`);
+      loadLayoutFromBackend(eventId);
     } else {
-      const layoutName = prompt('Ingrese el nombre del layout a cargar:');
-      if (layoutName && layoutName.trim()) {
-        loadLayoutFromBackend(layoutName.trim());
-      }
+      alert('Para cargar layouts, debe estar en el contexto de un evento específico.');
     }
   };
 
@@ -653,6 +791,142 @@ const FloorPlanDesignerInner = () => {
     navigate('/events');
   };
 
+  const handleLabelEdit = (elementId) => {
+    const element = elements.find(el => el.id === elementId);
+    if (element) {
+      setEditingLabelId(elementId);
+      setLabelInput(element.meta?.label || '');
+    }
+  };
+
+  const saveLabel = () => {
+    if (editingLabelId) {
+      handleUpdate(editingLabelId, { meta: { ...elements.find(el => el.id === editingLabelId)?.meta, label: labelInput } });
+      setEditingLabelId(null);
+      setLabelInput('');
+    }
+  };
+
+  const cancelLabelEdit = () => {
+    setEditingLabelId(null);
+    setLabelInput('');
+  };
+
+  const handleSeatPositionSelect = (seatRowId, seatIndex) => {
+    const seatKey = `${seatRowId}-${seatIndex}`;
+    const newSelected = new Set(selectedSeatPositions);
+
+    if (newSelected.has(seatKey)) {
+      newSelected.delete(seatKey);
+    } else {
+      newSelected.add(seatKey);
+    }
+
+    setSelectedSeatPositions(newSelected);
+
+    // Update the seatRow element with selected positions
+    const seatRow = elements.find(el => el.id === seatRowId);
+    if (seatRow && seatRow.seatPositions) {
+      const updatedPositions = seatRow.seatPositions.map((pos, idx) => ({
+        ...pos,
+        status: newSelected.has(`${seatRowId}-${idx}`) ? 'RESERVED' : 'AVAILABLE'
+      }));
+
+      handleUpdate(seatRowId, { seatPositions: updatedPositions });
+    }
+  };
+
+  const handleSeatSelect = async (seatId) => {
+    const seat = seats.find(s => s.id === seatId);
+    if (!seat) return;
+
+    if (selectedSeats.includes(seatId)) {
+      // Deseleccionar
+      setSelectedSeats(prev => prev.filter(id => id !== seatId));
+    } else {
+      // Seleccionar y reservar
+      try {
+        await updateSeatStatus(seatId, 'RESERVED');
+        setSelectedSeats(prev => [...prev, seatId]);
+        // Actualizar el estado del asiento localmente
+        setSeats(prev => prev.map(s => s.id === seatId ? { ...s, status: 'RESERVED' } : s));
+      } catch (error) {
+        console.error('Error reservando asiento:', error);
+        alert('Error al reservar el asiento');
+      }
+    }
+  };
+
+  const loadSeatsForEvent = async () => {
+    if (!eventId) return;
+    try {
+      // Cargar secciones primero
+      const sectionsResult = await getAllSections();
+      if (sectionsResult.success) {
+        const eventSections = sectionsResult.data.filter(s => s.eventId === parseInt(eventId));
+        // Para cada sección, cargar asientos
+        const allSeats = [];
+        for (const section of eventSections) {
+          const seatsResult = await getSeatsBySection(section.id);
+          if (seatsResult.success) {
+            allSeats.push(...seatsResult.data);
+          }
+        }
+        setSeats(allSeats);
+      }
+    } catch (error) {
+      console.error('Error cargando asientos:', error);
+    }
+  };
+
+  const handlePurchaseSeats = async () => {
+    if (selectedSeats.length === 0) return;
+
+    try {
+      const ticketData = {
+        eventId: parseInt(eventId),
+        seatIds: selectedSeats
+      };
+
+      const result = await createTicketWithSeats(ticketData);
+      if (result.success) {
+        alert('Compra exitosa! Ticket creado.');
+        // Cambiar estado de asientos a OCCUPIED
+        for (const seatId of selectedSeats) {
+          await updateSeatStatus(seatId, 'OCCUPIED');
+        }
+        // Actualizar estado local
+        setSeats(prev => prev.map(s => selectedSeats.includes(s.id) ? { ...s, status: 'OCCUPIED' } : s));
+        setSelectedSeats([]);
+      } else {
+        alert('Error en la compra: ' + (result.message || 'Error desconocido'));
+      }
+    } catch (error) {
+      console.error('Error comprando asientos:', error);
+      alert('Error de conexión al comprar asientos');
+    }
+  };
+
+  // Cargar asientos cuando se activa el modo selección
+  useEffect(() => {
+    if (isSeatSelectionMode) {
+      loadSeatsForEvent();
+    }
+  }, [isSeatSelectionMode, eventId]);
+
+  // Polling para actualizaciones en tiempo real
+  useEffect(() => {
+    let interval;
+    if (isSeatSelectionMode) {
+      interval = setInterval(() => {
+        loadSeatsForEvent();
+      }, 5000); // Actualizar cada 5 segundos
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isSeatSelectionMode, eventId]);
+
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       <TopNavbar onExport={exportMap} onImport={importMap} onUploadEvent={onUploadEvent} onLoadLayout={onLoadLayout} onGoHome={goHome} onGoToEvents={goToEvents} />
@@ -667,6 +941,12 @@ const FloorPlanDesignerInner = () => {
             >
               📏 Medidas
             </button>
+            <button
+              onClick={() => setIsSeatSelectionMode(!isSeatSelectionMode)}
+              className={`px-3 py-1 text-sm rounded border ${isSeatSelectionMode ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-700 border-gray-300'}`}
+            >
+              🎯 Seleccionar Asientos
+            </button>
           </div>
         </div>
 
@@ -676,11 +956,41 @@ const FloorPlanDesignerInner = () => {
           <span>Herramienta: {activeTool}</span>
           <span>•</span>
           <span>Unidades: {units}</span>
+          {isSeatSelectionMode && (
+            <>
+              <span>•</span>
+              <span>Asientos seleccionados: {selectedSeatPositions.size}</span>
+            </>
+          )}
         </div>
       </div>
 
+      {editingLabelId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">Editar Etiqueta</h3>
+            <input
+              type="text"
+              value={labelInput}
+              onChange={(e) => setLabelInput(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded mb-4"
+              placeholder="Ingrese la etiqueta"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') saveLabel();
+                if (e.key === 'Escape') cancelLabelEdit();
+              }}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button onClick={saveLabel} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Guardar</button>
+              <button onClick={cancelLabelEdit} className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 flex">
-        <ToolPanel activeTool={activeTool} setActiveTool={setActiveTool} onUndo={undo} onRedo={redo} canUndo={canUndo} canRedo={canRedo} onAddSample={addSample} />
+        <ToolPanel activeTool={activeTool} setActiveTool={setActiveTool} onUndo={undo} onRedo={redo} canUndo={canUndo} canRedo={canRedo} onAddSample={addSample} onLoadConcert={loadConcertSample} />
           <DrawingCanvas
             elements={elements || []}
             selectedElementId={selectedId}
@@ -692,6 +1002,17 @@ const FloorPlanDesignerInner = () => {
             setActiveTool={setActiveTool}
             units={units}
             showMeasurements={showMeasurements}
+            seats={seats}
+            selectedSeats={selectedSeats}
+            onSeatSelect={handleSeatSelect}
+            isSeatSelectionMode={isSeatSelectionMode}
+            selectedSeatPositions={selectedSeatPositions}
+            onSeatPositionSelect={handleSeatPositionSelect}
+            zoom={zoom}
+            setZoom={setZoom}
+            offset={offset}
+            setOffset={setOffset}
+            onLabelEdit={handleLabelEdit}
           />
 
         <PropertiesPanel selectedElement={(elements || []).find(e => e.id === selectedId)} onUpdate={handleUpdate} onDelete={handleDelete} units={units} setUnits={setUnits} />
@@ -735,7 +1056,6 @@ const FloorPlanDesignerInner = () => {
                       <li>• <strong>Sillas:</strong> Asientos individuales</li>
                       <li>• <strong>Filas:</strong> Agrupa sillas automáticamente</li>
                       <li>• <strong>Escenario:</strong> Área de presentación</li>
-                      <li>• <strong>Círculos:</strong> Arenas o zonas circulares</li>
                     </ul>
                   </div>
                 </div>

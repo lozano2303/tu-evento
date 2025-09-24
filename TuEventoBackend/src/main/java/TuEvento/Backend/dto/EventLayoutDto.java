@@ -11,14 +11,14 @@ import TuEvento.Backend.model.Event;
 
 public class EventLayoutDto {
     private int eventLayoutID;
-    private Event eventID;
+    private int eventId; // Changed from Event eventID to int eventId
     @JdbcTypeCode(SqlTypes.JSON)
     private JsonNode layoutData;
     private LocalDateTime createdAt;
     public EventLayoutDto() {}
-    public EventLayoutDto(int eventLayoutID, Event eventID, JsonNode layoutData, LocalDateTime createdAt) {
+    public EventLayoutDto(int eventLayoutID, int eventId, JsonNode layoutData, LocalDateTime createdAt) {
         this.eventLayoutID = eventLayoutID;
-        this.eventID = eventID;
+        this.eventId = eventId;
         this.layoutData = layoutData;
         this.createdAt = createdAt;
     }
@@ -28,11 +28,11 @@ public class EventLayoutDto {
     public void setEventLayoutID(int eventLayoutID) {
         this.eventLayoutID = eventLayoutID;
     }
-    public Event getEventID() {
-        return eventID;
+    public int getEventId() {
+        return eventId;
     }
-    public void setEventID(Event eventID) {
-        this.eventID = eventID;
+    public void setEventId(int eventId) {
+        this.eventId = eventId;
     }
     public JsonNode getLayoutData() {
         return layoutData;
