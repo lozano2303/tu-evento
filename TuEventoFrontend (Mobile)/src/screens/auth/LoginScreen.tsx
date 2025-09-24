@@ -104,7 +104,6 @@ export default function LoginScreen() {
         </Text>
 
         {/* Texto "Inicia sesión con:" */}
-         {/* Texto "Inicia sesión con:" centrado */}
         <Text className="text-gray-300 text-lg text-center mb-4 font-semibold">
           Inicia sesión con:
         </Text>

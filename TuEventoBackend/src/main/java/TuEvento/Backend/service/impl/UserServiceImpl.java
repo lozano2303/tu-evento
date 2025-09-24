@@ -339,7 +339,8 @@ public class UserServiceImpl implements UserService {
             user.getTelephone(),
             user.getBirthDate(),
             addressId,
-            user.isActivated()
+            user.isActivated(),
+            user.isOrganicer()
         );
     }
 

@@ -79,6 +79,7 @@ public class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
         List<OrganizerPetition> petitions = petitionRepository.findAll();
         List<OrganizerPetitionDto> dtoList = petitions.stream()
                 .map(p -> new OrganizerPetitionDto(
+                        p.getOrganizerPetitionID(),
                         p.getUserID().getUserID(),
                         p.getStatus()
                 ))
@@ -100,6 +101,7 @@ public class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
 
         OrganizerPetition petition = petitionOpt.get();
         OrganizerPetitionDto dto = new OrganizerPetitionDto(
+                petition.getOrganizerPetitionID(),
                 petition.getUserID().getUserID(),
                 petition.getStatus()
         );
@@ -108,7 +110,6 @@ public class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
     }
 
     @Override
-    @Transactional
     public ResponseDto<String> updatePetitionStatus(int petitionID, int newStatus) {
         Optional<OrganizerPetition> petitionOpt = petitionRepository.findById(petitionID);
         if (petitionOpt.isEmpty()) {

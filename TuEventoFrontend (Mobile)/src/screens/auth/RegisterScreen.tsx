@@ -107,7 +107,7 @@ export default function RegisterScreen() {
         
         <Input
           label="Correo Electrónico"
-          placeholder="tu@email.com"
+          placeholder="example@gmail.com"
           value={formData.email}
           onChangeText={(value) => updateField('email', value)}
           keyboardType="email-address"
@@ -131,30 +131,34 @@ export default function RegisterScreen() {
         
         {/* Línea divisoria */}
         <Text className="text-white text-sm text-center my-6">
-          __________________________O____________________________
+          _______________________________________________________
         </Text>
         
         {/* Texto "Inicia sesión con:" */}
-        <Text className="text-gray-300 text-lg text-left mb-3 font-semibold">
+       <Text className="text-gray-300 text-lg text-center mb-4 font-semibold">
           Registrate mediante:
         </Text>
         
-        {/*  Botones de redes sociales ACTUALIZADOS */}
-        <RedSocialButton 
-          social="google" 
-          onSuccess={handleOAuthSuccess}
-          onError={handleOAuthError}
-        />
-        <RedSocialButton 
-          social="facebook" 
-          onSuccess={handleOAuthSuccess}
-          onError={handleOAuthError}
-        />
+        {/* Botones de redes sociales con solo iconos */}
+        <View className="flex-row justify-center items-center mb-4" style={{ gap: 20 }}>
+          <RedSocialButton 
+            social="google" 
+            onSuccess={handleOAuthSuccess}
+            onError={handleOAuthError}
+            iconOnly={true}
+          />
+          <RedSocialButton 
+            social="facebook" 
+            onSuccess={handleOAuthSuccess}
+            onError={handleOAuthError}
+            iconOnly={true}
+          />
+        </View>
         
         {/* Terminos y condiciones */}
         <Text className="text-white text-base text-center mt-4 px-4">
           Al crear una cuenta, aceptas nuestros{" "}
-          <Text className="text-blue-400 font-semibold">Términos y condiciones</Text>
+          <Text style={{ color: '#B06CFF' }} className="font-semibold">Términos y condiciones</Text>
         </Text>
       </View>
       

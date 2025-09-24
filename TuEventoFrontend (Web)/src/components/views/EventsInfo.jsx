@@ -1,30 +1,120 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Star, Send, X } from 'lucide-react';
 import DrawingCanvas from '../DrawingCanvas.jsx';
+import { getEventById } from '../../services/EventService.js';
 
 const ReservaEvento = () => {
+  const [searchParams] = useSearchParams();
+  const eventId = searchParams.get('id');
+  const [event, setEvent] = useState(null);
   const [rating, setRating] = useState(0);
   const [mensaje, setMensaje] = useState('');
   const [showMapModal, setShowMapModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const sampleElements = [];
+
+  useEffect(() => {
+    const loadEvent = async () => {
+      if (!eventId) {
+        setError('ID de evento no proporcionado');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const result = await getEventById(eventId);
+        if (result.success) {
+          setEvent(result.data);
+        } else {
+          setError(result.message || 'Error al cargar el evento');
+        }
+      } catch (err) {
+        setError('Error de conexión al cargar el evento');
+        console.error('Error loading event:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvent();
+  }, [eventId]);
 
   const handleStarClick = (starNumber) => {
     setRating(starNumber);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen text-white flex items-center justify-center" style={{ backgroundColor: '#1a1a1a' }}>
+        <p>Cargando evento...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen text-white flex items-center justify-center" style={{ backgroundColor: '#1a1a1a' }}>
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="min-h-screen text-white flex items-center justify-center" style={{ backgroundColor: '#1a1a1a' }}>
+        <p>Evento no encontrado</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen text-white" style={{ backgroundColor: '#1a1a1a' }}>
-      
+
       {/* Hero Section con las imágenes del tour */}
       <section className="relative">
         <div className="px-4 py-8">
           <div className="max-w-7xl mx-auto">
-            
+
             {/* Título principal */}
             <h1 className="text-white text-3xl font-bold mb-8 text-center">
-              Las Mujeres Ya No Lloran World Tour
+              {event.name || 'Evento'}
             </h1>
+
+            {/* Imágenes del evento */}
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              <div className="relative">
+                <img
+                  src={event.image || "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop"}
+                  alt={event.name}
+                  className="w-full h-40 object-cover rounded-lg"
+                />
+              </div>
+              <div className="relative">
+                <img
+                  src={event.image || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=300&h=200&fit=crop"}
+                  alt={event.name}
+                  className="w-full h-40 object-cover rounded-lg"
+                />
+              </div>
+              <div className="relative">
+                <img
+                  src={event.image || "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop"}
+                  alt={event.name}
+                  className="w-full h-40 object-cover rounded-lg"
+                />
+              </div>
+              <div className="relative">
+                <img
+                  src={event.image || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=300&h=200&fit=crop"}
+                  alt={event.name}
+                  className="w-full h-40 object-cover rounded-lg"
+                />
+              </div>
+            </div>
 
             {/* Grid de imágenes */}
             <div className="grid grid-cols-4 gap-4 mb-8">
@@ -75,16 +165,16 @@ const ReservaEvento = () => {
               style={{ backgroundColor: '#8b5cf6' }}
             >
               <h2 className="text-white text-xl font-bold mb-4">
-                ¡Prepárate para una noche inolvidable con Shakira!
+                ¡Prepárate para {event.name}!
               </h2>
               <p className="text-white text-sm leading-relaxed mb-4">
-                La sensación mundial Shakira regresa a los escenarios con su esperado "Las Mujeres Ya No Lloran World Tour". Una experiencia única que combina sus éxitos más grandes con nuevas canciones de su último álbum. 
+                {event.description || 'Descripción del evento no disponible.'}
               </p>
               <p className="text-white text-sm leading-relaxed mb-4">
-                Con su inconfundible voz, sus movimientos hipnóticos y su energía contagiosa, Shakira promete una noche llena de emociones, baile y música que quedará grabada para siempre en tu memoria.
+                Fecha: {event.eventDate ? new Date(event.eventDate).toLocaleDateString() : 'Fecha no disponible'}
               </p>
               <p className="text-white text-sm leading-relaxed mb-6">
-                Desde "Hips Don't Lie" hasta "Monotonía", pasando por "Waka Waka" y "Whenever, Wherever", revive los momentos más icónicos de una de las artistas más importantes de la música latina y mundial. Una celebración de la música y la cultura que no te puedes perder.
+                Ubicación: {event.location?.address || 'Ubicación no disponible'}
               </p>
               <button className="bg-purple-800 hover:bg-purple-900 text-white px-6 py-2 rounded-lg transition-colors">
                 Ver más

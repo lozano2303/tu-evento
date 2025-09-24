@@ -9,16 +9,18 @@ public class UserDto {
     private Date birthDate;
     private Integer address;
     private boolean activated;
+    private boolean organizer;
 
     public UserDto() {
     }
 
-    public UserDto(String fullName, String telephone, Date birthDate, Integer address, boolean activated) {
+    public UserDto(String fullName, String telephone, Date birthDate, Integer address, boolean activated, boolean organizer) {
         this.fullName = fullName;
         this.telephone = telephone;
         this.birthDate = birthDate;
         this.address = address;
         this.activated = activated;
+        this.organizer = organizer;
     }
 
     public String getFullName() {
@@ -59,5 +61,13 @@ public class UserDto {
 
     public void setActivated(boolean activated) {
         this.activated = activated;
+    }
+
+    public boolean isOrganizer() {
+        return organizer;
+    }
+
+    public void setOrganizer(boolean organizer) {
+        this.organizer = organizer;
     }
 }
