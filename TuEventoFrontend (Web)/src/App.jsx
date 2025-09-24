@@ -14,6 +14,7 @@ import SeatManagement from "./components/views/SeatManagement.jsx";
 import EventManagement from "./components/views/EventManagement.jsx";
 import EventForm from "./components/views/EventForm.jsx";
 import OrganizerPetitionForm from "./components/views/OrganizerPetitionForm.jsx";
+import AboutUs from "./components/views/AboutUs.jsx";
 
 const App = () => {
   return (
@@ -61,6 +62,14 @@ const App = () => {
       <Route path="/event-management" element={<EventManagement />} />
       <Route path="/create-event" element={<EventForm />} />
       <Route path="/organizer-petition" element={<OrganizerPetitionForm />} />
+      <Route
+        path="/nosotros"
+        element={
+          <MainLayout>
+            <AboutUs />
+          </MainLayout>
+        }
+      />
     </Routes>
   );
 };

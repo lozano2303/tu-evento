@@ -68,17 +68,18 @@ export default function Navbar() {
     // Es organizador, ir a gestión de eventos
     navigate('/event-management');
   };
+
   return (
     <header className="bg-gray-800 p-4">
       <nav className="max-w-6xl mx-auto flex items-center justify-between">
         <div className="flex items-center space-x-2 -translate-x-4">
           <Calendar className="w-8 h-8 text-purple-500" />
-          <span className="text-xl font-bold text-white">Tu Evento</span> {/* Added text-white here for clarity */}
+          <span className="text-xl font-bold text-white">Tu Evento</span>
         </div>
 
-        <div className="hidden md:flex space-x-6 text-white"> {/* Added text-white here for all links */}
+        <div className="hidden md:flex space-x-6 text-white">
           <Link to="/landingPage" className="hover:text-purple-400 transition-colors">Inicio</Link>
-          <Link to="" className="hover:text-purple-400 transition-colors">Nosotros</Link>
+          <Link to="/nosotros" className="hover:text-purple-400 transition-colors">Nosotros</Link>
           <button
             onClick={handleCreateClick}
             className="hover:text-purple-400 transition-colors bg-transparent border-none cursor-pointer"
