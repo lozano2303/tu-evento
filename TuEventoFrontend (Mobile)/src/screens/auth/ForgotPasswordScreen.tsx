@@ -80,25 +80,9 @@ export default function ForgotPasswordScreen() {
           onPress={handleForgotPassword}
           disabled={isLoading}
         />
-
-        {/* Ícono del candado centrado y redimensionado */}
-        <View className="flex-1 justify-center items-center mt-8">
-          <View className="w-48 h-48 justify-center items-center">
-            <Image
-              source={require("assets/images/lock.png")}
-              className="w-full h-full"
-              resizeMode="contain"
-            />
-          </View>
-          
-          {/* Texto adicional de seguridad */}
-          <Text className="text-gray-400 text-sm text-center mt-6 px-8">
-            🔒 Tu información está segura. Solo tú podrás restablecer tu contraseña.
-          </Text>
-        </View>
       </View>
 
-      {/* Imagen de curva en la parte inferior */}
+      {/* Imagen de cuñrva en la parte inferior */}
       <Image
         source={require("assets/images/curve.png")}
         className="absolute bottom-0"

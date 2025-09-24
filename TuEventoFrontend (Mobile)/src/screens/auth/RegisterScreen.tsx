@@ -93,7 +93,7 @@ export default function RegisterScreen() {
 
   return (
     <View className="flex-1 bg-[#1a0033] justify-center items-center">
-      <View className="px-6 w-full h-full relative top-12">
+      <View className="px-6 w-full h-full relative top-12" style={{ marginTop: 180 }}>
         {/* Título de crear cuenta*/}
         <Text className="text-white text-2xl font-bold text-center">Crea tu cuenta</Text>
         

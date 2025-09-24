@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Alert } from "react-native";
+import { View, Text, TouchableOpacity, Alert, Image } from "react-native";
 import { useState } from "react";
 import { useRoute, useNavigation } from '@react-navigation/native';
 import Input from "../../components/Input";
@@ -60,8 +60,8 @@ export default function CodeVerifcationForgotPassword() {
   };
 
   return (
-    <View className="flex-1 bg-[#1a0033] items-center px-6 w-full h-full relative ">
-      <View className="w-full top-12 ">
+    <View className="flex-1 bg-[#1a0033]">
+      <View style={{ marginTop: 250, paddingHorizontal: 24, width: '100%' }}>
         {/* Título */}
         <Text className="text-white text-2xl font-bold mb-4 text-center">
           Verificación de Código para Recuperación
@@ -78,6 +78,7 @@ export default function CodeVerifcationForgotPassword() {
           value={activationCode}
           onChangeText={setactivationCode}
           maxLength={6}
+          keyboardType="numeric"
         />
 
         {/* Botón de verificar */}
@@ -86,8 +87,14 @@ export default function CodeVerifcationForgotPassword() {
           onPress={handleVerifyCode}
           disabled={loading || activationCode.length !== 6}
         />
-
       </View>
+      
+      {/* Imagen de curva en la parte inferior */}
+      <Image
+        source={require("assets/images/curve.png")}
+        className="absolute bottom-0"
+        resizeMode="cover"
+      />
     </View>
   );
 }

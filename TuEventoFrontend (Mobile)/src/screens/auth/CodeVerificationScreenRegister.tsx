@@ -122,8 +122,8 @@ export default function CodeVerificationScreenRegister() {
   };
 
   return (
-    <View className="flex-1 bg-[#1a0033] items-center px-6 w-full h-full relative ">         
-      <View className="w-full top-12 ">         
+    <View className="flex-1 bg-[#1a0033]">
+      <View style={{ marginTop: 250, paddingHorizontal: 24, width: '100%' }}>         
         {/* Título */}         
         <Text className="text-white text-2xl font-bold mb-4 text-center">             
           Verificación de Código         
@@ -133,7 +133,6 @@ export default function CodeVerificationScreenRegister() {
           Ingresa el código que te enviamos a tu correo electrónico.         
         </Text>
         
-
         {/* Input para código de verificación */}         
         <Input         
           label="Código de Verificación"         
@@ -157,14 +156,19 @@ export default function CodeVerificationScreenRegister() {
           disabled={isLoading}
           className="mt-4"
         >
-          <Text className="text-white text-center underline">
+          <Text className="text-center underline" style={{ color: '#B06CFF' }}>
             {isLoading ? "Reenviando..." : "Reenviar Código"}
           </Text>
         </TouchableOpacity>
+    </View>
 
-
-      </View>
+      {/* Imagen de cuñrva en la parte inferior */}
+      <Image
+        source={require("assets/images/curve.png")}
+        className="absolute bottom-0"
+        resizeMode="cover"
+      />
+  
     </View>     
   ); 
 }
-
