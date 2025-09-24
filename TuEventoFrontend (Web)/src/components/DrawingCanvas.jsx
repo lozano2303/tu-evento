@@ -140,14 +140,21 @@ const DrawingCanvas = ({
       }
     }
 
-    // Luego buscar en posiciones generadas por seatRow
+    return null
+  }
+
+  const getSeatPositionAt = (pos) => {
+    const { x: px, y: py } = pos
+
+    // Buscar en posiciones generadas por seatRow
     for (const element of elements) {
       if (element.type === 'seatRow' && element.seatPositions) {
-        for (const seatPos of element.seatPositions) {
+        for (let i = 0; i < element.seatPositions.length; i++) {
+          const seatPos = element.seatPositions[i]
           const seatSize = ELEMENT_CONSTANTS.CHAIR_RADIUS * 2
           if (px >= seatPos.x - seatSize/2 && px <= seatPos.x + seatSize/2 &&
               py >= seatPos.y - seatSize/2 && py <= seatPos.y + seatSize/2) {
-            return seatPos
+            return { seatRowId: element.id, seatIndex: i, seatPos }
           }
         }
       }
@@ -238,12 +245,19 @@ const DrawingCanvas = ({
 
     // Modo selección de asientos
     if (isSeatSelectionMode) {
-      // Verificar si se hizo clic en un asiento
+      // Verificar si se hizo clic en un asiento de base de datos
       const clickedSeat = getSeatAt(pos)
       if (clickedSeat && clickedSeat.status === 'AVAILABLE') {
         onSeatSelect && onSeatSelect(clickedSeat.id)
+        return
       }
-      return
+
+      // Verificar si se hizo clic en una posición de asiento en seatRow
+      const clickedSeatPosition = getSeatPositionAt(pos)
+      if (clickedSeatPosition) {
+        onSeatPositionSelect && onSeatPositionSelect(clickedSeatPosition.seatRowId, clickedSeatPosition.seatIndex)
+        return
+      }
     }
 
     const clickedElement = getElementAt(pos)
@@ -381,7 +395,29 @@ const DrawingCanvas = ({
       }
 
       if (isValidElement) {
-        onCreate && onCreate(currentElement)
+        let elementToCreate = { ...currentElement }
+
+        // Generate seat positions for seatRow
+        if (activeTool === 'seatRow' && currentElement.width > 0) {
+          const seatSpacing = 60 // Distance between seats
+          const numSeats = Math.max(1, Math.floor(currentElement.width / seatSpacing))
+          const startX = currentElement.x
+          const seatY = currentElement.y + currentElement.height / 2
+
+          elementToCreate.seatPositions = []
+          for (let i = 0; i < numSeats; i++) {
+            elementToCreate.seatPositions.push({
+              id: `${currentElement.id}-seat-${i}`,
+              x: startX + i * seatSpacing + 30, // Center the seats
+              y: seatY,
+              row: 'A', // Default row, can be changed later
+              seatNumber: i + 1,
+              status: 'AVAILABLE'
+            })
+          }
+        }
+
+        onCreate && onCreate(elementToCreate)
       }
 
       setIsDrawing(false)
@@ -595,12 +631,7 @@ const DrawingCanvas = ({
                 else if (isReserved) fillColor = '#f59e0b'; // Amarillo para reservado
 
                 return (
-                  <g
-                    key={seatPos.id}
-                    data-seat-id={seatPos.id}
-                    onClick={() => onSeatPositionSelect && onSeatPositionSelect(el.id, index)}
-                    className="cursor-pointer"
-                  >
+                  <g key={seatPos.id} data-seat-id={seatPos.id}>
                     <circle
                       cx={seatPos.x}
                       cy={seatPos.y}
@@ -608,7 +639,7 @@ const DrawingCanvas = ({
                       fill={fillColor}
                       stroke="#374151"
                       strokeWidth={2}
-                      className="hover:opacity-80 transition-opacity"
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
                     />
                     <text
                       x={seatPos.x}

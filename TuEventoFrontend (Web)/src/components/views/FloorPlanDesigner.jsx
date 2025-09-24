@@ -641,9 +641,24 @@ const FloorPlanDesignerInner = () => {
       { id: nanoid(), type: 'section', x: 500, y: 250, width: 150, height: 100, meta: { label: 'General', category: 'General' } },
       { id: nanoid(), type: 'section', x: 700, y: 250, width: 150, height: 100, meta: { label: 'Estudiante', category: 'Estudiante' } },
       // Seat rows
-      { id: nanoid(), type: 'seatRow', x: 300, y: 300, width: 120, height: 20, meta: { label: 'Fila VIP', row: 'A' } },
-      { id: nanoid(), type: 'seatRow', x: 500, y: 300, width: 120, height: 20, meta: { label: 'Fila General', row: 'B' } },
-      { id: nanoid(), type: 'seatRow', x: 700, y: 300, width: 120, height: 20, meta: { label: 'Fila Estudiante', row: 'C' } },
+      { id: nanoid(), type: 'seatRow', x: 300, y: 300, width: 120, height: 20, meta: { label: 'Fila VIP', row: 'A' },
+        seatPositions: [
+          { id: 'vip-1', x: 330, y: 310, row: 'A', seatNumber: 1, status: 'AVAILABLE' },
+          { id: 'vip-2', x: 390, y: 310, row: 'A', seatNumber: 2, status: 'AVAILABLE' }
+        ]
+      },
+      { id: nanoid(), type: 'seatRow', x: 500, y: 300, width: 120, height: 20, meta: { label: 'Fila General', row: 'B' },
+        seatPositions: [
+          { id: 'gen-1', x: 530, y: 310, row: 'B', seatNumber: 1, status: 'AVAILABLE' },
+          { id: 'gen-2', x: 590, y: 310, row: 'B', seatNumber: 2, status: 'AVAILABLE' }
+        ]
+      },
+      { id: nanoid(), type: 'seatRow', x: 700, y: 300, width: 120, height: 20, meta: { label: 'Fila Estudiante', row: 'C' },
+        seatPositions: [
+          { id: 'est-1', x: 730, y: 310, row: 'C', seatNumber: 1, status: 'AVAILABLE' },
+          { id: 'est-2', x: 790, y: 310, row: 'C', seatNumber: 2, status: 'AVAILABLE' }
+        ]
+      },
     ];
     pushSnapshot([...(elements || []), ...sample]);
   };
