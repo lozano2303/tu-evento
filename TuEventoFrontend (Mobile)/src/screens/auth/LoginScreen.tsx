@@ -1,8 +1,8 @@
 import { View, Text, Image, TouchableOpacity, Alert } from "react-native";
 import { useState } from "react";
-import Input from "../../components/Input";
-import Button from "../../components/Button";
-import RedSocialButton from "../../components/RedSocialButton";
+import Input from "../../components/common/Input";
+import Button from "../../components/common/Button";
+import RedSocialButton from "../../components/common/RedSocialButton";
 import { useNavigation } from "@react-navigation/native";
 import { login } from "../../api/services/LoginApi";
 

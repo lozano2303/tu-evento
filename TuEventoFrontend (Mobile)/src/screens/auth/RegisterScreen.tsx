@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, Image, Alert } from 'react-native';
-import Input from "../../components/Input";
-import Button from "../../components/Button";
-import RedSocialButton from "../../components/RedSocialButton";
+import Input from "../../components/common/Input";
+import Button from "../../components/common/Button";
+import RedSocialButton from "../../components/common/RedSocialButton";
 import { registerUser } from '../../api/services/UserApi';
 import { useNavigation } from "@react-navigation/native";
 

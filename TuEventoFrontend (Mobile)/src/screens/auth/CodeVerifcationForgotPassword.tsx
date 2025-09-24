@@ -1,8 +1,8 @@
 import { View, Text, TouchableOpacity, Alert, Image } from "react-native";
 import { useState } from "react";
 import { useRoute, useNavigation } from '@react-navigation/native';
-import Input from "../../components/Input";
-import Button from "../../components/Button";
+import Input from "../../components/common/Input";
+import Button from "../../components/common/Button";
 import { validateResetTokenApi } from "../../api/services/ForgotPasswordApi";
 
 type RouteParams = {
@@ -78,7 +78,6 @@ export default function CodeVerifcationForgotPassword() {
           value={activationCode}
           onChangeText={setactivationCode}
           maxLength={6}
-          keyboardType="numeric"
         />
 
         {/* Botón de verificar */}

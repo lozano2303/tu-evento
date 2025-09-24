@@ -1,8 +1,8 @@
 import { View, Text, Image, Alert } from 'react-native';
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import Input from "../../components/Input";
-import Button from "../../components/Button";
+import Input from "../../components/common/Input";
+import Button from "../../components/common/Button";
 import { forgotPasswordApi } from "../../api/services/ForgotPasswordApi";
 
 export default function ForgotPasswordScreen() {

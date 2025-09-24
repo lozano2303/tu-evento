@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { getUserIdFromToken, removeToken } from '../../api/services/Token';
 import { getUserProfile } from '../../api/services/UserApi';
 import { IUserProfile } from '../../api/types/IUser';
-import Input from '../../components/Input';
-import Button from '../../components/Button';
+import Input from "../../components/common/Input";
+import Button from '../../components/common/Button';
 import { useNavigation } from '@react-navigation/native';
 
 export default function ProfileScreen() {
@@ -58,7 +58,7 @@ export default function ProfileScreen() {
 
   return (
     <View className="flex-1 bg-[#1a0033] p-6">
-      <Text className="text-white text-3xl font-bold mb-6 text-center">Perfil del Usuario </Text>
+      <Text className="text-white text-2xl font-bold mb-6 text-center mt-4">Perfil del Usuario </Text>
       {profile && (
         <View>
           <Input
