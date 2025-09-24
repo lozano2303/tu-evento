@@ -43,12 +43,16 @@ public class EventController {
     public ResponseDto<EventDto> getEvent(@PathVariable int id) {
         return eventService.getEventById(id);
     }
-    @GetMapping("/getAll")
+    @GetMapping("/getAllbyUser")
     public ResponseDto<List<EventDto>> getAllEvent(HttpServletRequest request) {
         Integer userId = (Integer) request.getAttribute("userID");
         if (userId == null) {
             return ResponseDto.error("Usuario no autenticado");
         }
-        return eventService.getAllEvent(userId);
+        return eventService.getAllEventIdUser(userId);
+    }
+    @GetMapping("/getAll")
+    public ResponseDto<List<EventDto>> getAllEvent() {
+        return eventService.getAllEvent();
     }
 }

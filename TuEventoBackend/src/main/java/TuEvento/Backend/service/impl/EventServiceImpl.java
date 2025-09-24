@@ -425,31 +425,9 @@ public class EventServiceImpl implements EventService {
             return ResponseDto.error("Error inesperado al obtener evento: " + e.getMessage());
         }
     }
+
     @Override
-    public ResponseDto<EventDto> getEventById(int id) {
-        try {
-            Optional<Event> event = eventRepository.findById(id);
-            if (event.isPresent()) {
-                EventDto dto = new EventDto(
-                    event.get().getId(),
-                    event.get().getUserID(),
-                    event.get().getLocationID(),
-                    event.get().getEventName(),
-                    event.get().getDescription(),
-                    event.get().getStartDate(),
-                    event.get().getFinishDate(),
-                    event.get().getStatus()
-                );
-                return ResponseDto.ok("Evento encontrado", dto);
-            } else {
-                return ResponseDto.error("Evento no encontrado");
-            }
-        } catch (Exception e) {
-            return ResponseDto.error("Error inesperado al obtener evento: " + e.getMessage());
-        }
-    }
-    @Override
-    public ResponseDto<List<EventDto>> getAllEvent(int userId) {
+    public ResponseDto<List<EventDto>> getAllEventIdUser(int userId) {
         try {
             List<Event> entityList = eventRepository.findAllByUserID_UserIDAndStatusNot(userId, 0);
             List<EventDto> dtoList = new ArrayList<>();
@@ -475,4 +453,49 @@ public class EventServiceImpl implements EventService {
         }
     }
 
+    @Override
+    public ResponseDto<List<EventDto>> getAllEvent() {
+        try {
+            List<Event> entityList = eventRepository.findAllByStatusNot(0);
+            List<EventDto> dtoList = new ArrayList<>();
+
+            for (Event e : entityList) {
+                EventDto dtoEvent = new EventDto();
+                dtoEvent.setUserID(e.getUserID());
+                dtoEvent.setLocationID(e.getLocationID());
+                dtoEvent.setEventName(e.getEventName());
+                dtoEvent.setDescription(e.getDescription());
+                dtoEvent.setStartDate(e.getStartDate());
+                dtoEvent.setFinishDate(e.getFinishDate());
+                dtoEvent.setStatus(e.getStatus());
+                dtoList.add(dtoEvent);
+            }
+
+            return ResponseDto.ok("Eventos encontrados", dtoList);
+
+        } catch (Exception e) {
+            return ResponseDto.error("Error inesperado al obtener eventos: " + e.getMessage());
+        }
+    }
+    @Override
+    public ResponseDto<EventDto> getEventById(int id) {
+        try {
+            Optional<Event> event = eventRepository.findById(id);
+            if (event.isPresent()) {
+                EventDto dto = new EventDto();
+                dto.setUserID(event.get().getUserID());
+                dto.setLocationID(event.get().getLocationID());
+                dto.setEventName(event.get().getEventName());
+                dto.setDescription(event.get().getDescription());
+                dto.setStartDate(event.get().getStartDate());
+                dto.setFinishDate(event.get().getFinishDate());
+                dto.setStatus(event.get().getStatus());
+                return ResponseDto.ok("Evento encontrado", dto);
+            } else {
+                return ResponseDto.error("Evento no encontrado");
+            }
+        } catch (Exception e) {
+            return ResponseDto.error("Error inesperado al obtener evento: " + e.getMessage());
+        }
+    }
 }

@@ -12,7 +12,9 @@ public interface EventService {
     ResponseDto<EventDto> insertEvent(EventDto eventDto);
     ResponseDto<EventDto> updateEvent(ResponseEvent responseEvent,EventDto eventDto);
     ResponseDto<EventDto> CancelEvent(EventDto eventDto);
-    ResponseDto<List<EventDto>> getAllEvent(int userId);
     ResponseDto<EventDto> getEvent(ResponseEventSearch responseEventSearch, EventDto eventDto);
+    ResponseDto<List<EventDto>> getAllEvent();
     ResponseDto<EventDto> getEventById(int id);
+    ResponseDto<List<EventDto>> getAllEventIdUser(int userId);
+
 }
