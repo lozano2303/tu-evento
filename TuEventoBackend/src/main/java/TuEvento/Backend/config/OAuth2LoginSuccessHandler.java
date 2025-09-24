@@ -6,10 +6,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-
-import TuEvento.Backend.dto.requests.RequestLoginDTO;
-
-import TuEvento.Backend.dto.responses.ResponseLoginSm;
+import TuEvento.Backend.dto.responses.ResponseDto;
+import TuEvento.Backend.dto.responses.ResponseLogin;
 import TuEvento.Backend.service.impl.LoginServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,14 +31,15 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
 
-        RequestLoginDTO loginDTO = new RequestLoginDTO();
-        loginDTO.setUsername(name); // O usa email si tu sistema autentica por email
-        loginDTO.setEmail(email);
+        // Usar un método especial para OAuth
+        ResponseDto<ResponseLogin> loginResponse = userService.loginOAuth2(email, name);
 
-        ResponseLoginSm loginResponse = userService.LoginSM(loginDTO);
+        String token = loginResponse.getData().getToken();
 
-        String token = loginResponse.getToken();
-        String redirectUrl = "http://127.0.0.1:5500/user.html?token=" + token;
-        response.sendRedirect(redirectUrl);
+        // Para simplificar, devolvemos JSON (sirve para Android y Web SPA)
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{\"token\": \"" + token + "\"}");
+        response.getWriter().flush();
     }
-} 
+}

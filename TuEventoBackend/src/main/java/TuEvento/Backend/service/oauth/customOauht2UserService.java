@@ -17,7 +17,7 @@ import TuEvento.Backend.service.email.ActivationCodeEmailService;
 import TuEvento.Backend.service.impl.LoginServiceImpl;
 import TuEvento.Backend.service.impl.UserServiceImpl;
     @Service
-    public class customOauht2UserService extends DefaultOAuth2UserService {
+    public class CustomOauht2UserService extends DefaultOAuth2UserService {
     @Autowired
     private ActivationCodeEmailService activationCodeEmailService;
     @Autowired

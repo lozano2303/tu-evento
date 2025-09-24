@@ -17,12 +17,14 @@ import TuEvento.Backend.service.email.ActivationCodeEmailService;
 import TuEvento.Backend.service.jwt.jwtService;
 import TuEvento.Backend.dto.requests.TokenInfo;
 import TuEvento.Backend.dto.responses.ResponseLogin;
-import TuEvento.Backend.dto.responses.ResponseLoginSm;
+
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -133,20 +135,23 @@ public class LoginServiceImpl implements LoginService {
     public Optional<Login> findByUsername(String username) {
         return loginRepository.findByUsername(username);
     }
-    public ResponseLoginSm LoginSM(RequestLoginDTO loginDTO) {
-        authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                loginDTO.getEmail(),
-                loginDTO.getPassword()
-            )
-        );
 
-        Login userEntity = loginRepository.findByEmail(loginDTO.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+    public ResponseDto<ResponseLogin> loginOAuth2(String email, String name) {
+        // Buscar usuario existente
+        Login userEntity = loginRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
+
+        // Generar token
         String token = jwtService.generateToken(userEntity);
-        return new ResponseLoginSm(token);
+
+            ResponseLogin responseLogin = new ResponseLogin(
+                token,
+                userEntity.getUserID().getUserID(),
+                userEntity.getUserID().getRole().name()
+            );
+        return ResponseDto.ok("Login OAuth2 exitoso", responseLogin);
     }
-    
+
     // Metodos para enviar un token para cambiar la contraseña
     public ResponseDto<String> forgotPassword(String email) {
         Optional<Login> optionalUser = loginRepository.findByEmail(email);
@@ -154,7 +159,7 @@ public class LoginServiceImpl implements LoginService {
             return ResponseDto.error("Usuario no encontrado");
         }
         String oldPasswordHash = optionalUser.get().getPassword();
-        String token = String.format("%06d", new SecureRandom().nextInt(999999));
+        String token = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 6);
         LocalDateTime expiry = LocalDateTime.now().plusMinutes(15);
 
         RecoverPasswordDto recoverPasswordDto = new RecoverPasswordDto();
@@ -191,12 +196,7 @@ public class LoginServiceImpl implements LoginService {
      */
     public ResponseDto<String> resetPasswordWithToken(ResetPasswordDTO dto) {
         try {
-            TokenInfo tokenInfo = resetTokens.get(dto.getToken());
-            if (tokenInfo == null) {
-                return ResponseDto.error("Token inválido o no validado");
-            }
-
-            Optional<RecoverPassword> optionalRecoverPassword = recoverPasswordRepository.findById(tokenInfo.getIdRecoverPassword());
+            Optional<RecoverPassword> optionalRecoverPassword = recoverPasswordRepository.findByCode(dto.getToken());
             if (!optionalRecoverPassword.isPresent()) {
                 return ResponseDto.error("Token inválido");
             }
