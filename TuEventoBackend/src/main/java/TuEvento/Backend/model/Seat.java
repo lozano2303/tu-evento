@@ -24,10 +24,10 @@ public class Seat {
     @Column(name="row", nullable=false)
     private String row;
 
-    @Column(name="x", precision = 10, scale = 3)
+    @Column(name="x", precision = 10)
     private double x;
 
-    @Column(name="y", precision = 10, scale = 3)
+    @Column(name="y", precision = 10)
     private double y;
 
     @Column(name="status",nullable=false, columnDefinition= "boolean default false")

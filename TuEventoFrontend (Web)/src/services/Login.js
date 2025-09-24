@@ -107,7 +107,7 @@ export const changePassword = async (oldPassword, newPassword) => {
 
 export const resetPassword = async (token, newPassword) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/v1/login/resetPassword`, {
+    const response = await fetch(`${API_BASE_URL}/v1/login/resetPasswordWithToken`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
