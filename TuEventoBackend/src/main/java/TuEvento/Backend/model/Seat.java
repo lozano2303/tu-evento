@@ -30,8 +30,8 @@ public class Seat {
     @Column(name="y", precision = 10)
     private double y;
 
-    @Column(name="status",nullable=false, columnDefinition= "boolean default false")
-    private boolean status;
+    @Column(name="status", nullable=false)
+    private boolean status = false;
 
     public Seat() {
     }

@@ -3,13 +3,20 @@ import { API_BASE_URL } from './apiconstant.js';
 export const createTicketWithSeats = async (ticketData) => {
   try {
     const token = localStorage.getItem('token');
+    // Transform the payload to match backend expectations
+    const payload = {
+      eventId: ticketData.event.id,
+      seatIDs: ticketData.seats.map(seat => seat.id),
+      userId: 1, // TODO: Get actual user ID from context or localStorage
+      code: ticketData.code || 'TICKET-' + Date.now(),
+    };
     const response = await fetch(`${API_BASE_URL}/v1/tickets/create-with-seats`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(ticketData),
+      body: JSON.stringify(payload),
     });
     const data = await response.json();
     return data;

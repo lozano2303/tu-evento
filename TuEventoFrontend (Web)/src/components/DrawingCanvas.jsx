@@ -252,11 +252,13 @@ const DrawingCanvas = ({
         return
       }
 
-      // Verificar si se hizo clic en una posición de asiento en seatRow
-      const clickedSeatPosition = getSeatPositionAt(pos)
-      if (clickedSeatPosition) {
-        onSeatPositionSelect && onSeatPositionSelect(clickedSeatPosition.seatRowId, clickedSeatPosition.seatIndex)
-        return
+      // Solo permitir selección de posiciones de layout si no hay asientos de BD
+      if (seats.length === 0) {
+        const clickedSeatPosition = getSeatPositionAt(pos)
+        if (clickedSeatPosition) {
+          onSeatPositionSelect && onSeatPositionSelect(clickedSeatPosition.seatRowId, clickedSeatPosition.seatIndex)
+          return
+        }
       }
     }
 
@@ -616,8 +618,8 @@ const DrawingCanvas = ({
               )
             })}
 
-            {/* Asientos generados por seatRow */}
-            {elements
+            {/* Asientos generados por seatRow (solo si no hay asientos de BD) */}
+            {seats.length === 0 && elements
               .filter(el => el.type === 'seatRow' && el.seatPositions)
               .map(el => el.seatPositions.map((seatPos, index) => {
                 const seatKey = `${el.id}-${index}`;

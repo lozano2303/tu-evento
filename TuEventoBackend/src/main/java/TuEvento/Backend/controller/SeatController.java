@@ -60,4 +60,18 @@ public class SeatController {
         ResponseDto<SeatDto> response = seatService.getSeatById(seatID);
         return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
     }
+
+    // Obtener asientos por sección
+    @GetMapping("/section/{sectionId}")
+    public ResponseEntity<ResponseDto<List<SeatDto>>> getSeatsBySection(@PathVariable int sectionId) {
+        ResponseDto<List<SeatDto>> response = seatService.getSeatsBySection(sectionId);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
+    }
+
+    // Liberar reservaciones expiradas
+    @PostMapping("/release-expired")
+    public ResponseEntity<ResponseDto<String>> releaseExpiredReservations() {
+        ResponseDto<String> response = seatService.releaseExpiredReservations();
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
+    }
 }

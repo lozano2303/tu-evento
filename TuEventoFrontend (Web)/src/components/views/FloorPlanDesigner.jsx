@@ -682,8 +682,12 @@ const FloorPlanDesignerInner = () => {
       }));
 
       // Save sections
+      const createdSections = [];
       for (const section of sections) {
-        await createSection(section);
+        const result = await createSection(section);
+        if (result.success && result.data) {
+          createdSections.push(result.data); // Assume returns section with id
+        }
       }
 
       // Check if layout exists
@@ -736,11 +740,14 @@ const FloorPlanDesignerInner = () => {
 
       // Extract seats from seatRows
       const seatRows = elements.filter(el => el.type === 'seatRow');
+      const defaultSectionId = createdSections.length > 0 ? createdSections[0].id : 1; // Use first section or fallback to 1
+
+      const createdSeats = [];
       for (const row of seatRows) {
         if (row.seatPositions) {
           for (const seat of row.seatPositions) {
             const seatData = {
-              sectionId: 1, // TODO: Associate with actual section
+              sectionID: defaultSectionId, // Use actual section ID
               eventLayoutID: eventLayoutID,
               seatNumber: seat.seatNumber,
               row: seat.row,
@@ -748,9 +755,55 @@ const FloorPlanDesignerInner = () => {
               y: Math.round(seat.y),
               status: seat.status || 'AVAILABLE'
             };
-            await createSeat(seatData);
+            const result = await createSeat(seatData);
+            if (result.success && result.data) {
+              createdSeats.push({
+                ...seat,
+                backendId: result.data.id, // Store the backend ID
+                seatNumber: result.data.seatNumber,
+                status: result.data.status
+              });
+            }
           }
         }
+      }
+
+      // Update elements with backend IDs
+      const updatedElements = elements.map(element => {
+        if (element.type === 'seatRow' && element.seatPositions) {
+          const updatedPositions = element.seatPositions.map(position => {
+            const createdSeat = createdSeats.find(seat =>
+              Math.abs(seat.x - position.x) < 5 &&
+              Math.abs(seat.y - position.y) < 5 &&
+              seat.row === position.row &&
+              seat.seatNumber === position.seatNumber
+            );
+            if (createdSeat) {
+              return {
+                ...position,
+                backendId: createdSeat.backendId,
+                seatNumber: createdSeat.seatNumber,
+                status: createdSeat.status
+              };
+            }
+            return position;
+          });
+          return { ...element, seatPositions: updatedPositions };
+        }
+        return element;
+      });
+
+      // Update the layout with the new elements containing backend IDs
+      const updateData = {
+        layoutData: {
+          elements: updatedElements,
+          exportedAt: new Date().toISOString(),
+          name: `event_${eventId}`
+        }
+      };
+      const updateResult = await updateEventLayout(eventLayoutID, updateData);
+      if (!updateResult.success) {
+        console.error('Error updating layout with backend IDs: ' + (updateResult.message || 'Error desconocido'));
       }
     } catch (error) {
       console.error('Error saving layout to backend:', error);
@@ -766,9 +819,18 @@ const FloorPlanDesignerInner = () => {
     try {
       const result = await getEventLayoutByEventId(eventIdParam);
       if (result.success && result.data && result.data.layoutData && result.data.layoutData.elements) {
-        dispatch({ type: 'SET_ELEMENTS', payload: result.data.layoutData.elements });
-        historyWrapper.pushState(result.data.layoutData.elements);
+        let elements = result.data.layoutData.elements;
+        dispatch({ type: 'SET_ELEMENTS', payload: elements });
+        historyWrapper.pushState(elements);
         console.log('Layout cargado exitosamente desde el backend para evento:', eventIdParam);
+
+        // Load seats associated with this layout
+        await loadSeatsForEvent();
+
+        // Match loaded seats with seatPositions in elements to identify seats by backend ID
+        elements = matchSeatsWithLayout(elements);
+        dispatch({ type: 'SET_ELEMENTS', payload: elements });
+        historyWrapper.pushState(elements);
       } else {
         console.log('No se encontró layout existente para el evento:', eventIdParam, '- Esto es normal para eventos nuevos');
         // Don't show error for new events without layouts
@@ -851,7 +913,7 @@ const FloorPlanDesignerInner = () => {
     }
   };
 
-  const handleSeatSelect = async (seatId) => {
+  const handleSeatSelect = (seatId) => {
     const seat = seats.find(s => s.id === seatId);
     if (!seat) return;
 
@@ -859,16 +921,8 @@ const FloorPlanDesignerInner = () => {
       // Deseleccionar
       setSelectedSeats(prev => prev.filter(id => id !== seatId));
     } else {
-      // Seleccionar y reservar
-      try {
-        await updateSeatStatus(seatId, 'RESERVED');
-        setSelectedSeats(prev => [...prev, seatId]);
-        // Actualizar el estado del asiento localmente
-        setSeats(prev => prev.map(s => s.id === seatId ? { ...s, status: 'RESERVED' } : s));
-      } catch (error) {
-        console.error('Error reservando asiento:', error);
-        alert('Error al reservar el asiento');
-      }
+      // Seleccionar (sin reservar en el backend, solo para visualización)
+      setSelectedSeats(prev => [...prev, seatId]);
     }
   };
 
@@ -888,10 +942,41 @@ const FloorPlanDesignerInner = () => {
           }
         }
         setSeats(allSeats);
+        return allSeats;
       }
     } catch (error) {
       console.error('Error cargando asientos:', error);
     }
+    return [];
+  };
+
+  const matchSeatsWithLayout = (elements) => {
+    const updatedElements = elements.map(element => {
+      if (element.type === 'seatRow' && element.seatPositions) {
+        const updatedPositions = element.seatPositions.map(position => {
+          // Find matching seat by position (x, y) and row/seatNumber
+          const matchingSeat = seats.find(seat =>
+            Math.abs(seat.x - position.x) < 5 && // Tolerance for position matching
+            Math.abs(seat.y - position.y) < 5 &&
+            seat.row === position.row &&
+            seat.seatNumber === position.seatNumber
+          );
+
+          if (matchingSeat) {
+            return {
+              ...position,
+              backendId: matchingSeat.id, // Add backend ID
+              seatNumber: matchingSeat.seatNumber, // Ensure seat number matches
+              status: matchingSeat.status // Sync status
+            };
+          }
+          return position;
+        });
+        return { ...element, seatPositions: updatedPositions };
+      }
+      return element;
+    });
+    return updatedElements;
   };
 
   const handlePurchaseSeats = async () => {

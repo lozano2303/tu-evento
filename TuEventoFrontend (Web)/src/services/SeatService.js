@@ -21,13 +21,13 @@ export const getSeatsBySection = async (sectionId) => {
 export const updateSeatStatus = async (seatId, status) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_BASE_URL}/v1/seats/${seatId}/status`, {
+    const newStatus = status === 'RESERVED' ? 'true' : 'false';
+    const response = await fetch(`${API_BASE_URL}/v1/seats/${seatId}/status?newStatus=${newStatus}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ status }),
     });
     const data = await response.json();
     return data;
@@ -107,6 +107,24 @@ export const deleteSeat = async (seatId) => {
     return data;
   } catch (error) {
     console.error('Error eliminando asiento:', error);
+    throw error;
+  }
+};
+
+export const releaseExpiredReservations = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/v1/seats/release-expired`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error liberando reservaciones expiradas:', error);
     throw error;
   }
 };

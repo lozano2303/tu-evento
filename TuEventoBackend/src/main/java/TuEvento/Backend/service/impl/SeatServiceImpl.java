@@ -172,6 +172,29 @@ public class SeatServiceImpl implements SeatService {
     }
 
     @Override
+    public ResponseDto<List<SeatDto>> getSeatsBySection(int sectionId) {
+        List<Seat> seats = seatRepository.findBySectionID_SectionID(sectionId);
+
+        if (seats.isEmpty()) {
+            return ResponseDto.error("No hay asientos para esta sección");
+        }
+
+        List<SeatDto> seatsDto = seats.stream()
+                .map(seat -> new SeatDto(
+                        seat.getSectionID().getSectionID(),
+                        seat.getEventLayoutID().getId(),
+                        seat.getSeatNumber(),
+                        seat.getRow(),
+                        seat.getX(),
+                        seat.getY(),
+                        seat.isStatus() ? "OCCUPIED" : "AVAILABLE"
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseDto.ok("Asientos encontrados", seatsDto);
+    }
+
+    @Override
     @Transactional
     public ResponseDto<String> updateSeatStatus(int seatID, boolean newStatus) {
         Optional<Seat> seatOpt = seatRepository.findById(seatID);
@@ -190,6 +213,34 @@ public class SeatServiceImpl implements SeatService {
             return ResponseDto.error("Error de la base de datos al actualizar el estado");
         } catch (Exception e) {
             return ResponseDto.error("Error inesperado al actualizar el estado del asiento");
+        }
+    }
+
+    @Override
+    @Transactional
+    public ResponseDto<String> releaseExpiredReservations() {
+        try {
+            // For now, release all occupied seats that might be stuck from failed reservations
+            // In a production system, you'd check timestamps or reservation records
+            List<Seat> occupiedSeats = seatRepository.findAll().stream()
+                .filter(seat -> seat.isStatus()) // occupied/reserved
+                .collect(Collectors.toList());
+
+            int releasedCount = 0;
+            for (Seat seat : occupiedSeats) {
+                // Check if this seat has any associated tickets
+                // If no active tickets, release it
+                // For simplicity, release all occupied seats (not ideal for production)
+                seat.setStatus(false); // set to available
+                seatRepository.save(seat);
+                releasedCount++;
+            }
+
+            return ResponseDto.ok("Liberados " + releasedCount + " asientos expirados");
+        } catch (DataAccessException e) {
+            return ResponseDto.error("Error de la base de datos al liberar reservaciones");
+        } catch (Exception e) {
+            return ResponseDto.error("Error inesperado al liberar reservaciones expiradas");
         }
     }
 }

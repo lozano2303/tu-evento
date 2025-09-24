@@ -4,13 +4,16 @@ import TuEvento.Backend.dto.email.ActivationCodeEmailDto;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
-
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class ActivationCodeEmailService {
@@ -191,5 +194,101 @@ public class ActivationCodeEmailService {
             System.out.println(e.getMessage());
         }
         return false; // Si hubo un error, se devuelve false
+    }
+
+    public void sendTicketReservationEmail(String email, String userName, String eventName, String ticketCode, String qrCodeUrl, List<String> seatDetails, BigDecimal totalPrice, LocalDate eventDate) {
+        try {
+            String subject = "🎫 Confirmación de Reserva - " + eventName;
+
+            String seatDetailsHtml = seatDetails.stream()
+                .map(seat -> "<li style='margin: 5px 0;'>" + seat + "</li>")
+                .reduce("", (a, b) -> a + b);
+
+            String bodyMail = String.format("""
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Confirmación de Reserva</title>
+                    <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f5f3ff 0%%, #ede9fe 100%%); margin: 0; padding: 20px; color: #1f1d2e; }
+                        .container { max-width: 650px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(124, 58, 237, 0.12); }
+                        .header { background: linear-gradient(135deg, #7c3aed 0%%, #8b5cf6 50%%, #a855f7 100%%); color: white; padding: 40px 30px; text-align: center; }
+                        .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+                        .body { padding: 40px 30px; }
+                        .qr-section { text-align: center; margin: 30px 0; }
+                        .qr-code { max-width: 200px; height: auto; border: 3px solid #8b5cf6; border-radius: 8px; }
+                        .details { background: #faf7ff; padding: 25px; border-radius: 12px; margin: 25px 0; border-left: 4px solid #8b5cf6; }
+                        .seats { background: #f3f0ff; padding: 20px; border-radius: 8px; margin: 15px 0; }
+                        .seats ul { list-style: none; padding: 0; }
+                        .total { font-size: 18px; font-weight: bold; color: #7c3aed; text-align: center; margin: 20px 0; }
+                        .footer { text-align: center; padding: 30px 20px; background: #f9fafb; border-top: 1px solid #e5e7eb; font-size: 14px; color: #6b7280; }
+                        @media (max-width: 650px) { .container { margin: 10px; } .body, .header { padding: 25px 20px; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>🎫 Reserva Confirmada</h1>
+                            <p>Tu reserva ha sido procesada exitosamente</p>
+                        </div>
+                        <div class="body">
+                            <h2>¡Hola %s!</h2>
+                            <p>Tu reserva para <strong>%s</strong> ha sido confirmada. Aquí están los detalles:</p>
+
+                            <div class="details">
+                                <h3>📅 Detalles del Evento</h3>
+                                <p><strong>Fecha:</strong> %s</p>
+                                <p><strong>Código de Reserva:</strong> %s</p>
+                            </div>
+
+                            <div class="seats">
+                                <h3>💺 Asientos Reservados</h3>
+                                <ul>%s</ul>
+                            </div>
+
+                            <div class="total">
+                                Total Pagado: $%s
+                            </div>
+
+                            <div class="qr-section">
+                                <h3>📱 Código QR de Acceso</h3>
+                                <p>Presenta este código QR en la entrada del evento</p>
+                                <img src="%s" alt="Código QR" class="qr-code" />
+                            </div>
+
+                            <div style="background: #eff6ff; padding: 20px; border-radius: 10px; margin: 25px 0; border-left: 4px solid #3b82f6;">
+                                <strong>📋 Instrucciones:</strong>
+                                <ul style="margin: 10px 0; padding-left: 20px;">
+                                    <li>Llega al evento al menos 30 minutos antes</li>
+                                    <li>Presenta este correo o el código QR en tu teléfono</li>
+                                    <li>Los asientos están garantizados hasta 15 minutos antes del evento</li>
+                                    <li>Para cambios o cancelaciones, contacta con anticipación</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="footer">
+                            <p>Gracias por elegir TuEvento</p>
+                            <p>Este es un correo automático, por favor no respondas</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """,
+                userName,
+                eventName,
+                eventDate.toString(),
+                ticketCode,
+                seatDetailsHtml,
+                totalPrice.toString(),
+                qrCodeUrl
+            );
+
+            emailSender(email, subject, bodyMail);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error sending ticket reservation email: " + e.getMessage());
+        }
     }
 }
