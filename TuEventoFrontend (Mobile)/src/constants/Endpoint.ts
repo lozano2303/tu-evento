@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://192.168.0.25:8080/api/v1"; //  API base URL
+const API_BASE_URL = "http://192.168.215.235:8080/api/v1"; //  API base URL
 
 export const USER_ENDPOINT = `${API_BASE_URL}/register`; // User registration endpoint
 
@@ -15,3 +15,5 @@ export const RESET_PASSORD_WITH_TOKEN = `${API_BASE_URL}/login/resetPasswordWith
 export const LOGIN_ENDPOINT = `${API_BASE_URL}/login/start`; // Login endpoint
 
 export const USER_PROFILE_ENDPOINT = `${API_BASE_URL}/users`; // User profile endpoint
+
+export const GET_ALL_EVENTS_ENDPOINT = `${API_BASE_URL}/event/getAll`; // Get all events endpoint
