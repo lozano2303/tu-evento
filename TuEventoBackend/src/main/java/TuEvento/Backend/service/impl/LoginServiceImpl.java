@@ -13,7 +13,7 @@ import TuEvento.Backend.repository.LoginRepository;
 import TuEvento.Backend.repository.RecoverPasswordRepository;
 import TuEvento.Backend.service.LoginService;
 import TuEvento.Backend.service.RecoverPasswordService;
-import TuEvento.Backend.service.email.ActivationCodeEmailService;
+import TuEvento.Backend.service.email.ForgotPasswordEmailService;
 import TuEvento.Backend.service.jwt.jwtService;
 import TuEvento.Backend.dto.requests.TokenInfo;
 import TuEvento.Backend.dto.responses.ResponseLogin;
@@ -49,7 +49,7 @@ public class LoginServiceImpl implements LoginService {
     private final Map<String, TokenInfo> resetTokens = new ConcurrentHashMap<>();
 
     @Autowired
-    private ActivationCodeEmailService emailService;
+    private ForgotPasswordEmailService emailService;
 
     @Autowired
     private jwtService jwtService;
@@ -173,7 +173,8 @@ public class LoginServiceImpl implements LoginService {
         resetTokens.put(token, new TokenInfo(optionalUser.get().getUserID().getUserID(), token));
         recoverPasswordService.insertRecoverPassword(recoverPasswordDto);
         System.out.println("Token generado para " + email + ": " + token);
-        emailService.passwordResetEmail(email, token);
+        String userName = optionalUser.get().getUserID().getFullName();
+        emailService.passwordResetEmail(email, userName, token);
 
         return ResponseDto.ok("Se ha enviado un enlace de recuperación.");
     }

@@ -10,7 +10,7 @@ import TuEvento.Backend.repository.AccountActivationRepository;
 import TuEvento.Backend.repository.UserRepository;
 import TuEvento.Backend.repository.LoginRepository;
 import TuEvento.Backend.service.AccountActivationService;
-import TuEvento.Backend.service.email.ActivationCodeEmailService;
+import TuEvento.Backend.service.email.ActivationEmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Service;
@@ -33,7 +33,7 @@ public class AccountActivationServiceImpl implements AccountActivationService {
     private LoginRepository loginRepository;
 
     @Autowired
-    private ActivationCodeEmailService emailService;
+    private ActivationEmailService emailService;
 
     @Override
     @Transactional

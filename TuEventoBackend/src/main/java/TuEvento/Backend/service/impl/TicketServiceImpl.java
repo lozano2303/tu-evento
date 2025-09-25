@@ -9,7 +9,7 @@ import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.model.*;
 import TuEvento.Backend.repository.*;
 import TuEvento.Backend.service.TicketService;
-import TuEvento.Backend.service.email.ActivationCodeEmailService;
+import TuEvento.Backend.service.email.TicketReservationEmailService;
 
 import jakarta.transaction.Transactional;
 
@@ -41,7 +41,7 @@ public class TicketServiceImpl implements TicketService {
     private LoginRepository loginRepository;
 
     @Autowired
-    private ActivationCodeEmailService emailService;
+    private TicketReservationEmailService emailService;
 
     // DTO ↔ Entity
     private TicketDto toDto(Ticket ticket) {

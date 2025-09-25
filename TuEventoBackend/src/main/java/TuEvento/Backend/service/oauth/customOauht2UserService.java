@@ -13,13 +13,13 @@ import org.springframework.stereotype.Service;
 import TuEvento.Backend.dto.UserDto;
 import TuEvento.Backend.dto.requests.RequestLoginDTO;
 import TuEvento.Backend.model.User;
-import TuEvento.Backend.service.email.ActivationCodeEmailService;
+import TuEvento.Backend.service.email.RegisterWithOAuth2EmailService;
 import TuEvento.Backend.service.impl.LoginServiceImpl;
 import TuEvento.Backend.service.impl.UserServiceImpl;
     @Service
     public class customOauht2UserService extends DefaultOAuth2UserService {
     @Autowired
-    private ActivationCodeEmailService activationCodeEmailService;
+    private RegisterWithOAuth2EmailService oauth2EmailService;
     @Autowired
     private UserServiceImpl userService;
     @Autowired
@@ -66,7 +66,7 @@ import TuEvento.Backend.service.impl.UserServiceImpl;
               newUser.setEmail(email);
               newUser.setUserID(user);
               loginService.save(newUser);
-              activationCodeEmailService.basicEmail(email, name, newUser.getPassword());
+              oauth2EmailService.sendWelcomeEmail(email, name, newUser.getPassword());
               System.out.println("Usuario creado exitosamente: " + name);
             }
         }

@@ -16,13 +16,8 @@ import java.time.LocalDateTime;
 
 import TuEvento.Backend.dto.UserDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
-import TuEvento.Backend.model.Address;
-import TuEvento.Backend.model.Login;
-import TuEvento.Backend.model.Role;
-import TuEvento.Backend.model.User;
-import TuEvento.Backend.repository.AddressRepository;
-import TuEvento.Backend.repository.LoginRepository;
-import TuEvento.Backend.repository.UserRepository;
+import TuEvento.Backend.model.*;
+import TuEvento.Backend.repository.*;
 import TuEvento.Backend.service.UserService;
 
 @Service
@@ -36,6 +31,27 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private LoginRepository loginRepository;
+
+    @Autowired
+    private AccountActivationRepository accountActivationRepository;
+
+    @Autowired
+    private RecoverPasswordRepository recoverPasswordRepository;
+
+    @Autowired
+    private NotificationUserRepository notificationUserRepository;
+
+    @Autowired
+    private OrganizerPetitionRepository organizerPetitionRepository;
+
+    @Autowired
+    private EventRatingRepository eventRatingRepository;
+
+    @Autowired
+    private TicketRepository ticketRepository;
+
+    @Autowired
+    private SeatTicketRepository seatTicketRepository;
 
     // Regex patterns for validation
     private static final Pattern TELEPHONE_PATTERN = Pattern.compile(
@@ -242,10 +258,49 @@ public class UserServiceImpl implements UserService {
         User user = userOpt.get();
 
         try {
-            // Eliminar login asociado
-            loginRepository.deleteById(userId);
+            // Eliminar referencias en tablas relacionadas ANTES de eliminar el usuario
+            // 1. Eliminar registros de account_activation
+            Optional<AccountActivation> activationOpt = accountActivationRepository.findByUserID_UserID(userId);
+            if (activationOpt.isPresent()) {
+                accountActivationRepository.delete(activationOpt.get());
+            }
 
-            // Eliminar usuario (cascada eliminará referencias si configurado)
+            // 2. Eliminar registros de recover_password si existen
+            List<RecoverPassword> recoverPasswords = recoverPasswordRepository.findAll().stream()
+                .filter(rp -> rp.getUserID().getUserID() == userId)
+                .toList();
+            recoverPasswordRepository.deleteAll(recoverPasswords);
+
+            // 3. Eliminar registros de notification_user si existen
+            List<NotificationUser> notificationUsers = notificationUserRepository.findAll().stream()
+                .filter(nu -> nu.getUser().getUserID() == userId)
+                .toList();
+            notificationUserRepository.deleteAll(notificationUsers);
+
+            // 4. Eliminar registros de organizer_petition si existen
+            List<OrganizerPetition> organizerPetitions = organizerPetitionRepository.findAll().stream()
+                .filter(op -> op.getUserID().getUserID() == userId)
+                .toList();
+            organizerPetitionRepository.deleteAll(organizerPetitions);
+
+            // 5. Eliminar registros de event_rating si existen
+            List<EventRating> eventRatings = eventRatingRepository.findAll().stream()
+                .filter(er -> er.getUserId().getUserID() == userId)
+                .toList();
+            eventRatingRepository.deleteAll(eventRatings);
+
+            // 6. Eliminar tickets y referencias relacionadas
+            List<Ticket> userTickets = ticketRepository.findByUserId(user);
+            for (Ticket ticket : userTickets) {
+                // Eliminar seat_tickets relacionados
+                List<SeatTicket> seatTickets = seatTicketRepository.findByTicket(ticket);
+                seatTicketRepository.deleteAll(seatTickets);
+                // Eliminar el ticket
+                ticketRepository.delete(ticket);
+            }
+
+            // 7. Finalmente eliminar el login y el usuario
+            loginRepository.deleteById(userId);
             userRepository.delete(user);
 
             return ResponseDto.ok("Cuenta de usuario eliminada permanentemente");
@@ -359,8 +414,24 @@ public class UserServiceImpl implements UserService {
         for (Login login : unactivatedLogins) {
             try {
                 User user = login.getUserID();
-                // Eliminar usuario (cascada eliminará login y otras referencias)
+                int userId = user.getUserID();
+
+                // Eliminar referencias en tablas relacionadas ANTES de eliminar el usuario
+                // 1. Eliminar registros de account_activation (CRÍTICO - causa el error principal)
+                Optional<AccountActivation> activationOpt = accountActivationRepository.findByUserID_UserID(userId);
+                if (activationOpt.isPresent()) {
+                    accountActivationRepository.delete(activationOpt.get());
+                }
+
+                // 2. Para otras tablas, asumimos que los usuarios no activados no tienen datos
+                // o que el ORM maneja las eliminaciones en cascada apropiadamente
+
+                // 7. Finalmente eliminar el login y el usuario
+                loginRepository.delete(login);
                 userRepository.delete(user);
+
+                System.out.println("Cuenta no activada eliminada exitosamente para userId: " + userId);
+
             } catch (Exception e) {
                 // Log error but continue
                 System.err.println("Error eliminando cuenta no activada para userId: " + login.getUserID().getUserID() + " - " + e.getMessage());
