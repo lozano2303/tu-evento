@@ -1,5 +1,9 @@
 @startuml Complete Service Class Diagram
+left to right direction
+skinparam nodesep 100
+skinparam ranksep 50
 
+together {
 interface AccountActivationService {
     + void createActivationForUser(int)
     + void resendActivationCode(int)
@@ -7,7 +11,22 @@ interface AccountActivationService {
     + User getUserById(int)
 }
 
+class AccountActivationServiceImpl implements AccountActivationService {
+    + void createActivationForUser(int)
+    + void resendActivationCode(int)
+    + ResponseDto<String> verifyActivationCode(int, String)
+    + User getUserById(int)
+}
+
 interface AddressService {
+    + ResponseDto<AddressDto> insertAddress(AddressDto)
+    + ResponseDto<String> updateAddress(int, AddressDto)
+    + ResponseDto<String> deleteAddress(int)
+    + ResponseDto<List<AddressDto>> getAllAddresses()
+    + ResponseDto<AddressDto> getAddressById(int)
+}
+
+class AddressServiceImpl implements AddressService {
     + ResponseDto<AddressDto> insertAddress(AddressDto)
     + ResponseDto<String> updateAddress(int, AddressDto)
     + ResponseDto<String> deleteAddress(int)
@@ -24,7 +43,28 @@ interface CategoryEventService {
     + ResponseDto<String> removeAllEventsFromCategory(int)
 }
 
+class CategoryEventServiceImpl implements CategoryEventService {
+    + ResponseDto<CategoryEventDto> assignCategoryToEvent(CategoryEventDto)
+    + ResponseDto<String> removeCategoryFromEvent(int, int)
+    + ResponseDto<List<CategoryEventDto>> getCategoriesByEvent(int)
+    + ResponseDto<List<CategoryEventDto>> getEventsByCategory(int)
+    + ResponseDto<String> removeAllCategoriesFromEvent(int)
+    + ResponseDto<String> removeAllEventsFromCategory(int)
+}
+}
+together {
 interface CategoryService {
+    + ResponseDto<CategoryDto> insertCategory(CategoryDto)
+    + ResponseDto<String> updateCategory(int, CategoryDto)
+    + ResponseDto<String> deleteCategory(int)
+    + ResponseDto<List<CategoryDto>> getAllCategories()
+    + ResponseDto<CategoryDto> getCategoryById(int)
+    + ResponseDto<List<CategoryDto>> getRootCategories()
+    + ResponseDto<List<CategoryDto>> getSubCategories(int)
+    + ResponseDto<List<CategoryDto>> searchCategoriesByName(String)
+}
+
+class CategoryServiceImpl implements CategoryService {
     + ResponseDto<CategoryDto> insertCategory(CategoryDto)
     + ResponseDto<String> updateCategory(int, CategoryDto)
     + ResponseDto<String> deleteCategory(int)
@@ -43,6 +83,14 @@ interface CityService {
     + ResponseDto<CityDto> getCityById(int)
 }
 
+class CityServiceImpl implements CityService {
+    + ResponseDto<CityDto> insertCity(CityDto)
+    + ResponseDto<String> updateCity(int, CityDto)
+    + ResponseDto<String> deleteCity(int)
+    + ResponseDto<List<CityDto>> getAllCities()
+    + ResponseDto<CityDto> getCityById(int)
+}
+
 interface DepartmentService {
     + ResponseDto<DepartmentDto> insertDepartment(DepartmentDto)
     + ResponseDto<String> updateDepartment(int, String)
@@ -51,6 +99,15 @@ interface DepartmentService {
     + ResponseDto<DepartmentDto> getDepartmentById(int)
 }
 
+class DepartmentServiceImpl implements DepartmentService {
+    + ResponseDto<DepartmentDto> insertDepartment(DepartmentDto)
+    + ResponseDto<String> updateDepartment(int, String)
+    + ResponseDto<String> deleteDepartment(int)
+    + ResponseDto<List<DepartmentDto>> getAllDepartments()
+    + ResponseDto<DepartmentDto> getDepartmentById(int)
+}
+}
+together {
 interface EventLayoutService {
     + ResponseDto<EventLayoutDto> getEventLayout(String, EventLayoutDto)
     + ResponseDto<EventLayoutDto> createEventLayout(EventLayoutDto)
@@ -58,7 +115,23 @@ interface EventLayoutService {
     + ResponseDto<EventLayoutDto> deleteEventLayout(EventLayoutDto)
 }
 
+class EventLayoutServiceImpl implements EventLayoutService {
+    + ResponseDto<EventLayoutDto> getEventLayout(String, EventLayoutDto)
+    + ResponseDto<EventLayoutDto> createEventLayout(EventLayoutDto)
+    + ResponseDto<EventLayoutDto> updateEventLayout(String, EventLayoutDto)
+    + ResponseDto<EventLayoutDto> deleteEventLayout(EventLayoutDto)
+}
+
 interface EventRatingService {
+    + ResponseDto<EventRatingDto> insertEventRating(int, int, EventRatingDto)
+    + ResponseDto<EventRatingDto> updateEventRating(EventRatingDto)
+    + ResponseDto<EventRatingDto> getEventRating(EventRatingDto)
+    + ResponseDto<EventRatingDto> deleteEventRating(EventRatingDto)
+    + ResponseDto<EventRatingDto> getEventRatingByEvent(EventRatingDto)
+    + ResponseDto<EventRatingDto> getEventRatingByUser(EventRatingDto)
+}
+
+class EventRatingServiceImpl implements EventRatingService {
     + ResponseDto<EventRatingDto> insertEventRating(int, int, EventRatingDto)
     + ResponseDto<EventRatingDto> updateEventRating(EventRatingDto)
     + ResponseDto<EventRatingDto> getEventRating(EventRatingDto)
@@ -76,7 +149,25 @@ interface EventService {
     + ResponseDto<EventDto> getEventById(int)
 }
 
+class EventServiceImpl implements EventService {
+    + ResponseDto<EventDto> insertEvent(EventDto)
+    + ResponseDto<EventDto> updateEvent(ResponseEvent, EventDto)
+    + ResponseDto<EventDto> CancelEvent(EventDto)
+    + ResponseDto<List<EventDto>> getAllEvent()
+    + ResponseDto<EventDto> getEvent(ResponseEventSearch, EventDto)
+    + ResponseDto<EventDto> getEventById(int)
+}
+}
+together {
 interface LocationService {
+    + ResponseDto<LocationDto> insertLocation(LocationDto)
+    + ResponseDto<String> updateLocation(int, LocationDto)
+    + ResponseDto<String> deleteLocation(int)
+    + ResponseDto<List<LocationDto>> getAllLocations()
+    + ResponseDto<LocationDto> getLocationById(int)
+}
+
+class LocationServiceImpl implements LocationService {
     + ResponseDto<LocationDto> insertLocation(LocationDto)
     + ResponseDto<String> updateLocation(int, LocationDto)
     + ResponseDto<String> deleteLocation(int)
@@ -89,6 +180,11 @@ interface LoginService {
     + ResponseDto<String> save(RequestLoginDTO)
 }
 
+class LoginServiceImpl implements LoginService {
+    + ResponseDto<ResponseLogin> login(LoginDto)
+    + ResponseDto<String> save(RequestLoginDTO)
+}
+
 interface NotificationService {
     + ResponseDto<NotificationDto> insertNotification(NotificationDto)
     + ResponseDto<NotificationDto> updateNotification(NotificationDto)
@@ -97,7 +193,22 @@ interface NotificationService {
     + ResponseDto<List<NotificationDto>> getNotifications(int)
 }
 
+class NotificationServiceImpl implements NotificationService {
+    + ResponseDto<NotificationDto> insertNotification(NotificationDto)
+    + ResponseDto<NotificationDto> updateNotification(NotificationDto)
+    + ResponseDto<NotificationDto> deleteNotification(int)
+    + ResponseDto<NotificationDto> getNotification(int)
+    + ResponseDto<List<NotificationDto>> getNotifications(int)
+}
+}
+together {
 interface NotificationUserService {
+    + ResponseDto<NotificationUserDto> deleteNotificationUser(int)
+    + ResponseDto<NotificationUserDto> insertNotificationUser(NotificationUserDto)
+    + ResponseDto<List<NotificationUserDto>> getAll()
+}
+
+class NotificationUserServiceImpl implements NotificationUserService {
     + ResponseDto<NotificationUserDto> deleteNotificationUser(int)
     + ResponseDto<NotificationUserDto> insertNotificationUser(NotificationUserDto)
     + ResponseDto<List<NotificationUserDto>> getAll()
@@ -110,16 +221,42 @@ interface OrganizerPetitionService {
     + ResponseDto<String> updatePetitionStatus(int, int)
 }
 
+class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
+    + ResponseDto<String> submitPetition(int, MultipartFile)
+    + ResponseDto<List<OrganizerPetitionDto>> getAllPetitions()
+    + ResponseDto<OrganizerPetitionDto> getPetitionByUserID(int)
+    + ResponseDto<String> updatePetitionStatus(int, int)
+}
+
 interface RecoverPasswordService {
     + ResponseDto<String> insertRecoverPassword(RecoverPasswordDto)
     + ResponseDto<String> updateRecoverPassword(String, RecoverPasswordDto)
 }
 
+class RecoverPasswordServiceImpl implements RecoverPasswordService {
+    + ResponseDto<String> insertRecoverPassword(RecoverPasswordDto)
+    + ResponseDto<String> updateRecoverPassword(String, RecoverPasswordDto)
+}
+}
+together {
 interface RegisterService {
     + ResponseDto<String> register(RegisterRequestDto)
 }
 
+class RegisterServiceImpl implements RegisterService {
+    + ResponseDto<String> register(RegisterRequestDto)
+}
+
 interface SeatService {
+    + ResponseDto<SeatDto> insertSeat(SeatDto)
+    + ResponseDto<String> updateSeat(int, SeatDto)
+    + ResponseDto<String> deleteSeat(int)
+    + ResponseDto<List<SeatDto>> getAllSeats()
+    + ResponseDto<SeatDto> getSeatById(int)
+    + ResponseDto<String> updateSeatStatus(int, boolean)
+}
+
+class SeatServiceImpl implements SeatService {
     + ResponseDto<SeatDto> insertSeat(SeatDto)
     + ResponseDto<String> updateSeat(int, SeatDto)
     + ResponseDto<String> deleteSeat(int)
@@ -136,6 +273,15 @@ interface SectionService {
     + ResponseDto<SectionDto> getSectionById(int)
 }
 
+class SectionServiceImpl implements SectionService {
+    + ResponseDto<SectionDto> insertSection(SectionDto)
+    + List<SectionDto> getAllSections()
+    + ResponseDto<SectionDto> updateSection(SectionDto)
+    + ResponseDto<SectionDto> deleteSection(int)
+    + ResponseDto<SectionDto> getSectionById(int)
+}
+}
+together {
 interface TicketService {
     + ResponseDto<String> createTicketWithSeats(TicketDto)
     + ResponseDto<String> cancelTicket(int)
@@ -144,7 +290,19 @@ interface TicketService {
     + ResponseDto<List<TicketDto>> getTicketByUser(int)
 }
 
+class TicketServiceImpl implements TicketService {
+    + ResponseDto<String> createTicketWithSeats(TicketDto)
+    + ResponseDto<String> cancelTicket(int)
+    + ResponseDto<TicketDto> getTicketById(int)
+    + ResponseDto<List<TicketDto>> getTicketByEvent(int)
+    + ResponseDto<List<TicketDto>> getTicketByUser(int)
+}
+
 interface UserDetailsService {
+    + UserDetails loadUserByUsername(String)
+}
+
+class UserDetailsServiceImpl implements UserDetailsService {
     + UserDetails loadUserByUsername(String)
 }
 
@@ -160,4 +318,16 @@ interface UserService {
     + ResponseDto<List<UserDto>> getAllUsers()
 }
 
+class UserServiceImpl implements UserService {
+    + ResponseDto<String> updateTelephone(int, String)
+    + ResponseDto<String> updateBirthDate(int, Date)
+    + ResponseDto<String> updateAddress(int, Integer)
+    + ResponseDto<String> deleteUserAccount(int)
+    + ResponseDto<String> deactivateUser(int)
+    + ResponseDto<String> reactivateUser(int)
+    + ResponseDto<UserDto> getUserById(int)
+    + ResponseDto<List<UserDto>> getUsersByName(String)
+    + ResponseDto<List<UserDto>> getAllUsers()
+}
+}
 @enduml

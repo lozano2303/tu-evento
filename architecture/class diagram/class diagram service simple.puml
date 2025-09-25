@@ -1,66 +1,118 @@
 @startuml Simple Service Class Diagram
+left to right direction
+skinparam nodesep 100
+skinparam ranksep 50
 
-class AccountActivationService {
+together {
+interface AccountActivationService {
 }
 
-class AddressService {
+class AccountActivationServiceImpl implements AccountActivationService {
+}
+interface AddressService {
 }
 
-class CategoryEventService {
+class AddressServiceImpl implements AddressService {
+}
+interface CategoryEventService {
+}
+class CategoryEventServiceImpl implements CategoryEventService {
+}
+}
+together {
+interface CategoryService {
 }
 
-class CategoryService {
+class CategoryServiceImpl implements CategoryService {
+}
+interface CityService {
 }
 
-class CityService {
+class CityServiceImpl implements CityService {
+}
+interface DepartmentService {
+}
+class DepartmentServiceImpl implements DepartmentService {
+}
+}
+together {
+interface EventLayoutService {
 }
 
-class DepartmentService {
+class EventLayoutServiceImpl implements EventLayoutService {
+}
+interface EventRatingService {
 }
 
-class EventLayoutService {
+class EventRatingServiceImpl implements EventRatingService {
+}
+interface EventService {
+}
+class EventServiceImpl implements EventService {
+}
+}
+together {
+interface LocationService {
 }
 
-class EventRatingService {
+class LocationServiceImpl implements LocationService {
+}
+interface LoginService {
 }
 
-class EventService {
+class LoginServiceImpl implements LoginService {
+}
+interface NotificationService {
+}
+class NotificationServiceImpl implements NotificationService {
+}
+}
+together {
+interface NotificationUserService {
 }
 
-class LocationService {
+class NotificationUserServiceImpl implements NotificationUserService {
+}
+interface OrganizerPetitionService {
 }
 
-class LoginService {
+class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
+}
+interface RecoverPasswordService {
+}
+class RecoverPasswordServiceImpl implements RecoverPasswordService {
+}
+}
+together {
+interface RegisterService {
 }
 
-class NotificationService {
+class RegisterServiceImpl implements RegisterService {
+}
+interface SeatService {
 }
 
-class NotificationUserService {
+class SeatServiceImpl implements SeatService {
+}
+interface SectionService {
+}
+class SectionServiceImpl implements SectionService {
+}
+}
+together {
+interface TicketService {
 }
 
-class OrganizerPetitionService {
+class TicketServiceImpl implements TicketService {
+}
+interface UserDetailsService {
 }
 
-class RecoverPasswordService {
+class UserDetailsServiceImpl implements UserDetailsService {
 }
-
-class RegisterService {
+interface UserService {
 }
-
-class SeatService {
+class UserServiceImpl implements UserService {
 }
-
-class SectionService {
 }
-
-class TicketService {
-}
-
-class UserDetailsService {
-}
-
-class UserService {
-}
-
 @enduml
