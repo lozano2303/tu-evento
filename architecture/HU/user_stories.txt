@@ -1,0 +1,40 @@
+# Historias de Usuario para TuEvento
+
+## Autenticación y Registro
+1. Como alguien nuevo en la plataforma, quiero crear una cuenta de manera sencilla y rápida para empezar a explorar eventos emocionantes.
+2. Como usuario registrado, quiero verificar mi dirección de email para sentirme seguro de que mi cuenta está protegida.
+3. Como usuario habitual, quiero iniciar sesión de forma rápida y sin complicaciones para acceder inmediatamente a lo que me interesa.
+4. Como usuario ocupado, quiero que la app recuerde mi sesión para no tener que loguearme cada vez que la uso.
+5. Como alguien olvidadizo, quiero poder recuperar mi contraseña fácilmente para no quedarme fuera de mi cuenta favorita.
+
+## Gestión de Perfil Personal
+6. Como usuario curioso, quiero ver mi información personal en un vistazo para asegurarme de que todo esté correcto.
+7. Como persona en evolución, quiero editar mi perfil cuando cambie algo en mi vida para mantenerlo actualizado.
+8. Como usuario que necesita un descanso, quiero desactivar mi cuenta temporalmente para tomarme un break sin perder mis datos.
+9. Como usuario que regresa, quiero reactivar mi cuenta fácilmente cuando esté listo para volver a la acción.
+10. Como usuario que decide irse, quiero eliminar mi cuenta permanentemente para cerrar ese capítulo de mi vida.
+
+## Descubrimiento de Eventos
+11. Como explorador de experiencias, quiero ver una lista de eventos disponibles para inspirarme y encontrar algo que me apasione.
+12. Como alguien con un evento específico en mente, quiero buscar por nombre para hallarlo rápidamente sin perder tiempo.
+13. Como usuario selectivo, quiero filtrar eventos por categoría o ubicación para encontrar exactamente lo que busco.
+14. Como persona indecisa, quiero ver todos los detalles de un evento para tomar una decisión informada sobre asistir.
+15. Como seguidor de tendencias, quiero ver eventos destacados o populares para no perderme lo que está de moda.
+
+## Gestión de Eventos (para Organizadores)
+16. Como creador de experiencias, quiero crear un evento con todos los detalles necesarios para que la gente se emocione por asistir.
+17. Como organizador ocupado, quiero editar mi evento si hay cambios de último minuto para mantener a todos informados.
+18. Como organizador responsable, quiero cancelar un evento si es necesario para evitar decepciones y manejar reembolsos.
+19. Como gestor eficiente, quiero un panel de control intuitivo para manejar todos mis eventos en un solo lugar.
+
+## Peticiones de Organizadores
+20. Como entusiasta de eventos, quiero solicitar convertirme en organizador para compartir mis ideas con el mundo.
+21. Como administrador cuidadoso, quiero revisar las peticiones de organizadores para asegurar que todos cumplan con los estándares.
+22. Como guardián de la calidad, quiero aprobar o rechazar solicitudes de organizadores para mantener la plataforma segura y confiable.
+
+## Diseño de Asientos y Layouts
+23. Como organizador creativo, quiero diseñar el layout de asientos para mi evento para crear la mejor experiencia posible.
+24. Como administrador de soporte, quiero gestionar secciones y asientos para ayudar a los organizadores a configurar sus eventos.
+
+## Navegación y Experiencia de Usuario
+25. Como usuario moderno, quiero interfaces bonitas, intuitivas y responsivas en web y móvil para disfrutar de una experiencia placentera y sin fricciones.
