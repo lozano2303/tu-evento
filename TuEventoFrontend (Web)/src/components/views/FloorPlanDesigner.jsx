@@ -528,7 +528,7 @@ const FloorPlanDesignerInner = () => {
   const canUndo = historyWrapper.canUndo;
   const canRedo = historyWrapper.canRedo;
 
-  const [activeTool, setActiveTool] = useState('select');
+  const [activeTool, setActiveTool] = useState('wall');
   const [units, setUnits] = useState('cm');
   const [clipboard, setClipboard] = useState(null);
   const [showGuide, setShowGuide] = useState(false);

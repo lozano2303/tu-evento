@@ -145,15 +145,19 @@ const DrawingCanvas = ({
     const { x: px, y: py } = pos
 
     // Primero buscar en asientos reales de la base de datos
+    let closestSeat = null
+    let minDistance = Infinity
     for (const seat of seats) {
-      const seatSize = 40
-      if (px >= seat.x - 20 && px <= seat.x + 20 &&
-          py >= seat.y - 20 && py <= seat.y + 20) {
-        return seat
+      const dx = px - seat.x
+      const dy = py - seat.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      if (distance <= 20 && distance < minDistance) {
+        minDistance = distance
+        closestSeat = seat
       }
     }
 
-    return null
+    return closestSeat
   }
 
   const getChairAt = (pos) => {
@@ -197,20 +201,25 @@ const DrawingCanvas = ({
     const { x: px, y: py } = pos
 
     // Buscar en posiciones generadas por seatRow - área de clic exacta
+    let closestPosition = null
+    let minDistance = Infinity
     for (const element of elements) {
       if (element.type === 'seatRow' && element.seatPositions) {
         for (let i = 0; i < element.seatPositions.length; i++) {
           const seatPos = element.seatPositions[i]
+          const dx = px - seatPos.x
+          const dy = py - seatPos.y
+          const distance = Math.sqrt(dx * dx + dy * dy)
           const chairSize = 50 // Tamaño visual exacto de la silla
-          if (px >= seatPos.x - chairSize/2 && px <= seatPos.x + chairSize/2 &&
-              py >= seatPos.y - chairSize/2 && py <= seatPos.y + chairSize/2) {
-            return { seatRowId: element.id, seatIndex: i, seatPos }
+          if (distance <= chairSize/2 && distance < minDistance) {
+            minDistance = distance
+            closestPosition = { seatRowId: element.id, seatIndex: i, seatPos }
           }
         }
       }
     }
 
-    return null
+    return closestPosition
   }
 
   const isPointInElement = (point, element) => {
@@ -300,7 +309,7 @@ const DrawingCanvas = ({
       // Verificar si se hizo clic en un asiento de base de datos
       const clickedSeat = getSeatAt(pos)
       console.log("Clicked seat:", clickedSeat)
-      if (clickedSeat && !clickedSeat.status) {
+      if (clickedSeat && clickedSeat.status === 'AVAILABLE') {
         console.log("Selecting seat:", clickedSeat.id)
         onSeatSelect && onSeatSelect(clickedSeat.id)
         return
@@ -873,14 +882,15 @@ const DrawingCanvas = ({
             {/* Asientos reales de la base de datos */}
             {seats.map((seat) => {
               const isSelected = selectedSeats.includes(seat.id)
-              const isOccupied = seat.status === true
+              const isOccupied = seat.status === 'OCCUPIED'
+              const isReserved = seat.status === 'RESERVED'
 
               console.log("Rendering seat:", seat.id, "selectedSeats:", selectedSeats, "isSelected:", isSelected, "isOccupied:", isOccupied);
 
               let fillColor = '#22c55e' // Verde para disponible
               if (isSelected) fillColor = '#3b82f6' // Azul para seleccionado
               else if (isOccupied) fillColor = '#ef4444' // Rojo para ocupado
-              else fillColor = '#ea580c' // Naranja para reservado (true)
+              else if (isReserved) fillColor = '#f59e0b' // Amarillo para reservado
 
               return (
                 <g key={seat.id} data-seat-id={seat.id}>

@@ -34,6 +34,12 @@ public class SectionServiceImpl implements SectionService {
     @Transactional
     public ResponseDto<SectionDto> insertSection(SectionDto sectionDto) {
         try {
+            // Check if section with same name already exists for this event
+            Optional<Section> existingSection = sectionRepository.findByEventID_IdAndSectionName(sectionDto.getEventId(), sectionDto.getSectionName());
+            if (existingSection.isPresent()) {
+                return ResponseDto.error("Ya existe una sección con este nombre para este evento");
+            }
+
             Section entity = new Section();
             entity.setEventID(eventRepository.findById(sectionDto.getEventId()).orElseThrow(() -> new RuntimeException("Event not found")));
             entity.setSectionName(sectionDto.getSectionName());
@@ -50,11 +56,12 @@ public class SectionServiceImpl implements SectionService {
         }
     }
     @Override
-    public List<SectionDto> getAllSections() {
-        return sectionRepository.findAll()
+    public ResponseDto<List<SectionDto>> getAllSections() {
+        List<SectionDto> sectionsDto = sectionRepository.findAll()
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+        return ResponseDto.ok("Secciones encontradas", sectionsDto);
     }
 
     private SectionDto toDto(Section section) {
