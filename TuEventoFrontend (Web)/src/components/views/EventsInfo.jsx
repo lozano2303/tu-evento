@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Star, Send, X, ShoppingCart, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Star, Send, X, ShoppingCart, CheckCircle, AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
 import DrawingCanvas from '../DrawingCanvas.jsx';
 import { getEventById } from '../../services/EventService.js';
 import { getEventLayoutByEventId } from '../../services/EventLayoutService.js';
 import { getTicketsByEvent, createTicketWithSeats } from '../../services/TicketService.js';
 import { getSeatsBySection, updateSeatStatus, createSeat, releaseExpiredReservations } from '../../services/SeatService.js';
 import { getAllSections, createSection } from '../../services/SectionService.js';
+import { insertEventRating, getEventRatingByEvent, deleteEventRating } from '../../services/EventRatingService.js';
+import { getUserById } from '../../services/UserService.js';
 
 const ReservaEvento = () => {
   const [searchParams] = useSearchParams();
@@ -35,6 +37,13 @@ const ReservaEvento = () => {
   const [modalError, setModalError] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(Date.now());
+  const [eventRatings, setEventRatings] = useState([]);
+  const [loadingRatings, setLoadingRatings] = useState(false);
+  const [submittingRating, setSubmittingRating] = useState(false);
+  const [visibleCommentsCount, setVisibleCommentsCount] = useState(5);
+  const [userInfo, setUserInfo] = useState({});
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [deletingRating, setDeletingRating] = useState(null);
 
   // Maximum seats per purchase
   const MAX_SEATS_PER_PURCHASE = 10;
@@ -181,6 +190,7 @@ const ReservaEvento = () => {
     if (event) {
       loadEventTickets();
       loadSections();
+      loadEventRatings();
     }
   }, [event]);
 
@@ -193,6 +203,94 @@ const ReservaEvento = () => {
 
   const handleStarClick = (starNumber) => {
     setRating(starNumber);
+  };
+
+  const handleShowMoreComments = () => {
+    setVisibleCommentsCount(prev => prev + 5);
+  };
+
+  const handleShowLessComments = () => {
+    setVisibleCommentsCount(5);
+  };
+
+  const handleDeleteRating = async (ratingId, ratingUserId) => {
+    if (!checkSession()) return;
+
+    // Get current user ID
+    const currentUserId = localStorage.getItem('userID');
+    if (!currentUserId) {
+      alert('No se pudo identificar al usuario. Por favor, inicia sesión nuevamente.');
+      return;
+    }
+
+    // Check if the current user owns this rating
+    if (parseInt(currentUserId) !== ratingUserId) {
+      alert('Solo puedes eliminar tus propios comentarios.');
+      return;
+    }
+
+    if (!confirm('¿Estás seguro de que quieres eliminar este comentario?')) {
+      return;
+    }
+
+    setDeletingRating(ratingId);
+    try {
+      const result = await deleteEventRating(ratingId);
+      if (result.success) {
+        alert('Comentario eliminado exitosamente.');
+        // Remove the rating from the list
+        setEventRatings(prev => prev.filter(rating => rating.ratingID !== ratingId));
+        // If we're showing fewer comments than available, adjust the count
+        setVisibleCommentsCount(prev => Math.min(prev, eventRatings.length - 1));
+      } else {
+        alert(result.message || 'Error al eliminar el comentario. Inténtalo de nuevo.');
+      }
+    } catch (error) {
+      console.error('Error deleting rating:', error);
+      alert('Error de conexión. Inténtalo de nuevo.');
+    } finally {
+      setDeletingRating(null);
+    }
+  };
+
+  const handleSubmitRating = async () => {
+    if (!checkSession()) return;
+
+    if (rating === 0 || !mensaje.trim()) {
+      alert('Por favor, selecciona una calificación y escribe un comentario.');
+      return;
+    }
+
+    // Get user ID from token (assuming it's stored in localStorage)
+    const userId = localStorage.getItem('userID');
+    if (!userId) {
+      alert('No se pudo identificar al usuario. Por favor, inicia sesión nuevamente.');
+      return;
+    }
+
+    setSubmittingRating(true);
+    try {
+      const ratingData = {
+        rating: rating,
+        comment: mensaje.trim()
+      };
+
+      const result = await insertEventRating(userId, eventId, ratingData);
+      if (result.success) {
+        alert('¡Comentario enviado exitosamente!');
+        setRating(0);
+        setMensaje('');
+        // Reload ratings to show the new one
+        await loadEventRatings();
+      } else {
+        alert(result.message || 'Error al enviar el comentario. Inténtalo de nuevo.');
+      }
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      alert('Error de conexión. Inténtalo de nuevo.');
+    } finally {
+      setSubmittingRating(false);
+    }
   };
 
   const loadEventLayout = async () => {
@@ -269,6 +367,54 @@ const ReservaEvento = () => {
       }
     } catch (error) {
       console.error('Error loading sections:', error);
+    }
+  };
+
+  const loadUserInfo = async (userIds) => {
+    if (!userIds || userIds.length === 0) return;
+
+    try {
+      setLoadingUsers(true);
+      const userPromises = userIds.map(userId => getUserById(userId));
+      const userResults = await Promise.allSettled(userPromises);
+
+      const newUserInfo = {};
+      userResults.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value.success) {
+          const userId = userIds[index];
+          newUserInfo[userId] = result.value.data;
+        }
+      });
+
+      setUserInfo(prev => ({ ...prev, ...newUserInfo }));
+    } catch (error) {
+      console.error('Error loading user info:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const loadEventRatings = async () => {
+    if (!eventId) return;
+
+    try {
+      setLoadingRatings(true);
+      const result = await getEventRatingByEvent(eventId);
+      if (result.success) {
+        const ratings = result.data || [];
+        setEventRatings(ratings);
+
+        // Extraer IDs únicos de usuarios y cargar su información
+        const userIds = [...new Set(ratings.map(rating => rating.userId))];
+        await loadUserInfo(userIds);
+      } else {
+        setEventRatings([]);
+      }
+    } catch (error) {
+      console.error('Error loading event ratings:', error);
+      setEventRatings([]);
+    } finally {
+      setLoadingRatings(false);
     }
   };
 
@@ -921,10 +1067,12 @@ const ReservaEvento = () => {
                   
                   {/* Botón de enviar */}
                   <div className="flex justify-center mt-4">
-                    <button 
-                      className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                    <button
+                      onClick={handleSubmitRating}
+                      disabled={submittingRating}
+                      className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
                     >
-                      Enviar
+                      {submittingRating ? 'Enviando...' : 'Enviar'}
                       <Send className="w-4 h-4" />
                     </button>
                   </div>
@@ -934,47 +1082,99 @@ const ReservaEvento = () => {
 
             {/* Comentarios existentes */}
             <div className="space-y-6">
-              
-              {/* Comentario 1 */}
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">A</span>
+              {loadingRatings ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-400">Cargando comentarios...</p>
                 </div>
-                <div className="flex-1">
-                  <p className="text-white font-semibold mb-1">Anónimo</p>
-                  <p className="text-white text-sm mb-2 leading-relaxed">
-                    Bien y sin la mesa de los licores hubiese sido excelente
-                  </p>
-                  <p className="text-gray-400 text-xs leading-relaxed">
-                    Muy buena organización del evento, solo en el tema de licores me habré un embargo, parece que nadie se 
-                    dio cuenta en la revisión, ya que las mesas tenían botellas vacías por todas partes algo extraño, La 
-                    mesa de los licores especial que busqué parte de las personas que estábamos sentados en la parte 
-                    de abajo no podían llamar a la atención que vendan los aperitivos. De los demás me encantó todo
-                  </p>
-                </div>
-              </div>
+              ) : eventRatings.length > 0 ? (
+                <>
+                  {eventRatings.slice(0, visibleCommentsCount).map((rating, index) => {
+                    const user = userInfo[rating.userId];
+                    const displayName = user?.fullName || `Usuario ${rating.userId}`;
+                    const avatarLetter = user?.fullName?.charAt(0).toUpperCase() || rating.userId?.toString().charAt(0).toUpperCase() || 'U';
 
-              {/* Comentario 2 */}
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">A</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-white font-semibold mb-1">Anónimo</p>
-                  <p className="text-white text-sm mb-2 leading-relaxed">
-                    PÉSIMA DISTRIBUCIÓN ESCENARIO.
-                  </p>
-                  <p className="text-gray-400 text-xs leading-relaxed">
-                    Totalmente hacia el momento, no hay entretenimiento en cuanto a escenario, pague primera fila como 
-                    se puede ver en foto de mi entrada, pero al llegar el artista a escenario estaba de espalda completamente 
-                    hasta finalizar show. Los boletos estaban por el valor que la función debía de cumplir expectativas 
-                    para con esa cantidad. Una frustración. En definitiva no voy más, el show fue muy bueno pero esta 
-                    idea de colocar a las personas en la cara del artista pero metía ultra, cuando el momento era en la mesa del 
-                    centro total desaprovechamiento.
-                  </p>
-                </div>
-              </div>
+                    // Check if current user can delete this rating
+                    const currentUserId = localStorage.getItem('userID');
+                    const canDelete = currentUserId && parseInt(currentUserId) === rating.userId;
 
+                    return (
+                      <div key={rating.ratingID || index} className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm">
+                            {avatarLetter}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <div className="flex items-center gap-2">
+                              <p className="text-white font-semibold">{displayName}</p>
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`w-4 h-4 ${
+                                      star <= rating.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            {canDelete && (
+                              <button
+                                onClick={() => handleDeleteRating(rating.ratingID, rating.userId)}
+                                disabled={deletingRating === rating.ratingID}
+                                className="text-red-500 hover:text-red-700 disabled:opacity-50 p-1"
+                                title="Eliminar comentario"
+                              >
+                                {deletingRating === rating.ratingID ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-gray-400 text-xs leading-relaxed">
+                            {rating.comment}
+                          </p>
+                          {rating.createdAt && (
+                            <p className="text-gray-500 text-xs mt-1">
+                              {new Date(rating.createdAt).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Botones de paginación */}
+                  <div className="text-center mt-6 space-y-3">
+                    {eventRatings.length > visibleCommentsCount && (
+                      <button
+                        onClick={handleShowMoreComments}
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
+                      >
+                        Ver más comentarios ({eventRatings.length - visibleCommentsCount} restantes)
+                      </button>
+                    )}
+                    {visibleCommentsCount > 5 && (
+                      <div>
+                        <button
+                          onClick={handleShowLessComments}
+                          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors"
+                        >
+                          Ver menos comentarios
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">Aún no hay comentarios para este evento.</p>
+                  <p className="text-gray-500 text-sm mt-2">¡Sé el primero en dejar tu opinión!</p>
+                </div>
+              )}
             </div>
 
           </div>

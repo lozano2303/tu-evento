@@ -1,5 +1,7 @@
 package TuEvento.Backend.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,7 +43,7 @@ public class EventRatingController {
     }
 
     @GetMapping("/getByEvent/{eventId}")
-    public ResponseDto<EventRatingDto> getEventRatingByEvent(@PathVariable int eventId) {
+    public ResponseDto<List<EventRatingDto>> getEventRatingByEvent(@PathVariable int eventId) {
         EventRatingDto dto = new EventRatingDto();
         dto.setEventId(eventId);
         return eventRatingService.getEventRatingByEvent(dto);
