@@ -9,7 +9,9 @@ const ELEMENT_CONSTANTS = {
 const DrawingCanvas = ({
   elements = [],
   selectedElementId = null,
+  selectedIds = new Set(),
   onSelect,
+  onMultiSelect,
   onCreate,
   onUpdate,
   onDelete,
@@ -22,17 +24,27 @@ const DrawingCanvas = ({
   isSeatSelectionMode = false,
   selectedSeatPositions = new Set(),
   onSeatPositionSelect,
+  isSectionCreationMode = false,
+  selectedChairsForSection = new Set(),
+  selectedSeatPositionsForSection = new Set(),
+  onChairSelectForSection,
+  onSeatPositionSelectForSection,
   zoom: externalZoom,
   setZoom: externalSetZoom,
   offset: externalOffset,
   setOffset: externalSetOffset,
   onLabelEdit,
+  selectedSection,
 }) => {
   const svgRef = useRef(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [currentElement, setCurrentElement] = useState(null)
   const [startPoint, setStartPoint] = useState(null)
-  
+  const [hoveredSeat, setHoveredSeat] = useState(null)
+  const [isSelecting, setIsSelecting] = useState(false)
+  const [selectionStart, setSelectionStart] = useState(null)
+  const [selectionEnd, setSelectionEnd] = useState(null)
+
   const {
     dragState,
     startDrag,
@@ -64,15 +76,16 @@ const DrawingCanvas = ({
     const svg = svgRef.current
     if (!svg) return { x: 0, y: 0 }
 
-    const ctm = svg.getScreenCTM()
-    if (!ctm) return { x: 0, y: 0 }
+    const svgRect = svg.getBoundingClientRect()
+    // Calcular la escala correctamente: el viewBox visible dividido por el tamaño del SVG en pantalla
+    const scaleX = (viewWidth / zoom) / svgRect.width
+    const scaleY = (viewHeight / zoom) / svgRect.height
 
-    const point = svg.createSVGPoint()
-    point.x = clientX
-    point.y = clientY
-    const svgPoint = point.matrixTransform(ctm.inverse())
+    // Convertir coordenadas del mouse al espacio del viewBox
+    const x = offset.x + (clientX - svgRect.left) * scaleX
+    const y = offset.y + (clientY - svgRect.top) * scaleY
 
-    return { x: svgPoint.x, y: svgPoint.y }
+    return { x: Math.round(x), y: Math.round(y) }
   }
 
 
@@ -133,10 +146,47 @@ const DrawingCanvas = ({
 
     // Primero buscar en asientos reales de la base de datos
     for (const seat of seats) {
-      const seatSize = 30
-      if (px >= seat.x - seatSize/2 && px <= seat.x + seatSize/2 &&
-          py >= seat.y - seatSize/2 && py <= seat.y + seatSize/2) {
+      const seatSize = 40
+      if (px >= seat.x - 20 && px <= seat.x + 20 &&
+          py >= seat.y - 20 && py <= seat.y + 20) {
         return seat
+      }
+    }
+
+    return null
+  }
+
+  const getChairAt = (pos) => {
+    const { x: px, y: py } = pos
+
+    // Buscar en elementos de tipo 'chair' del canvas - área de clic exacta sobre la silla
+    for (const element of elements) {
+      if (element.type === 'chair') {
+        const chairSize = 50 // Tamaño visual exacto de la silla
+        if (px >= element.x - chairSize / 2 && px <= element.x + chairSize / 2 &&
+            py >= element.y - chairSize / 2 && py <= element.y + chairSize / 2) {
+          return element
+        }
+      }
+    }
+
+    return null
+  }
+
+  const getSeatPositionForSectionAt = (pos) => {
+    const { x: px, y: py } = pos
+
+    // Buscar en posiciones de seatRow para selección de sección - área de clic exacta
+    for (const element of elements) {
+      if (element.type === 'seatRow' && element.seatPositions) {
+        for (let i = 0; i < element.seatPositions.length; i++) {
+          const seatPos = element.seatPositions[i]
+          const chairSize = 50 // Tamaño visual exacto de la silla
+          if (px >= seatPos.x - chairSize/2 && px <= seatPos.x + chairSize/2 &&
+              py >= seatPos.y - chairSize/2 && py <= seatPos.y + chairSize/2) {
+            return { seatRowId: element.id, seatIndex: i, seatPos, element }
+          }
+        }
       }
     }
 
@@ -146,14 +196,14 @@ const DrawingCanvas = ({
   const getSeatPositionAt = (pos) => {
     const { x: px, y: py } = pos
 
-    // Buscar en posiciones generadas por seatRow
+    // Buscar en posiciones generadas por seatRow - área de clic exacta
     for (const element of elements) {
       if (element.type === 'seatRow' && element.seatPositions) {
         for (let i = 0; i < element.seatPositions.length; i++) {
           const seatPos = element.seatPositions[i]
-          const seatSize = ELEMENT_CONSTANTS.CHAIR_RADIUS * 2
-          if (px >= seatPos.x - seatSize/2 && px <= seatPos.x + seatSize/2 &&
-              py >= seatPos.y - seatSize/2 && py <= seatPos.y + seatSize/2) {
+          const chairSize = 50 // Tamaño visual exacto de la silla
+          if (px >= seatPos.x - chairSize/2 && px <= seatPos.x + chairSize/2 &&
+              py >= seatPos.y - chairSize/2 && py <= seatPos.y + chairSize/2) {
             return { seatRowId: element.id, seatIndex: i, seatPos }
           }
         }
@@ -242,12 +292,16 @@ const DrawingCanvas = ({
     if (e.button !== 0) return
 
     const pos = toViewCoords(e.clientX, e.clientY)
+    console.log("Mouse down at:", pos)
 
     // Modo selección de asientos
     if (isSeatSelectionMode) {
+      console.log("Seat selection mode active")
       // Verificar si se hizo clic en un asiento de base de datos
       const clickedSeat = getSeatAt(pos)
-      if (clickedSeat && clickedSeat.status === 'AVAILABLE') {
+      console.log("Clicked seat:", clickedSeat)
+      if (clickedSeat && !clickedSeat.status) {
+        console.log("Selecting seat:", clickedSeat.id)
         onSeatSelect && onSeatSelect(clickedSeat.id)
         return
       }
@@ -262,6 +316,38 @@ const DrawingCanvas = ({
       }
     }
 
+    // Modo creación de sección - selección simplificada
+    if (isSectionCreationMode) {
+      // Buscar posiciones de asiento individuales en filas (prioridad alta)
+      const clickedSeatPosition = getSeatPositionForSectionAt(pos);
+      if (clickedSeatPosition) {
+        const positionKey = `${clickedSeatPosition.seatRowId}-${clickedSeatPosition.seatIndex}`;
+        onSeatPositionSelectForSection && onSeatPositionSelectForSection(positionKey);
+        return;
+      }
+
+      // Buscar sillas individuales
+      const clickedChair = getChairAt(pos);
+      if (clickedChair) {
+        onChairSelectForSection && onChairSelectForSection(clickedChair.id);
+        return;
+      }
+    }
+
+    // Primero verificar sillas y posiciones de asiento (prioridad alta)
+    let clickedSeatPosition = null;
+    if (!isSeatSelectionMode && !isSectionCreationMode && activeTool === 'select') {
+      clickedSeatPosition = getSeatPositionAt(pos);
+    }
+
+    // Si se hizo clic en una posición de asiento, seleccionarla
+    if (clickedSeatPosition && !isSeatSelectionMode && !isSectionCreationMode && activeTool === 'select') {
+      const positionKey = `${clickedSeatPosition.seatRowId}-${clickedSeatPosition.seatIndex}`;
+      onSelect && onSelect(positionKey);
+      return;
+    }
+
+    // Después verificar otros elementos
     const clickedElement = getElementAt(pos)
 
     if (clickedElement) {
@@ -272,12 +358,40 @@ const DrawingCanvas = ({
       return
     }
 
-    // If tool is select and something is selected, drag the selected element
-    if (activeTool === 'select' && selectedElementId) {
-      const selectedElement = elements.find(el => el.id === selectedElementId)
-      if (selectedElement) {
-        startDrag(selectedElement, pos)
-        return
+    // Si no se hizo clic en ningún elemento y estamos en modo select, iniciar selección múltiple rectangular
+    if (!isSeatSelectionMode && !isSectionCreationMode && activeTool === 'select' && !clickedElement && !clickedSeatPosition) {
+      setIsSelecting(true);
+      setSelectionStart(pos);
+      setSelectionEnd(pos);
+      // Limpiar selección actual
+      onSelect && onSelect(null);
+      return;
+    }
+
+    // If tool is select and something is selected, drag the selected element or group
+    if (activeTool === 'select' && (selectedElementId || (selectedIds && selectedIds.size > 0))) {
+      // Si hay selección múltiple, permitir arrastrar cualquier elemento del grupo
+      if (selectedIds && selectedIds.size > 0) {
+        const clickedElement = getElementAt(pos);
+        if (clickedElement && selectedIds.has(clickedElement.id)) {
+          startDrag(clickedElement, pos);
+          return;
+        }
+        // Si no se hizo clic en un elemento específico del grupo, buscar posiciones de asiento
+        const clickedSeatPosition = getSeatPositionAt(pos);
+        if (clickedSeatPosition) {
+          const positionKey = `${clickedSeatPosition.seatRowId}-${clickedSeatPosition.seatIndex}`;
+          if (selectedIds.has(positionKey)) {
+            // Para posiciones de asiento, no iniciamos arrastre, solo selección
+            return;
+          }
+        }
+      } else if (selectedElementId) {
+        const selectedElement = elements.find(el => el.id === selectedElementId);
+        if (selectedElement) {
+          startDrag(selectedElement, pos);
+          return;
+        }
       }
     }
 
@@ -338,6 +452,12 @@ const DrawingCanvas = ({
       return
     }
 
+    // Actualizar rectángulo de selección múltiple
+    if (isSelecting && selectionStart) {
+      setSelectionEnd(pos);
+      return;
+    }
+
     // Manejo de dibujo de nuevos elementos
     if (!isDrawing || !currentElement || !startPoint) return
 
@@ -369,6 +489,50 @@ const DrawingCanvas = ({
     setCurrentElement(updated)
   }
 
+  const getElementsInSelectionRect = (start, end) => {
+    if (!start || !end) return new Set();
+
+    const minX = Math.min(start.x, end.x);
+    const maxX = Math.max(start.x, end.x);
+    const minY = Math.min(start.y, end.y);
+    const maxY = Math.max(start.y, end.y);
+
+    const selectedElements = new Set();
+
+    // Buscar elementos dentro del rectángulo
+    for (const element of elements) {
+      let elementX, elementY;
+
+      if (element.type === 'wall') {
+        elementX = (element.x1 + element.x2) / 2;
+        elementY = (element.y1 + element.y2) / 2;
+      } else {
+        elementX = element.x;
+        elementY = element.y;
+      }
+
+      if (elementX >= minX && elementX <= maxX && elementY >= minY && elementY <= maxY) {
+        selectedElements.add(element.id);
+      }
+    }
+
+    // Buscar posiciones de asiento dentro del rectángulo (solo en modo normal)
+    if (!isSeatSelectionMode && !isSectionCreationMode) {
+      for (const element of elements) {
+        if (element.type === 'seatRow' && element.seatPositions) {
+          for (let i = 0; i < element.seatPositions.length; i++) {
+            const seatPos = element.seatPositions[i];
+            if (seatPos.x >= minX && seatPos.x <= maxX && seatPos.y >= minY && seatPos.y <= maxY) {
+              selectedElements.add(`${element.id}-${i}`);
+            }
+          }
+        }
+      }
+    }
+
+    return selectedElements;
+  };
+
   const handleMouseUp = (e) => {
     e.preventDefault()
 
@@ -380,6 +544,29 @@ const DrawingCanvas = ({
     if (isDragging) {
       endDrag()
       return
+    }
+
+    // Finalizar selección múltiple rectangular
+    if (isSelecting && selectionStart && selectionEnd) {
+      const selectedElements = getElementsInSelectionRect(selectionStart, selectionEnd);
+
+      // Notificar al padre sobre la selección múltiple
+      if (selectedElements.size > 0) {
+        const selectedArray = Array.from(selectedElements);
+
+        if (selectedElements.size === 1) {
+          // Selección simple
+          onSelect && onSelect(selectedArray[0]);
+        } else {
+          // Selección múltiple
+          onMultiSelect && onMultiSelect(selectedArray);
+        }
+      }
+
+      setIsSelecting(false);
+      setSelectionStart(null);
+      setSelectionEnd(null);
+      return;
     }
 
     // Terminar dibujo
@@ -399,7 +586,7 @@ const DrawingCanvas = ({
       if (isValidElement) {
         let elementToCreate = { ...currentElement }
 
-        // Generate seat positions for seatRow
+        // Generate seat positions for seatRow (will be converted to individual chairs in parent)
         if (activeTool === 'seatRow' && currentElement.width > 0) {
           const seatSpacing = 60 // Distance between seats
           const numSeats = Math.max(1, Math.floor(currentElement.width / seatSpacing))
@@ -485,7 +672,7 @@ const DrawingCanvas = ({
   const getCursor = () => {
     if (isPanning) return 'grabbing'
     if (isDragging) return 'grabbing'
-    if (isSeatSelectionMode) return 'pointer'
+    if (isSeatSelectionMode || isSectionCreationMode) return 'pointer'
     if (activeTool === 'select' || !activeTool) return 'pointer'
     return 'crosshair'
   }
@@ -554,7 +741,7 @@ const DrawingCanvas = ({
             <CanvasElement
               key={el.id}
               element={el}
-              isSelected={selectedElementId === el.id}
+              isSelected={selectedElementId === el.id || (selectedIds && selectedIds.has(el.id))}
               onSelect={onSelect}
               onUpdate={onUpdate}
               onDelete={onDelete}
@@ -565,32 +752,150 @@ const DrawingCanvas = ({
             />
           ))}
 
+        {/* Renderizar sillas cuando está en modo creación de sección */}
+        {isSectionCreationMode && (
+          <>
+            {/* Sillas individuales */}
+            {elements
+              .filter(el => el.type === 'chair')
+              .map((chair) => {
+                const isSelected = selectedChairsForSection.has(chair.id)
+                const isHovered = hoveredSeat && hoveredSeat.id === chair.id
+                return (
+                  <g key={chair.id} data-chair-id={chair.id}>
+                    <rect
+                      x={chair.x - 25}
+                      y={chair.y - 25}
+                      width={50}
+                      height={50}
+                      fill={isSelected ? '#8b5cf6' : '#6b7280'}
+                      stroke={isSelected ? '#7c3aed' : '#374151'}
+                      strokeWidth={isSelected ? 3 : 2}
+                      rx={4}
+                      className="cursor-pointer"
+                    />
+                    <text
+                      x={chair.x}
+                      y={chair.y + 4}
+                      textAnchor="middle"
+                      fontSize="12"
+                      fontWeight="bold"
+                      fill="white"
+                      pointerEvents="none"
+                    >
+                      🪑
+                    </text>
+                  </g>
+                )
+              })}
+
+            {/* Posiciones de asiento en filas - renderizadas como rectángulos igual que sillas */}
+            {elements
+              .filter(el => el.type === 'seatRow' && el.seatPositions)
+              .map(el => el.seatPositions.map((seatPos, index) => {
+                const positionKey = `${el.id}-${index}`;
+                const isSelected = selectedSeatPositionsForSection.has(positionKey);
+                const isHovered = hoveredSeat && hoveredSeat.positionKey === positionKey;
+                return (
+                  <g key={positionKey} data-seat-position-id={positionKey}>
+                    <rect
+                      x={seatPos.x - 25}
+                      y={seatPos.y - 25}
+                      width={50}
+                      height={50}
+                      fill={isSelected ? '#8b5cf6' : '#6b7280'}
+                      stroke={isSelected ? '#7c3aed' : '#374151'}
+                      strokeWidth={isSelected ? 3 : 2}
+                      rx={4}
+                      className="cursor-pointer"
+                    />
+                    <text
+                      x={seatPos.x}
+                      y={seatPos.y + 4}
+                      textAnchor="middle"
+                      fontSize="12"
+                      fontWeight="bold"
+                      fill="white"
+                      pointerEvents="none"
+                    >
+                      {seatPos.row}{seatPos.seatNumber}
+                    </text>
+                  </g>
+                );
+              }))}
+          </>
+        )}
+
+        {/* Renderizar posiciones de asiento en filas en modo normal - como rectángulos igual que sillas */}
+        {!isSeatSelectionMode && !isSectionCreationMode && (
+          <>
+            {elements
+              .filter(el => el.type === 'seatRow' && el.seatPositions)
+              .map(el => el.seatPositions.map((seatPos, index) => {
+                const positionKey = `${el.id}-${index}`;
+                // Para modo normal, verificar en selectedIds, para otros modos usar selectedElementId
+                const isSelected = (!isSeatSelectionMode && !isSectionCreationMode) ?
+                  (selectedIds && selectedIds.has(positionKey)) :
+                  selectedElementId === positionKey;
+                return (
+                  <g key={positionKey} data-seat-position-id={positionKey}>
+                    <rect
+                      x={seatPos.x - 25}
+                      y={seatPos.y - 25}
+                      width={50}
+                      height={50}
+                      fill={isSelected ? '#3b82f6' : '#6b7280'}
+                      stroke={isSelected ? '#1e40af' : '#374151'}
+                      strokeWidth={isSelected ? 3 : 2}
+                      rx={4}
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                    />
+                    <text
+                      x={seatPos.x}
+                      y={seatPos.y + 4}
+                      textAnchor="middle"
+                      fontSize="12"
+                      fontWeight="bold"
+                      fill="white"
+                      pointerEvents="none"
+                    >
+                      {seatPos.row}{seatPos.seatNumber}
+                    </text>
+                  </g>
+                );
+              }))}
+          </>
+        )}
+
         {/* Renderizar asientos cuando está en modo selección */}
         {isSeatSelectionMode && (
           <>
             {/* Asientos reales de la base de datos */}
             {seats.map((seat) => {
               const isSelected = selectedSeats.includes(seat.id)
-              const isOccupied = seat.status === 'OCCUPIED'
-              const isReserved = seat.status === 'RESERVED'
+              const isOccupied = seat.status === true
+
+              console.log("Rendering seat:", seat.id, "selectedSeats:", selectedSeats, "isSelected:", isSelected, "isOccupied:", isOccupied);
 
               let fillColor = '#22c55e' // Verde para disponible
               if (isSelected) fillColor = '#3b82f6' // Azul para seleccionado
               else if (isOccupied) fillColor = '#ef4444' // Rojo para ocupado
-              else if (isReserved) fillColor = '#f59e0b' // Amarillo para reservado
+              else fillColor = '#ea580c' // Naranja para reservado (true)
 
               return (
                 <g key={seat.id} data-seat-id={seat.id}>
                   <rect
-                    x={seat.x - 15}
-                    y={seat.y - 15}
-                    width={30}
-                    height={30}
+                    x={seat.x - 20}
+                    y={seat.y - 20}
+                    width={40}
+                    height={40}
                     fill={fillColor}
                     stroke="#374151"
                     strokeWidth={2}
                     rx={4}
                     className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onMouseEnter={() => setHoveredSeat(seat)}
+                    onMouseLeave={() => setHoveredSeat(null)}
                   />
                   <text
                     x={seat.x}
@@ -601,12 +906,12 @@ const DrawingCanvas = ({
                     fill="white"
                     pointerEvents="none"
                   >
-                    {seat.seatNumber}
+                    {seat.row}{seat.seatNumber}
                   </text>
                   {isSelected && (
                     <circle
-                      cx={seat.x + 8}
-                      cy={seat.y - 8}
+                      cx={seat.x + 12}
+                      cy={seat.y - 12}
                       r={6}
                       fill="#ffffff"
                       stroke="#3b82f6"
@@ -672,6 +977,21 @@ const DrawingCanvas = ({
           </>
         )}
 
+        {/* Rectángulo de selección múltiple */}
+        {isSelecting && selectionStart && selectionEnd && (
+          <rect
+            x={Math.min(selectionStart.x, selectionEnd.x)}
+            y={Math.min(selectionStart.y, selectionEnd.y)}
+            width={Math.abs(selectionEnd.x - selectionStart.x)}
+            height={Math.abs(selectionEnd.y - selectionStart.y)}
+            fill="rgba(59, 130, 246, 0.2)"
+            stroke="#3b82f6"
+            strokeWidth="2"
+            strokeDasharray="5,5"
+            pointerEvents="none"
+          />
+        )}
+
         {currentElement && (
           <CanvasElement
             element={currentElement}
@@ -682,7 +1002,17 @@ const DrawingCanvas = ({
           />
         )}
       </svg>
-      
+
+      {/* Tooltip para asientos */}
+      {hoveredSeat && (
+        <div
+          className="absolute bg-black text-white p-2 rounded text-sm pointer-events-none z-10"
+          style={{ left: hoveredSeat.x + 25, top: hoveredSeat.y - 25 }}
+        >
+          Fila {hoveredSeat.row} Asiento {hoveredSeat.seatNumber} - ${selectedSection?.price || 30000}
+        </div>
+      )}
+
       {/* Información de estado */}
       <div className="absolute top-2 left-2 bg-black/70 text-white px-3 py-2 rounded text-sm flex items-center gap-4">
         <div>
@@ -701,9 +1031,9 @@ const DrawingCanvas = ({
       {/* Ayuda contextual */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg shadow-md border border-blue-200">
         <div className="text-sm text-center">
-          {isSeatSelectionMode ? '🎯 Haz clic en asientos individuales para seleccionar/deseleccionar | Clic derecho pan | Rueda zoom' :
-           activeTool === 'select' ? '🖱️ Selecciona y arrastra elementos | Ctrl+Z/Y deshacer/rehacer | Ctrl+C/V copiar/pegar | Delete eliminar' :
-           '🎨 Haz clic para colocar elementos | Clic derecho pan | Rueda zoom | Ctrl+Z deshacer'}
+          {isSectionCreationMode ? '🎯 Haz clic en cualquier silla para seleccionar/deseleccionar | Las sillas seleccionadas se marcan con ✓ | Clic derecho pan | Rueda zoom' :
+          activeTool === 'select' ? '🖱️ Arrastra para seleccionar múltiples elementos | Clic para seleccionar individual | Ctrl+Z/Y deshacer/rehacer | Ctrl+C/V copiar/pegar | Delete eliminar' :
+          '🎨 Haz clic para colocar elementos | Clic derecho pan | Rueda zoom | Ctrl+Z deshacer'}
         </div>
       </div>
     </div>

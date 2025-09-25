@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import TuEvento.Backend.dto.SectionDto;
@@ -30,15 +31,18 @@ public class SectionServiceImpl implements SectionService {
     private EventRepository eventRepository;
 
     @Override
+    @Transactional
     public ResponseDto<SectionDto> insertSection(SectionDto sectionDto) {
         try {
             Section entity = new Section();
             entity.setEventID(eventRepository.findById(sectionDto.getEventId()).orElseThrow(() -> new RuntimeException("Event not found")));
             entity.setSectionName(sectionDto.getSectionName());
             entity.setPrice(BigDecimal.valueOf(sectionDto.getPrice()));
-            sectionRepository.save(entity);
+            Section savedEntity = sectionRepository.save(entity);
 
-            return ResponseDto.ok("Section insertada exitosamente");
+            // Convertir la entidad guardada a DTO y devolverla
+            SectionDto savedDto = toDto(savedEntity);
+            return ResponseDto.ok("Section insertada exitosamente", savedDto);
         } catch (DataAccessException e) {
             return ResponseDto.error("Error de la base de datos");
         } catch (Exception e) {
@@ -56,11 +60,13 @@ public class SectionServiceImpl implements SectionService {
     private SectionDto toDto(Section section) {
         SectionDto dto = new SectionDto();
         dto.setSectionID(section.getSectionID());
+        dto.setEventId(section.getEventID().getId());
         dto.setSectionName(section.getSectionName());
         dto.setPrice(section.getPrice().doubleValue());
         return dto;
     }
     @Override
+    @Transactional
     public ResponseDto<SectionDto> updateSection(SectionDto sectionDto) {
         try {
             Optional<Section> section = sectionRepository.findById(sectionDto.getSectionID());
@@ -81,6 +87,7 @@ public class SectionServiceImpl implements SectionService {
         }
     }
     @Override
+    @Transactional
     public ResponseDto<SectionDto> deleteSection(int id) {
         Optional<Section> sectionOpt = sectionRepository.findById(id);
         if (!sectionOpt.isPresent()) {

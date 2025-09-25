@@ -21,7 +21,7 @@ export const getSeatsBySection = async (sectionId) => {
 export const updateSeatStatus = async (seatId, status) => {
   try {
     const token = localStorage.getItem('token');
-    const newStatus = status === 'RESERVED' ? 'true' : 'false';
+    const newStatus = status === 'RESERVED' ? true : false;
     const response = await fetch(`${API_BASE_URL}/v1/seats/${seatId}/status?newStatus=${newStatus}`, {
       method: 'PUT',
       headers: {

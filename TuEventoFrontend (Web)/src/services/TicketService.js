@@ -7,7 +7,6 @@ export const createTicketWithSeats = async (ticketData) => {
     const payload = {
       eventId: ticketData.event.id,
       seatIDs: ticketData.seats.map(seat => seat.id),
-      userId: 1, // TODO: Get actual user ID from context or localStorage
       code: ticketData.code || 'TICKET-' + Date.now(),
     };
     const response = await fetch(`${API_BASE_URL}/v1/tickets/create-with-seats`, {

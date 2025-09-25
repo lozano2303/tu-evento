@@ -10,6 +10,8 @@ import TuEvento.Backend.dto.TicketDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.service.TicketService;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/api/v1/tickets")
 public class TicketController {
@@ -19,7 +21,12 @@ public class TicketController {
 
     // ✅ Crear ticket con múltiples asientos
     @PostMapping("/create-with-seats")
-    public ResponseEntity<ResponseDto<String>> createTicketWithSeats(@RequestBody TicketDto ticketDto) {
+    public ResponseEntity<ResponseDto<String>> createTicketWithSeats(@RequestBody TicketDto ticketDto, HttpServletRequest request) {
+        Integer userId = (Integer) request.getAttribute("userID");
+        if (userId == null) {
+            return ResponseEntity.status(401).body(ResponseDto.error("Usuario no autenticado"));
+        }
+        ticketDto.setUserId(userId);
         ResponseDto<String> response = ticketService.createTicketWithSeats(ticketDto);
         return ResponseEntity.status(response.isSuccess() ? 201 : 400).body(response);
     }

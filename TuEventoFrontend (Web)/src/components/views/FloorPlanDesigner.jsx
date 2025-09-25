@@ -27,7 +27,7 @@ import { saveEventLayout, getEventLayoutByEventId, hasEventLayout, updateEventLa
 import { createSection, getAllSections } from '../../services/SectionService.js';
 import { createSeat, getSeatsBySection, updateSeatStatus } from '../../services/SeatService.js';
 import { createTicketWithSeats } from '../../services/TicketService.js';
-import { concertLayout, loadConcertLayout } from './ConcertLayout';
+import eventLayoutExample from './LayoutStructureExample.js';
 
 const TopNavbar = ({ onExport, onImport, onUploadEvent, onLoadLayout, onGoHome, onGoToEvents }) => {
   return (
@@ -70,12 +70,11 @@ const TopNavbar = ({ onExport, onImport, onUploadEvent, onLoadLayout, onGoHome, 
   );
 };
 
-const ToolPanel = ({ activeTool, setActiveTool, onUndo, onRedo, canUndo, canRedo, onAddSample, onLoadConcert }) => {
+const ToolPanel = ({ activeTool, setActiveTool, onUndo, onRedo, canUndo, canRedo, onAddSample }) => {
 const tools = [
   { id: 'select', icon: MousePointer, label: 'Seleccionar' },
   { id: 'wall', icon: Ruler, label: 'Pared' },
   { id: 'zone', icon: Square, label: 'Zona' },
-  { id: 'section', icon: Grid3x3, label: 'Sección' },
   { id: 'stage', icon: Theater, label: 'Escenario' },
   { id: 'chair', icon: Sofa, label: 'Silla' },
   { id: 'seatRow', icon: Grid3x3, label: 'Fila de sillas' },
@@ -124,13 +123,7 @@ const tools = [
             onClick={onAddSample}
             className="w-full flex items-center p-2 rounded text-sm hover:bg-gray-50"
           >
-            <Square size={16} className="mr-2" /> Añadir ejemplo
-          </button>
-          <button
-            onClick={onLoadConcert}
-            className="w-full flex items-center p-2 rounded text-sm hover:bg-gray-50"
-          >
-            <Theater size={16} className="mr-2" /> Plantilla Concierto
+            <Square size={16} className="mr-2" /> Cargar Layout Completo
           </button>
         </div>
       </div>
@@ -139,8 +132,22 @@ const tools = [
 };
 
 // Properties panel
-const PropertiesPanel = ({ selectedElement, onUpdate, onDelete, units, setUnits }) => {
+const PropertiesPanel = ({ selectedElement, selectedIds, elements, onUpdate, onDelete, units, setUnits }) => {
   const [inputValues, setInputValues] = useState({});
+
+  // Calcular información de selección múltiple
+  const multipleSelectionInfo = selectedIds.size > 0 ? {
+    count: selectedIds.size,
+    positions: Array.from(selectedIds).map(id => {
+      const [seatRowId, seatIndex] = id.split('-');
+      const seatRow = elements.find(el => el.id === seatRowId && el.type === 'seatRow');
+      if (seatRow && seatRow.seatPositions && seatRow.seatPositions[parseInt(seatIndex)]) {
+        const seatPos = seatRow.seatPositions[parseInt(seatIndex)];
+        return `${seatPos.row}${seatPos.seatNumber}`;
+      }
+      return id;
+    })
+  } : null;
 
   useEffect(() => {
     if (selectedElement) {
@@ -214,16 +221,18 @@ const PropertiesPanel = ({ selectedElement, onUpdate, onDelete, units, setUnits 
   return (
     <div className="w-64 bg-white border-l border-gray-200 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Propiedades</h3>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setUnits(units === 'cm' ? 'm' : 'cm')} className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600">
-            {units.toUpperCase()}
-          </button>
-          <button onClick={() => onDelete(selectedElement.id)} className="p-1 text-red-500 hover:bg-red-50 rounded">
-            <Trash2 size={16} />
-          </button>
-        </div>
-      </div>
+       <h3 className="text-lg font-semibold text-gray-800">Propiedades</h3>
+       <div className="flex items-center gap-2">
+         <button onClick={() => setUnits(units === 'cm' ? 'm' : 'cm')} className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600">
+           {units.toUpperCase()}
+         </button>
+         {selectedElement.type !== 'seatPosition' && (
+           <button onClick={() => onDelete(selectedElement.id)} className="p-1 text-red-500 hover:bg-red-50 rounded">
+             <Trash2 size={16} />
+           </button>
+         )}
+       </div>
+     </div>
 
       <div className="space-y-4">
         {selectedElement.type === 'wall' ? (
@@ -279,6 +288,18 @@ const PropertiesPanel = ({ selectedElement, onUpdate, onDelete, units, setUnits 
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={selectedElement.meta?.price || ''}
+                onChange={(e) => onUpdate(selectedElement.id, { meta: { ...selectedElement.meta, price: parseFloat(e.target.value) || 0 } })}
+                className="w-full p-2 border border-gray-300 rounded text-sm"
+                placeholder="Ej: 50.00"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
               <select
                 value={selectedElement.meta?.category || 'General'}
@@ -291,6 +312,149 @@ const PropertiesPanel = ({ selectedElement, onUpdate, onDelete, units, setUnits 
                 <option value="Estudiante">Estudiante</option>
                 <option value="Otro">Otro</option>
               </select>
+            </div>
+          </>
+        )}
+
+
+        {selectedElement.type === 'seatRow' && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fila de Asientos</label>
+              <div className="text-sm text-gray-600">
+                Tipo: {selectedElement.type}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Número de Asientos</label>
+              <input
+                type="number"
+                min="1"
+                max={selectedElement.seatPositions?.length || 1}
+                value={selectedElement.seatPositions?.length || 1}
+                onChange={(e) => {
+                  const newNumSeats = Math.max(1, parseInt(e.target.value) || 1);
+
+                  // Recalcular las posiciones de asientos
+                  const spacing = 60; // Espaciado entre sillas
+                  const totalWidth = (newNumSeats - 1) * spacing;
+                  const startX = selectedElement.x - totalWidth / 2;
+
+                  const updatedPositions = [];
+                  for (let i = 0; i < newNumSeats; i++) {
+                    updatedPositions.push({
+                      id: `${selectedElement.id}-seat-${i}`,
+                      x: startX + i * spacing,
+                      y: selectedElement.y,
+                      seatNumber: i + 1,
+                      row: selectedElement.seatPositions?.[0]?.row || 'A',
+                      status: 'AVAILABLE'
+                    });
+                  }
+
+                  // Actualizar el ancho del seatRow
+                  const newWidth = Math.max(totalWidth + 100, 200); // Ancho mínimo
+                  onUpdate(selectedElement.id, {
+                    seatPositions: updatedPositions,
+                    width: newWidth
+                  });
+                }}
+                className="w-full p-2 border border-gray-300 rounded text-sm"
+              />
+              <div className="text-xs text-gray-500 mt-1">
+                Asientos actuales: {selectedElement.seatPositions?.length || 0}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fila</label>
+              <input
+                type="text"
+                value={selectedElement.seatPositions?.[0]?.row || 'A'}
+                onChange={(e) => {
+                  const newRow = e.target.value.toUpperCase();
+                  // Update all seat positions in this row
+                  if (selectedElement.seatPositions) {
+                    const updatedPositions = selectedElement.seatPositions.map(pos => ({
+                      ...pos,
+                      row: newRow
+                    }));
+                    onUpdate(selectedElement.id, { seatPositions: updatedPositions });
+                  }
+                }}
+                className="w-full p-2 border border-gray-300 rounded text-sm"
+                maxLength="1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Ancho de la Fila</label>
+              <div className="text-sm text-gray-600">
+                {Math.round(selectedElement.width || 0)}{units}
+              </div>
+            </div>
+          </>
+        )}
+
+        {selectedElement.type === 'seatPosition' && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Posición de Asiento</label>
+              <div className="text-sm text-gray-600">
+                Fila {selectedElement.row} - Asiento {selectedElement.seatNumber}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+              <div className="text-sm text-gray-600">
+                {selectedElement.status === 'AVAILABLE' ? 'Disponible' :
+                 selectedElement.status === 'RESERVED' ? 'Reservado' :
+                 selectedElement.status === 'OCCUPIED' ? 'Ocupado' : 'Desconocido'}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Coordenadas</label>
+              <div className="text-sm text-gray-600">
+                X: {selectedElement.x}, Y: {selectedElement.y}
+              </div>
+            </div>
+          </>
+        )}
+
+        {multipleSelectionInfo && !selectedElement && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Selección Múltiple</label>
+              <div className="text-sm text-gray-600">
+                {multipleSelectionInfo.count} elementos seleccionados
+              </div>
+              <div className="mt-2">
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                >
+                  Limpiar selección
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Elementos seleccionados</label>
+              <div className="text-sm text-gray-600 max-h-32 overflow-y-auto border rounded p-2 bg-gray-50">
+                {multipleSelectionInfo.positions.map((pos, index) => (
+                  <div key={index} className="flex justify-between items-center py-1">
+                    <span>{pos}</span>
+                    <button
+                      onClick={() => {
+                        const newSet = new Set(selectedIds);
+                        const keys = Array.from(selectedIds);
+                        newSet.delete(keys[index]);
+                        setSelectedIds(newSet);
+                      }}
+                      className="text-red-500 hover:text-red-700 text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}
@@ -377,6 +541,13 @@ const FloorPlanDesignerInner = () => {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [editingLabelId, setEditingLabelId] = useState(null);
   const [labelInput, setLabelInput] = useState('');
+  const [isSectionCreationMode, setIsSectionCreationMode] = useState(false);
+  const [selectedChairsForSection, setSelectedChairsForSection] = useState(new Set());
+  const [selectedSeatPositionsForSection, setSelectedSeatPositionsForSection] = useState(new Set());
+  const [selectedIds, setSelectedIds] = useState(new Set()); // Para selección múltiple en modo normal
+  const [showSectionCreationModal, setShowSectionCreationModal] = useState(false);
+  const [newSectionData, setNewSectionData] = useState({ name: '', price: 0 });
+  const [isCreatingSection, setIsCreatingSection] = useState(false);
 
   // Load existing layout for the event when component mounts
   useEffect(() => {
@@ -457,52 +628,169 @@ const FloorPlanDesignerInner = () => {
   };
 
   const handleCreate = useCallback((el) => {
-    const newEl = {
-      ...el,
-      id: nanoid(),
-      rotation: el.rotation || 0
-    };
+    let elementsToAdd = [];
+
+    if (el.type === 'seatRow' && el.seatPositions) {
+      // Convert seatRow to individual chair elements
+      elementsToAdd = el.seatPositions.map((seatPos, index) => ({
+        id: nanoid(),
+        type: 'chair',
+        x: seatPos.x,
+        y: seatPos.y,
+        width: 50,
+        height: 50,
+        fill: 'transparent',
+        stroke: '#6b7280',
+        row: seatPos.row,
+        seatNumber: seatPos.seatNumber,
+        status: seatPos.status,
+        meta: {
+          label: `${seatPos.row}${seatPos.seatNumber}`,
+          row: seatPos.row,
+          seatNumber: seatPos.seatNumber
+        }
+      }));
+    } else {
+      // Normal element creation
+      const newEl = {
+        ...el,
+        id: nanoid(),
+        rotation: el.rotation || 0
+      };
+      elementsToAdd = [newEl];
+    }
 
     const newElements = [];
 
     // Copiar todos los elementos excepto paredes que intersecten con puertas
     for (const element of elements || []) {
-      if (newEl.type === 'door' || newEl.type === 'exit') {
-        if (element.type === 'wall') {
-          // Calcular si la pared intersecta con la puerta
-          const doorSize = 100;
-          const doorLeft = newEl.x - doorSize / 2;
-          const doorRight = newEl.x + doorSize / 2;
-          const doorTop = newEl.y - doorSize / 2;
-          const doorBottom = newEl.y + doorSize / 2;
+      let shouldSkip = false;
+      for (const newEl of elementsToAdd) {
+        if (newEl.type === 'door' || newEl.type === 'exit') {
+          if (element.type === 'wall') {
+            // Calcular si la pared intersecta con la puerta
+            const doorSize = 100;
+            const doorLeft = newEl.x - doorSize / 2;
+            const doorRight = newEl.x + doorSize / 2;
+            const doorTop = newEl.y - doorSize / 2;
+            const doorBottom = newEl.y + doorSize / 2;
 
-          const wallLeft = Math.min(element.x1, element.x2);
-          const wallRight = Math.max(element.x1, element.x2);
-          const wallTop = Math.min(element.y1, element.y2);
-          const wallBottom = Math.max(element.y1, element.y2);
+            const wallLeft = Math.min(element.x1, element.x2);
+            const wallRight = Math.max(element.x1, element.x2);
+            const wallTop = Math.min(element.y1, element.y2);
+            const wallBottom = Math.max(element.y1, element.y2);
 
-          if (!(wallRight <= doorLeft || wallLeft >= doorRight || wallBottom <= doorTop || wallTop >= doorBottom)) {
-            continue; 
+            if (!(wallRight <= doorLeft || wallLeft >= doorRight || wallBottom <= doorTop || wallTop >= doorBottom)) {
+              shouldSkip = true;
+              break;
+            }
           }
         }
       }
-      newElements.push(element);
+      if (!shouldSkip) {
+        newElements.push(element);
+      }
     }
 
-    // Añadir el nuevo elemento
-    newElements.push(newEl);
+    // Añadir los nuevos elementos
+    newElements.push(...elementsToAdd);
     pushSnapshot(newElements);
   }, [elements]);
 
   const handleUpdate = useCallback((id, updates) => {
-    const roundedUpdates = {};
-    for (const key in updates) {
-      roundedUpdates[key] = Math.round(updates[key]);
+    // Si es una posición de asiento, actualizar el elemento padre
+    if (id && id.includes('-')) {
+      const [seatRowId, seatIndex] = id.split('-');
+      const seatRowIndex = elements.findIndex(e => e.id === seatRowId);
+      if (seatRowIndex >= 0) {
+        const seatRow = elements[seatRowIndex];
+        if (seatRow.seatPositions && seatRow.seatPositions[parseInt(seatIndex)]) {
+          const updatedPositions = [...seatRow.seatPositions];
+          updatedPositions[parseInt(seatIndex)] = { ...updatedPositions[parseInt(seatIndex)], ...updates };
+          pushSnapshot(elements.map((e, idx) =>
+            idx === seatRowIndex ? { ...e, seatPositions: updatedPositions } : e
+          ));
+          return;
+        }
+      }
     }
-    pushSnapshot((elements || []).map(e => e.id === id ? { ...e, ...roundedUpdates } : e));
-  }, [elements]);
+
+    // Si hay selección múltiple y se está moviendo un elemento, mover todos los seleccionados
+    if (selectedIds.size > 1 && (updates.x !== undefined || updates.y !== undefined)) {
+      const movedElement = elements.find(e => e.id === id);
+      if (movedElement) {
+        const dx = (updates.x || 0) - (movedElement.x || 0);
+        const dy = (updates.y || 0) - (movedElement.y || 0);
+
+        // Mover todos los elementos seleccionados
+        const updatedElements = elements.map(element => {
+          if (selectedIds.has(element.id)) {
+            // Para elementos seatRow, también mover las posiciones de asiento
+            if (element.type === 'seatRow' && element.seatPositions) {
+              const updatedPositions = element.seatPositions.map(pos => ({
+                ...pos,
+                x: pos.x + dx,
+                y: pos.y + dy
+              }));
+              return {
+                ...element,
+                x: (element.x || 0) + dx,
+                y: (element.y || 0) + dy,
+                seatPositions: updatedPositions
+              };
+            } else {
+              return {
+                ...element,
+                x: (element.x || 0) + dx,
+                y: (element.y || 0) + dy
+              };
+            }
+          }
+          return element;
+        });
+
+        pushSnapshot(updatedElements);
+        return;
+      }
+    }
+
+    // Si es un elemento seatRow y hay updates de posición, mover todas las posiciones manteniendo alineación perfecta
+    if (id && updates && (updates.x !== undefined || updates.y !== undefined)) {
+      const element = elements.find(e => e.id === id);
+      if (element && element.type === 'seatRow' && element.seatPositions) {
+        const newX = updates.x || element.x || 0;
+        const newY = updates.y || element.y || 0;
+
+        // Mantener todas las sillas en la misma fila horizontal (misma Y)
+        // Recalcular posiciones basadas en el espaciado
+        const spacing = 60; // Espaciado entre sillas
+        const numSeats = element.seatPositions.length;
+        const totalWidth = (numSeats - 1) * spacing;
+        const startX = newX - totalWidth / 2;
+
+        const updatedPositions = element.seatPositions.map((pos, index) => ({
+          ...pos,
+          x: startX + index * spacing,
+          y: newY // Mantener todas en la misma línea horizontal
+        }));
+
+        pushSnapshot((elements || []).map(e =>
+          e.id === id ? { ...e, x: newX, y: newY, seatPositions: updatedPositions } : e
+        ));
+        return;
+      }
+    }
+
+    // Para elementos normales, incluyendo actualizaciones de displaySeats
+    pushSnapshot((elements || []).map(e => e.id === id ? { ...e, ...updates } : e));
+  }, [elements, selectedIds]);
 
   const handleDelete = useCallback((id) => {
+    // Si es una posición de asiento, no se puede eliminar individualmente
+    if (id && id.includes('-')) {
+      console.log('No se pueden eliminar posiciones de asiento individuales');
+      return;
+    }
     pushSnapshot((elements || []).filter(e => e.id !== id));
   }, [elements]);
 
@@ -599,7 +887,30 @@ const FloorPlanDesignerInner = () => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedId, elements, handleUpdate, handleDelete, setActiveTool, undo, redo, clipboard])
 
-  const selectedElement = elements.find(el => el.id === selectedId)
+  // Encontrar elemento seleccionado, incluyendo posiciones de asiento
+  const selectedElement = elements.find(el => el.id === selectedId) || (() => {
+    // Si no es un elemento directo, verificar si es una posición de asiento
+    if (selectedId && selectedId.includes('-')) {
+      const [seatRowId, seatIndex] = selectedId.split('-');
+      const seatRow = elements.find(el => el.id === seatRowId && el.type === 'seatRow');
+      if (seatRow && seatRow.seatPositions && seatRow.seatPositions[parseInt(seatIndex)]) {
+        // Crear un objeto temporal que represente la posición de asiento
+        const seatPos = seatRow.seatPositions[parseInt(seatIndex)];
+        return {
+          id: selectedId,
+          type: 'seatPosition',
+          x: seatPos.x,
+          y: seatPos.y,
+          row: seatPos.row,
+          seatNumber: seatPos.seatNumber,
+          status: seatPos.status,
+          parentElement: seatRow
+        };
+      }
+    }
+    return null;
+  })()
+
 
   const exportMap = useCallback(() => {
     const data = {
@@ -633,39 +944,15 @@ const FloorPlanDesignerInner = () => {
   }, [dispatch, historyWrapper]);
 
   const addSample = () => {
-    const sample = [
-      // Stage
-      { id: nanoid(), type: 'stage', x: 500, y: 100, width: 200, height: 50, meta: { label: 'Escenario' } },
-      // Sections
-      { id: nanoid(), type: 'section', x: 300, y: 250, width: 150, height: 100, meta: { label: 'VIP', category: 'VIP' } },
-      { id: nanoid(), type: 'section', x: 500, y: 250, width: 150, height: 100, meta: { label: 'General', category: 'General' } },
-      { id: nanoid(), type: 'section', x: 700, y: 250, width: 150, height: 100, meta: { label: 'Estudiante', category: 'Estudiante' } },
-      // Seat rows
-      { id: nanoid(), type: 'seatRow', x: 300, y: 300, width: 120, height: 20, meta: { label: 'Fila VIP', row: 'A' },
-        seatPositions: [
-          { id: 'vip-1', x: 330, y: 310, row: 'A', seatNumber: 1, status: 'AVAILABLE' },
-          { id: 'vip-2', x: 390, y: 310, row: 'A', seatNumber: 2, status: 'AVAILABLE' }
-        ]
-      },
-      { id: nanoid(), type: 'seatRow', x: 500, y: 300, width: 120, height: 20, meta: { label: 'Fila General', row: 'B' },
-        seatPositions: [
-          { id: 'gen-1', x: 530, y: 310, row: 'B', seatNumber: 1, status: 'AVAILABLE' },
-          { id: 'gen-2', x: 590, y: 310, row: 'B', seatNumber: 2, status: 'AVAILABLE' }
-        ]
-      },
-      { id: nanoid(), type: 'seatRow', x: 700, y: 300, width: 120, height: 20, meta: { label: 'Fila Estudiante', row: 'C' },
-        seatPositions: [
-          { id: 'est-1', x: 730, y: 310, row: 'C', seatNumber: 1, status: 'AVAILABLE' },
-          { id: 'est-2', x: 790, y: 310, row: 'C', seatNumber: 2, status: 'AVAILABLE' }
-        ]
-      },
-    ];
-    pushSnapshot([...(elements || []), ...sample]);
+    // Usar la estructura completa del LayoutStructureExample.js
+    const sampleElements = eventLayoutExample.layout.elements.map(element => ({
+      ...element,
+      id: nanoid() // Generar nuevos IDs únicos
+    }));
+
+    pushSnapshot([...(elements || []), ...sampleElements]);
   };
 
-  const loadConcertSample = () => {
-    loadConcertLayout(dispatch, historyWrapper);
-  };
 
   const saveLayoutToBackend = async (layoutName) => {
     // Validate that we have a valid eventId
@@ -678,7 +965,8 @@ const FloorPlanDesignerInner = () => {
       // Extract sections from elements
       const sections = elements.filter(el => el.type === 'section').map(section => ({
         eventId: parseInt(eventId),
-        sectionName: section.meta?.label || 'Sección'
+        sectionName: section.meta?.label || 'Sección',
+        price: section.meta?.price || 0
       }));
 
       // Save sections
@@ -738,57 +1026,50 @@ const FloorPlanDesignerInner = () => {
         alert('Layout creado con éxito');
       }
 
-      // Extract seats from seatRows
-      const seatRows = elements.filter(el => el.type === 'seatRow');
+      // Extract seats from chair elements
+      const chairElements = elements.filter(el => el.type === 'chair');
       const defaultSectionId = createdSections.length > 0 ? createdSections[0].id : 1; // Use first section or fallback to 1
 
       const createdSeats = [];
-      for (const row of seatRows) {
-        if (row.seatPositions) {
-          for (const seat of row.seatPositions) {
-            const seatData = {
-              sectionID: defaultSectionId, // Use actual section ID
-              eventLayoutID: eventLayoutID,
-              seatNumber: seat.seatNumber,
-              row: seat.row,
-              x: Math.round(seat.x),
-              y: Math.round(seat.y),
-              status: seat.status || 'AVAILABLE'
-            };
-            const result = await createSeat(seatData);
-            if (result.success && result.data) {
-              createdSeats.push({
-                ...seat,
-                backendId: result.data.id, // Store the backend ID
-                seatNumber: result.data.seatNumber,
-                status: result.data.status
-              });
-            }
-          }
+      for (const chair of chairElements) {
+        const seatData = {
+          sectionID: defaultSectionId, // Use actual section ID
+          eventLayoutID: eventLayoutID,
+          seatNumber: chair.seatNumber,
+          row: chair.row, // Use row from chair element
+          x: Math.round(chair.x),
+          y: Math.round(chair.y),
+          status: chair.status === 'AVAILABLE' ? false : true // Convert to boolean
+        };
+        const result = await createSeat(seatData);
+        if (result.success && result.data) {
+          createdSeats.push({
+            ...chair,
+            backendId: result.data.id, // Store the backend ID
+            seatNumber: result.data.seatNumber,
+            row: result.data.row, // Ensure row is set
+            status: result.data.status
+          });
         }
       }
 
-      // Update elements with backend IDs
+      // Update chair elements with backend IDs
       const updatedElements = elements.map(element => {
-        if (element.type === 'seatRow' && element.seatPositions) {
-          const updatedPositions = element.seatPositions.map(position => {
-            const createdSeat = createdSeats.find(seat =>
-              Math.abs(seat.x - position.x) < 5 &&
-              Math.abs(seat.y - position.y) < 5 &&
-              seat.row === position.row &&
-              seat.seatNumber === position.seatNumber
-            );
-            if (createdSeat) {
-              return {
-                ...position,
-                backendId: createdSeat.backendId,
-                seatNumber: createdSeat.seatNumber,
-                status: createdSeat.status
-              };
-            }
-            return position;
-          });
-          return { ...element, seatPositions: updatedPositions };
+        if (element.type === 'chair') {
+          const createdSeat = createdSeats.find(seat =>
+            Math.abs(seat.x - element.x) < 5 &&
+            Math.abs(seat.y - element.y) < 5 &&
+            seat.seatNumber === element.seatNumber
+          );
+          if (createdSeat) {
+            return {
+              ...element,
+              backendId: createdSeat.backendId,
+              seatNumber: createdSeat.seatNumber,
+              row: createdSeat.row,
+              status: createdSeat.status ? 'OCCUPIED' : 'AVAILABLE'
+            };
+          }
         }
         return element;
       });
@@ -954,11 +1235,10 @@ const FloorPlanDesignerInner = () => {
     const updatedElements = elements.map(element => {
       if (element.type === 'seatRow' && element.seatPositions) {
         const updatedPositions = element.seatPositions.map(position => {
-          // Find matching seat by position (x, y) and row/seatNumber
+          // Find matching seat by position (x, y) and seatNumber (ignore row as it may be outdated)
           const matchingSeat = seats.find(seat =>
             Math.abs(seat.x - position.x) < 5 && // Tolerance for position matching
             Math.abs(seat.y - position.y) < 5 &&
-            seat.row === position.row &&
             seat.seatNumber === position.seatNumber
           );
 
@@ -966,6 +1246,7 @@ const FloorPlanDesignerInner = () => {
             return {
               ...position,
               backendId: matchingSeat.id, // Add backend ID
+              row: matchingSeat.row, // Update row from backend
               seatNumber: matchingSeat.seatNumber, // Ensure seat number matches
               status: matchingSeat.status // Sync status
             };
@@ -1042,11 +1323,40 @@ const FloorPlanDesignerInner = () => {
               📏 Medidas
             </button>
             <button
-              onClick={() => setIsSeatSelectionMode(!isSeatSelectionMode)}
-              className={`px-3 py-1 text-sm rounded border ${isSeatSelectionMode ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-700 border-gray-300'}`}
+              onClick={() => {
+                setIsSectionCreationMode(!isSectionCreationMode);
+                if (!isSectionCreationMode) {
+                  setSelectedChairsForSection(new Set());
+                  setSelectedSeatPositionsForSection(new Set());
+                } else {
+                  setSelectedChairsForSection(new Set());
+                  setSelectedSeatPositionsForSection(new Set());
+                }
+              }}
+              className={`px-3 py-1 text-sm rounded border ${isSectionCreationMode ? 'bg-purple-500 text-white border-purple-500' : 'bg-white text-gray-700 border-gray-300'}`}
             >
-              🎯 Seleccionar Asientos
+              🎯 Seleccionar Sillas
             </button>
+            {isSectionCreationMode && (selectedChairsForSection.size > 0 || selectedSeatPositionsForSection.size > 0) && (
+              <button
+                onClick={() => setShowSectionCreationModal(true)}
+                className="px-4 py-2 text-sm rounded border bg-green-500 text-white border-green-500 hover:bg-green-600"
+              >
+                ✅ Crear Sección ({selectedChairsForSection.size + selectedSeatPositionsForSection.size} sillas)
+              </button>
+            )}
+            {isSectionCreationMode && (
+              <button
+                onClick={() => {
+                  // Limpiar selección actual
+                  setSelectedChairsForSection(new Set());
+                  setSelectedSeatPositionsForSection(new Set());
+                }}
+                className="px-3 py-1 text-sm rounded border bg-red-500 text-white border-red-500 hover:bg-red-600"
+              >
+                ✕ Limpiar
+              </button>
+            )}
           </div>
         </div>
 
@@ -1056,10 +1366,22 @@ const FloorPlanDesignerInner = () => {
           <span>Herramienta: {activeTool}</span>
           <span>•</span>
           <span>Unidades: {units}</span>
-          {isSeatSelectionMode && (
+          {isSectionCreationMode && (
             <>
               <span>•</span>
-              <span>Asientos seleccionados: {selectedSeatPositions.size}</span>
+              <span className={`font-bold px-2 py-1 rounded ${
+                selectedChairsForSection.size + selectedSeatPositionsForSection.size > 0
+                  ? 'bg-purple-600 text-white'
+                  : 'text-purple-300'
+              }`}>
+                🎯 Sillas seleccionadas: {selectedChairsForSection.size + selectedSeatPositionsForSection.size}
+              </span>
+            </>
+          )}
+          {!isSeatSelectionMode && !isSectionCreationMode && selectedIds.size > 0 && (
+            <>
+              <span>•</span>
+              <span>Elementos seleccionados: {selectedIds.size}</span>
             </>
           )}
         </div>
@@ -1089,12 +1411,246 @@ const FloorPlanDesignerInner = () => {
         </div>
       )}
 
+      {showSectionCreationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">Crear Nueva Sección</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Sección</label>
+                <input
+                  type="text"
+                  value={newSectionData.name}
+                  onChange={(e) => setNewSectionData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  placeholder="Ej: VIP, General"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={newSectionData.price}
+                  onChange={(e) => setNewSectionData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  placeholder="Ej: 50.00"
+                />
+              </div>
+              <div className="text-sm text-gray-600">
+                Sillas seleccionadas: {selectedChairsForSection.size + selectedSeatPositionsForSection.size}
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button
+                disabled={isCreatingSection}
+                onClick={async () => {
+                  if (!newSectionData.name.trim()) {
+                    alert('Por favor ingrese un nombre para la sección');
+                    return;
+                  }
+
+                  setIsCreatingSection(true);
+
+                  try {
+                    // Verificar token de autenticación
+                    const token = localStorage.getItem('token');
+                    console.log('Token disponible:', !!token);
+
+                    // Crear la sección
+                    const sectionData = {
+                      eventId: parseInt(eventId),
+                      sectionName: newSectionData.name.trim(),
+                      price: newSectionData.price
+                    };
+                    console.log('Datos a enviar para crear sección:', sectionData);
+
+                    const sectionResult = await createSection(sectionData);
+                    console.log('Respuesta completa de createSection:', sectionResult);
+
+                    // Verificar diferentes estructuras de respuesta posibles
+                    let newSection = null;
+                    if (sectionResult && sectionResult.data) {
+                      newSection = sectionResult.data;
+                    } else if (sectionResult && typeof sectionResult === 'object' && sectionResult.sectionID) {
+                      newSection = sectionResult;
+                    }
+
+                    console.log('Nueva sección extraída:', newSection);
+
+                    if (!newSection) {
+                      alert('Error: No se recibió datos de la sección creada. Respuesta: ' + JSON.stringify(sectionResult));
+                      return;
+                    }
+
+                    // Obtener o crear eventLayoutID
+                    let eventLayoutID = 1; // Valor por defecto
+                    try {
+                      const hasLayoutResult = await hasEventLayout(eventId);
+                      if (hasLayoutResult.success && hasLayoutResult.data) {
+                        const existingLayoutResult = await getEventLayoutByEventId(eventId);
+                        if (existingLayoutResult.success && existingLayoutResult.data) {
+                          eventLayoutID = existingLayoutResult.data.eventLayoutID;
+                        }
+                      }
+                    } catch (error) {
+                      console.warn('No se pudo obtener eventLayoutID, usando valor por defecto:', error);
+                    }
+
+                    // Crear asientos para la sección
+                    let seatCounter = 1;
+
+                    // Procesar sillas individuales
+                    const selectedChairElements = elements.filter(el => selectedChairsForSection.has(el.id));
+                    for (let i = 0; i < selectedChairElements.length; i++) {
+                      const chair = selectedChairElements[i];
+                      const seatData = {
+                        sectionID: newSection.sectionID || newSection.id || newSection,
+                        eventLayoutID: eventLayoutID,
+                        seatNumber: seatCounter++,
+                        row: 'A', // Por ahora fila fija
+                        x: Math.round(chair.x),
+                        y: Math.round(chair.y),
+                        status: false
+                      };
+
+                      const seatResult = await createSeat(seatData);
+                      if (!seatResult.success) {
+                        console.error('Error creando asiento:', seatResult.message);
+                      }
+                    }
+
+                    // Procesar posiciones de asiento en filas
+                    for (const positionKey of selectedSeatPositionsForSection) {
+                      const [seatRowId, seatIndex] = positionKey.split('-');
+                      const seatRow = elements.find(el => el.id === seatRowId);
+                      if (seatRow && seatRow.seatPositions && seatRow.seatPositions[seatIndex]) {
+                        const seatPos = seatRow.seatPositions[seatIndex];
+                        const seatData = {
+                          sectionID: newSection.sectionID || newSection.id,
+                          eventLayoutID: eventLayoutID,
+                          seatNumber: seatCounter++,
+                          row: seatPos.row || 'A',
+                          x: Math.round(seatPos.x),
+                          y: Math.round(seatPos.y),
+                          status: false
+                        };
+
+                        const seatResult = await createSeat(seatData);
+                        if (!seatResult.success) {
+                          console.error('Error creando asiento:', seatResult.message);
+                        }
+                      }
+                    }
+
+                    // Calcular bounding box de todas las sillas seleccionadas
+                    const allSelectedElements = [];
+
+                    // Agregar sillas individuales
+                    selectedChairElements.forEach(chair => allSelectedElements.push(chair));
+
+                    // Agregar posiciones de asiento
+                    for (const positionKey of selectedSeatPositionsForSection) {
+                      const [seatRowId, seatIndex] = positionKey.split('-');
+                      const seatRow = elements.find(el => el.id === seatRowId);
+                      if (seatRow && seatRow.seatPositions && seatRow.seatPositions[seatIndex]) {
+                        allSelectedElements.push({
+                          x: seatRow.seatPositions[seatIndex].x,
+                          y: seatRow.seatPositions[seatIndex].y
+                        });
+                      }
+                    }
+
+                    // Crear elemento visual de sección
+                    const sectionElement = {
+                      id: nanoid(),
+                      type: 'section',
+                      x: Math.min(...allSelectedElements.map(c => c.x)) - 50,
+                      y: Math.min(...allSelectedElements.map(c => c.y)) - 50,
+                      width: Math.max(...allSelectedElements.map(c => c.x)) - Math.min(...allSelectedElements.map(c => c.x)) + 100,
+                      height: Math.max(...allSelectedElements.map(c => c.y)) - Math.min(...allSelectedElements.map(c => c.y)) + 100,
+                      meta: {
+                        label: newSectionData.name.trim(),
+                        price: newSectionData.price,
+                        category: 'General'
+                      }
+                    };
+
+                    pushSnapshot([...elements, sectionElement]);
+
+                    // Limpiar estado
+                    setShowSectionCreationModal(false);
+                    setNewSectionData({ name: '', price: 0 });
+                    setSelectedChairsForSection(new Set());
+                    setSelectedSeatPositionsForSection(new Set());
+                    setIsSectionCreationMode(false);
+
+                    // Mostrar notificación de éxito más prominente
+                    const successMessage = `✅ Sección "${newSectionData.name}" creada exitosamente con ${selectedChairElements.length} asientos`;
+                    alert(successMessage);
+
+                    // Resetear automáticamente el modo de selección
+                    setIsSectionCreationMode(false);
+                  } catch (error) {
+                    console.error('Error creando sección:', error);
+                    alert('Error al crear la sección');
+                  } finally {
+                    setIsCreatingSection(false);
+                  }
+                }}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              >
+                {isCreatingSection ? '⏳ Creando...' : 'Crear Sección'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowSectionCreationModal(false);
+                  setNewSectionData({ name: '', price: 0 });
+                }}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 flex">
-        <ToolPanel activeTool={activeTool} setActiveTool={setActiveTool} onUndo={undo} onRedo={redo} canUndo={canUndo} canRedo={canRedo} onAddSample={addSample} onLoadConcert={loadConcertSample} />
+        <ToolPanel activeTool={activeTool} setActiveTool={setActiveTool} onUndo={undo} onRedo={redo} canUndo={canUndo} canRedo={canRedo} onAddSample={addSample} />
           <DrawingCanvas
             elements={elements || []}
             selectedElementId={selectedId}
-            onSelect={(id) => dispatch({ type: 'SET_SELECTED', payload: id })}
+            selectedIds={selectedIds}
+            onSelect={(id) => {
+              if (id && id.includes('-') && !isSeatSelectionMode && !isSectionCreationMode) {
+                // Selección múltiple para posiciones de asiento en modo normal
+                setSelectedIds(prev => {
+                  const newSet = new Set(prev);
+                  if (newSet.has(id)) {
+                    newSet.delete(id);
+                  } else {
+                    newSet.add(id);
+                  }
+                  return newSet;
+                });
+              } else {
+                // Selección normal para otros elementos
+                dispatch({ type: 'SET_SELECTED', payload: id });
+                // Limpiar selección múltiple cuando se selecciona un elemento normal
+                setSelectedIds(new Set());
+              }
+            }}
+            onMultiSelect={(selectedElements) => {
+              // Actualizar selección múltiple
+              setSelectedIds(new Set(selectedElements));
+              // También seleccionar el primer elemento para compatibilidad
+              if (selectedElements.length > 0) {
+                dispatch({ type: 'SET_SELECTED', payload: selectedElements[0] });
+              }
+            }}
             onCreate={(el) => handleCreate({ ...el, type: activeTool })}
             onUpdate={handleUpdate}
             onDelete={handleDelete}
@@ -1108,6 +1664,27 @@ const FloorPlanDesignerInner = () => {
             isSeatSelectionMode={isSeatSelectionMode}
             selectedSeatPositions={selectedSeatPositions}
             onSeatPositionSelect={handleSeatPositionSelect}
+            isSectionCreationMode={isSectionCreationMode}
+            selectedChairsForSection={selectedChairsForSection}
+            selectedSeatPositionsForSection={selectedSeatPositionsForSection}
+            onChairSelectForSection={(chairId) => {
+              const newSelected = new Set(selectedChairsForSection);
+              if (newSelected.has(chairId)) {
+                newSelected.delete(chairId);
+              } else {
+                newSelected.add(chairId);
+              }
+              setSelectedChairsForSection(newSelected);
+            }}
+            onSeatPositionSelectForSection={(positionKey) => {
+              const newSelected = new Set(selectedSeatPositionsForSection);
+              if (newSelected.has(positionKey)) {
+                newSelected.delete(positionKey);
+              } else {
+                newSelected.add(positionKey);
+              }
+              setSelectedSeatPositionsForSection(newSelected);
+            }}
             zoom={zoom}
             setZoom={setZoom}
             offset={offset}
@@ -1115,7 +1692,15 @@ const FloorPlanDesignerInner = () => {
             onLabelEdit={handleLabelEdit}
           />
 
-        <PropertiesPanel selectedElement={(elements || []).find(e => e.id === selectedId)} onUpdate={handleUpdate} onDelete={handleDelete} units={units} setUnits={setUnits} />
+        <PropertiesPanel
+          selectedElement={selectedElement}
+          selectedIds={selectedIds}
+          elements={elements || []}
+          onUpdate={handleUpdate}
+          onDelete={handleDelete}
+          units={units}
+          setUnits={setUnits}
+        />
       </div>
 
       {showGuide && (

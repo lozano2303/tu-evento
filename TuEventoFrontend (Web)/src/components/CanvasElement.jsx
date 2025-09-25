@@ -199,36 +199,35 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
       }
 
       case "seatRow": {
-        const numChairs = Math.max(1, Math.floor((element.width || 0) / ELEMENT_CONSTANTS.CHAIR_SPACING));
+        const numChairs = element.seatPositions ? element.seatPositions.length : Math.max(1, Math.floor((element.width || 0) / ELEMENT_CONSTANTS.CHAIR_SPACING));
         const startX = element.x - (element.width || 0) / 2 + ELEMENT_CONSTANTS.CHAIR_SPACING / 2;
         const chairs = [];
 
-        // Generar posiciones de asientos individuales
-        const seatPositions = [];
-        for (let i = 0; i < numChairs; i++) {
-          const chairX = startX + i * ELEMENT_CONSTANTS.CHAIR_SPACING;
-          seatPositions.push({
-            id: `${element.id}-seat-${i}`,
-            x: chairX,
-            y: element.y,
-            seatNumber: i + 1,
-            row: element.meta?.row || 'A',
-            status: 'AVAILABLE'
-          });
-        }
-
-        // Almacenar las posiciones de asientos en el elemento para que DrawingCanvas pueda acceder
-        if (!element.seatPositions) {
+        // Usar las posiciones de asientos existentes o generar nuevas
+        let seatPositions = element.seatPositions;
+        if (!seatPositions) {
+          seatPositions = [];
+          for (let i = 0; i < numChairs; i++) {
+            const chairX = startX + i * ELEMENT_CONSTANTS.CHAIR_SPACING;
+            seatPositions.push({
+              id: `${element.id}-seat-${i}`,
+              x: chairX,
+              y: element.y,
+              seatNumber: i + 1,
+              row: element.meta?.row || 'A',
+              status: 'AVAILABLE'
+            });
+          }
           element.seatPositions = seatPositions;
         }
 
-        for (let i = 0; i < numChairs; i++) {
-          const chairX = startX + i * ELEMENT_CONSTANTS.CHAIR_SPACING;
+        for (let i = 0; i < seatPositions.length; i++) {
+          const seatPos = seatPositions[i];
           chairs.push(
             <g key={i} style={{ cursor: 'pointer' }}>
               <rect
-                x={chairX - ELEMENT_CONSTANTS.CHAIR_RADIUS}
-                y={element.y - ELEMENT_CONSTANTS.CHAIR_RADIUS}
+                x={seatPos.x - ELEMENT_CONSTANTS.CHAIR_RADIUS}
+                y={seatPos.y - ELEMENT_CONSTANTS.CHAIR_RADIUS}
                 width={ELEMENT_CONSTANTS.CHAIR_RADIUS * 2}
                 height={ELEMENT_CONSTANTS.CHAIR_RADIUS * 2}
                 fill="#6b7280"
@@ -237,21 +236,43 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
                 rx="2"
               />
               <text
-                x={chairX}
-                y={element.y + 3}
+                x={seatPos.x}
+                y={seatPos.y + 3}
                 textAnchor="middle"
                 fontSize="8"
                 fill="white"
                 pointerEvents="none"
               >
-                {element.meta?.row || 'A'}{i + 1}
+                {seatPos.row}{seatPos.seatNumber}
               </text>
             </g>
           );
         }
 
         return (
-          <g data-element-id={element.id} transform={transform} {...baseProps}>
+          <g data-element-id={element.id} transform={transform}>
+            {/* Área clickeable para seleccionar toda la fila */}
+            <rect
+              x={element.x - (element.width || 0) / 2}
+              y={element.y - ELEMENT_CONSTANTS.CHAIR_RADIUS - 10}
+              width={element.width || 0}
+              height={ELEMENT_CONSTANTS.CHAIR_RADIUS * 2 + 20}
+              fill="transparent"
+              stroke={isSelected ? "#3b82f6" : "transparent"}
+              strokeWidth={isSelected ? 2 : 0}
+              strokeDasharray={isSelected ? "5,5" : undefined}
+              style={{
+                cursor: isSelected ? "move" : "pointer",
+                pointerEvents: isSeatSelectionMode ? 'none' : 'auto',
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect && onSelect(element.id);
+              }}
+              opacity={isSelected ? 0.9 : 1}
+              filter={isSelected ? "url(#dropShadow)" : undefined}
+              className={isSelected ? "canvas-element selected" : "canvas-element"}
+            />
             {chairs}
             {renderLabelElement(element.x, element.y - 20)}
             {isSelected && (
@@ -263,7 +284,7 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
                 fill="#374151"
                 pointerEvents="none"
               >
-                {numChairs} sillas × {Math.round(element.width || 0)}{units}
+                {seatPositions.length} sillas × {Math.round(element.width || 0)}{units}
               </text>
             )}
           </g>
