@@ -22,7 +22,7 @@ public class SectionController {
     }
 
     @GetMapping
-    public List<SectionDto> getAllSections() {
+    public ResponseDto<List<SectionDto>> getAllSections() {
         return sectionService.getAllSections();
     }
 

@@ -44,6 +44,12 @@ public class SeatServiceImpl implements SeatService {
         }
 
         try {
+            // Check if seat already exists at this position for this section
+            Optional<Seat> existingSeat = seatRepository.findBySectionID_SectionIDAndXAndY(seatDto.getSectionID(), seatDto.getX(), seatDto.getY());
+            if (existingSeat.isPresent()) {
+                return ResponseDto.error("Ya existe un asiento en esta posición para esta sección");
+            }
+
             Seat seat = new Seat();
             seat.setSectionID(sectionOpt.get());
             seat.setEventLayoutID(eventLayoutOpt.get());
@@ -51,18 +57,19 @@ public class SeatServiceImpl implements SeatService {
             seat.setRow(seatDto.getRow());
             seat.setX(seatDto.getX());
             seat.setY(seatDto.getY());
-            seat.setStatus("AVAILABLE".equals(seatDto.getStatus()) ? false : true); // Convert string to boolean
+            seat.setStatus("AVAILABLE".equals(seatDto.getStatus()) ? true : false); // true = available, false = occupied
 
             seatRepository.save(seat);
 
             SeatDto responseDto = new SeatDto(
+                seat.getSeatID(),
                 seat.getSectionID().getSectionID(),
                 seat.getEventLayoutID().getId(),
                 seat.getSeatNumber(),
                 seat.getRow(),
                 seat.getX(),
                 seat.getY(),
-                seat.isStatus() ? "OCCUPIED" : "AVAILABLE"
+                seat.isStatus() ? "AVAILABLE" : "OCCUPIED"
             );
             return ResponseDto.ok("Asiento insertado correctamente", responseDto);
         } catch (DataAccessException e) {
@@ -98,7 +105,7 @@ public class SeatServiceImpl implements SeatService {
             seat.setRow(seatDto.getRow());
             seat.setX(seatDto.getX());
             seat.setY(seatDto.getY());
-            seat.setStatus("AVAILABLE".equals(seatDto.getStatus()) ? false : true);
+            seat.setStatus("AVAILABLE".equals(seatDto.getStatus()) ? true : false);
 
             seatRepository.save(seat);
             return ResponseDto.ok("Asiento actualizado correctamente");
@@ -137,13 +144,14 @@ public class SeatServiceImpl implements SeatService {
 
         List<SeatDto> seatsDto = seats.stream()
                 .map(seat -> new SeatDto(
+                        seat.getSeatID(),
                         seat.getSectionID().getSectionID(),
                         seat.getEventLayoutID().getId(),
                         seat.getSeatNumber(),
                         seat.getRow(),
                         seat.getX(),
                         seat.getY(),
-                        seat.isStatus() ? "OCCUPIED" : "AVAILABLE"
+                        seat.isStatus() ? "AVAILABLE" : "OCCUPIED"
                 ))
                 .collect(Collectors.toList());
 
@@ -159,13 +167,14 @@ public class SeatServiceImpl implements SeatService {
 
         Seat seat = seatOpt.get();
         SeatDto seatDto = new SeatDto(
+                seat.getSeatID(),
                 seat.getSectionID().getSectionID(),
                 seat.getEventLayoutID().getId(),
                 seat.getSeatNumber(),
                 seat.getRow(),
                 seat.getX(),
                 seat.getY(),
-                seat.isStatus() ? "OCCUPIED" : "AVAILABLE"
+                seat.isStatus() ? "AVAILABLE" : "OCCUPIED"
         );
 
         return ResponseDto.ok("Asiento encontrado", seatDto);
@@ -181,13 +190,14 @@ public class SeatServiceImpl implements SeatService {
 
         List<SeatDto> seatsDto = seats.stream()
                 .map(seat -> new SeatDto(
+                        seat.getSeatID(),
                         seat.getSectionID().getSectionID(),
                         seat.getEventLayoutID().getId(),
                         seat.getSeatNumber(),
                         seat.getRow(),
                         seat.getX(),
                         seat.getY(),
-                        seat.isStatus() ? "OCCUPIED" : "AVAILABLE"
+                        seat.isStatus() ? "AVAILABLE" : "OCCUPIED"
                 ))
                 .collect(Collectors.toList());
 
@@ -204,10 +214,10 @@ public class SeatServiceImpl implements SeatService {
 
         try {
             Seat seat = seatOpt.get();
-            seat.setStatus(newStatus);
+            seat.setStatus(!newStatus); // newStatus true (occupied) -> set false (occupied)
             seatRepository.save(seat);
 
-            String estado = newStatus ? "ocupado" : "disponible";
+            String estado = !seat.isStatus() ? "ocupado" : "disponible";
             return ResponseDto.ok("Estado del asiento actualizado a " + estado);
         } catch (DataAccessException e) {
             return ResponseDto.error("Error de la base de datos al actualizar el estado");
@@ -223,7 +233,7 @@ public class SeatServiceImpl implements SeatService {
             // For now, release all occupied seats that might be stuck from failed reservations
             // In a production system, you'd check timestamps or reservation records
             List<Seat> occupiedSeats = seatRepository.findAll().stream()
-                .filter(seat -> seat.isStatus()) // occupied/reserved
+                .filter(seat -> !seat.isStatus()) // occupied
                 .collect(Collectors.toList());
 
             int releasedCount = 0;
@@ -231,7 +241,7 @@ public class SeatServiceImpl implements SeatService {
                 // Check if this seat has any associated tickets
                 // If no active tickets, release it
                 // For simplicity, release all occupied seats (not ideal for production)
-                seat.setStatus(false); // set to available
+                seat.setStatus(true); // set to available
                 seatRepository.save(seat);
                 releasedCount++;
             }

@@ -9,7 +9,7 @@ public interface SectionService {
 
     ResponseDto<SectionDto> insertSection(SectionDto sectionDto);
 
-    List<SectionDto> getAllSections();
+    ResponseDto<List<SectionDto>> getAllSections();
 
     ResponseDto<SectionDto> updateSection(SectionDto sectionDto);
 

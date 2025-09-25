@@ -2,6 +2,8 @@ package TuEvento.Backend.dto;
 
 public class SeatDto {
 
+    private int id;
+
     private int sectionID;
 
     private int eventLayoutID;
@@ -19,7 +21,8 @@ public class SeatDto {
     public SeatDto() {
     }
 
-    public SeatDto(int sectionID, int eventLayoutID, int seatNumber, String row, double x, double y, String status) {
+    public SeatDto(int id, int sectionID, int eventLayoutID, int seatNumber, String row, double x, double y, String status) {
+        this.id = id;
         this.sectionID = sectionID;
         this.eventLayoutID = eventLayoutID;
         this.seatNumber = seatNumber;
@@ -27,6 +30,14 @@ public class SeatDto {
         this.x = x;
         this.y = y;
         this.status = status;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public int getSectionID() {

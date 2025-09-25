@@ -187,12 +187,50 @@ const ReservaEvento = () => {
   // Load seats when section is selected
   useEffect(() => {
     if (selectedSection) {
-      loadSeatsForSection(selectedSection.id);
+      loadSeatsForSection(selectedSection.sectionID);
     }
   }, [selectedSection]);
 
+  // Update layout seat statuses when selectedSeats changes
+  useEffect(() => {
+    setLayoutElements(prev => prev.map(element => {
+      if (element.type === 'seatRow' && element.seatPositions) {
+        const updatedPositions = element.seatPositions.map(pos => {
+          const isSelected = selectedSeats.includes(pos.id);
+          return { ...pos, status: isSelected ? 'SELECTED' : (pos.status === 'SELECTED' ? 'AVAILABLE' : pos.status) };
+        });
+        return { ...element, seatPositions: updatedPositions };
+      }
+      return element;
+    }));
+  }, [selectedSeats]);
+
   const handleStarClick = (starNumber) => {
     setRating(starNumber);
+  };
+
+  const matchSeatsWithLayout = (elements, seats) => {
+    return elements.map(element => {
+      if (element.type === 'seatRow' && element.seatPositions) {
+        const updatedPositions = element.seatPositions.map(position => {
+          // Find matching seat by seatNumber (position may not match if layout was adjusted)
+          const matchingSeat = seats.find(seat => seat.seatNumber === position.seatNumber);
+
+          if (matchingSeat) {
+            return {
+              ...position,
+              id: matchingSeat.id, // Set id to backend ID
+              row: matchingSeat.row, // Update row from backend
+              seatNumber: matchingSeat.seatNumber, // Ensure seat number matches
+              status: matchingSeat.status // Sync status
+            };
+          }
+          return position;
+        });
+        return { ...element, seatPositions: updatedPositions };
+      }
+      return element;
+    });
   };
 
   const loadEventLayout = async () => {
@@ -202,8 +240,9 @@ const ReservaEvento = () => {
       setLoadingLayout(true);
       const result = await getEventLayoutByEventId(eventId);
       if (result.success && result.data && result.data.layoutData && result.data.layoutData.elements) {
-        const elements = result.data.layoutData.elements;
+        let elements = result.data.layoutData.elements;
         console.log("Layout elements cargados:", elements);
+        elements = matchSeatsWithLayout(elements, seats);
         setLayoutElements(elements);
         setLayoutId(result.data.id);
       } else {
@@ -246,22 +285,6 @@ const ReservaEvento = () => {
       if (sectionsResult.success) {
         let eventSections = sectionsResult.data.filter(section => section.eventId === parseInt(eventId));
 
-        // If no sections exist, create a default section
-        if (eventSections.length === 0) {
-          const defaultSection = {
-            eventId: parseInt(eventId),
-            sectionName: 'General',
-            price: 30000
-          };
-          const createResult = await createSection(defaultSection);
-          if (createResult.success && createResult.data) {
-            eventSections = [createResult.data];
-          } else {
-            console.error('Failed to create default section');
-            return;
-          }
-        }
-
         setSections(eventSections);
         if (eventSections.length > 0 && !selectedSection) {
           setSelectedSection(eventSections[0]);
@@ -287,7 +310,7 @@ const ReservaEvento = () => {
       if (selectedSection && layoutElements.some(el => el.type === 'seatRow')) {
         await generateSeatsFromLayout(layoutElements);
         // Reload seats after generation
-        await loadSeatsForSection(selectedSection.id);
+        await loadSeatsForSection(selectedSection.sectionID);
       }
 
       // Load previously selected seat positions from layout
@@ -346,7 +369,7 @@ const ReservaEvento = () => {
         if (eventSections.length > 0) {
           setSelectedSection(eventSections[0]);
           // Load seats for the first section
-          const loadedSeats = await loadSeatsForSection(eventSections[0].id);
+          const loadedSeats = await loadSeatsForSection(eventSections[0].sectionID);
           return loadedSeats;
         }
       }
@@ -367,7 +390,7 @@ const ReservaEvento = () => {
       console.log("Generando seats para seatRows ordenados:", seatRows.length);
 
       // Obtener seats existentes para actualizar
-      const existingSeats = await getSeatsBySection(selectedSection.id);
+      const existingSeats = await getSeatsBySection(selectedSection.sectionID);
       const existingSeatsData = existingSeats.success ? existingSeats.data : [];
 
       for (let i = 0; i < seatRows.length; i++) {
@@ -390,8 +413,8 @@ const ReservaEvento = () => {
               const updateData = {
                 seatNumber: seatNumber,
                 row: rowLetter,
-                status: existingSeat.status ? "OCCUPIED" : "AVAILABLE", // Convertir boolean a string
-                sectionID: selectedSection.id,
+                status: existingSeat.status, // Mantener el status actual
+                sectionID: selectedSection.sectionID,
                 eventLayoutID: layoutId,
                 x: x,
                 y: y
@@ -408,7 +431,7 @@ const ReservaEvento = () => {
                 seatNumber: seatNumber,
                 row: rowLetter,
                 status: "AVAILABLE",
-                sectionID: selectedSection.id,
+                sectionID: selectedSection.sectionID,
                 eventLayoutID: layoutId,
                 x: x,
                 y: y
@@ -426,7 +449,7 @@ const ReservaEvento = () => {
 
       // Recargar asientos después de procesarlos
       if (selectedSection) {
-        loadSeatsForSection(selectedSection.id);
+        loadSeatsForSection(selectedSection.sectionID);
       }
     } catch (error) {
       console.error('Error generating seats from layout:', error);
@@ -451,8 +474,8 @@ const ReservaEvento = () => {
   const handleSeatSelect = (seatId) => {
     console.log("Asiento clickeado:", seatId);
     const seat = seats.find(s => s.id === seatId);
-    if (!seat || !['A', 'B'].includes(seat.row)) {
-      console.log("Asiento no permitido para selección:", seat?.row);
+    if (!seat) {
+      console.log("Asiento no encontrado:", seatId);
       return;
     }
     setSelectedSeats(prev => {
@@ -508,7 +531,7 @@ const ReservaEvento = () => {
   // Function to verify seat availability before purchase
   const verifySeatAvailability = async (seatIds) => {
     try {
-      const currentSeats = await getSeatsBySection(selectedSection.id);
+      const currentSeats = await getSeatsBySection(selectedSection.sectionID);
       if (!currentSeats.success) {
         throw new Error('No se pudo verificar la disponibilidad de asientos');
       }
@@ -638,7 +661,7 @@ const ReservaEvento = () => {
         setShowPurchaseModal(false);
         // Reload seats to reflect changes
         if (selectedSection) {
-          await loadSeatsForSection(selectedSection.id);
+          await loadSeatsForSection(selectedSection.sectionID);
         }
       } else {
         throw new Error(result.message || 'Error desconocido en la creación del ticket');
@@ -665,7 +688,7 @@ const ReservaEvento = () => {
 
       // Reload seats to reflect any changes
       if (selectedSection) {
-        await loadSeatsForSection(selectedSection.id);
+        await loadSeatsForSection(selectedSection.sectionID);
       }
     } finally {
       setReservingSeats(false);
@@ -1091,19 +1114,19 @@ const ReservaEvento = () => {
                     Seleccionar Sección
                   </label>
                   <select
-                    value={selectedSection?.id || ''}
+                    value={selectedSection?.sectionID || ''}
                     onChange={(e) => {
                       const secId = parseInt(e.target.value);
-                      const sec = sections.find(s => s.id === secId);
+                      const sec = sections.find(s => s.sectionID === secId);
                       setSelectedSection(sec);
                       setSelectedSeats([]);
                       setSelectedSeatPositions(new Set());
-                      loadSeatsForSection(sec.id);
+                      loadSeatsForSection(sec.sectionID);
                     }}
                     className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
                     {sections.map(sec => (
-                      <option key={sec.id} value={sec.id}>
+                      <option key={sec.sectionID} value={sec.sectionID}>
                         {sec.sectionName} - ${sec.price}
                       </option>
                     ))}
@@ -1244,59 +1267,62 @@ const ReservaEvento = () => {
                 </div>
               </div>
 
-              {/* Área del mapa */}
-              <div className="flex-1 p-6 flex justify-center items-center min-h-[600px]">
-                {modalLoading || loadingLayout ? (
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Cargando mapa del evento...</p>
-                  </div>
-                ) : modalError ? (
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-2xl text-red-500">⚠️</span>
+              {/* Área del mapa y lista de asientos */}
+              <div className="flex-1 p-6 flex flex-col">
+                {/* Mapa del evento con asientos */}
+                <div className="flex-1 flex justify-center items-center border rounded-lg bg-gray-50 overflow-hidden">
+                  {modalLoading || loadingLayout ? (
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                      <p className="text-gray-600">Cargando mapa del evento...</p>
                     </div>
-                    <p className="text-red-600 font-medium">Error al cargar el mapa</p>
-                    <p className="text-sm text-gray-500 mt-2">{modalError}</p>
-                    <button
-                      onClick={handleShowMap}
-                      className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
-                    >
-                      Reintentar
-                    </button>
-                  </div>
-                ) : (layoutElements && layoutElements.length > 0) || (seats && seats.length > 0) ? (
-                  <DrawingCanvas
-                    elements={layoutElements || []}
-                    selectedElementId={null}
-                    onSelect={() => {}}
-                    onCreate={() => {}}
-                    onUpdate={() => {}}
-                    onDelete={() => {}}
-                    activeTool="select"
-                    setActiveTool={() => {}}
-                    units="cm"
-                    showMeasurements={true}
-                    seats={seats || []}
-                    selectedSeats={selectedSeats}
-                    onSeatSelect={handleSeatSelect}
-                    onSeatPositionSelect={handleSeatPositionSelect}
-                    isSeatSelectionMode={true}
-                    zoom={zoom}
-                    setZoom={setZoom}
-                    offset={offset}
-                    setOffset={setOffset}
-                    selectedSection={selectedSection}
-                  />
-                ) : (
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-2xl">🗺️</span>
+                  ) : modalError ? (
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-2xl text-red-500">⚠️</span>
+                      </div>
+                      <p className="text-red-600 font-medium">Error al cargar el mapa</p>
+                      <p className="text-sm text-gray-500 mt-2">{modalError}</p>
+                      <button
+                        onClick={handleShowMap}
+                        className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        Reintentar
+                      </button>
                     </div>
-                    <p className="text-gray-600 font-medium">Mapa no disponible</p>
-                    <p className="text-sm text-gray-500 mt-2">El organizador aún no ha creado la distribución de asientos para este evento.</p>
-                  </div>
-                )}
+                  ) : (layoutElements && layoutElements.length > 0) || (seats && seats.length > 0) ? (
+                    <DrawingCanvas
+                      elements={layoutElements || []}
+                      selectedElementId={null}
+                      onSelect={() => {}}
+                      onCreate={() => {}}
+                      onUpdate={() => {}}
+                      onDelete={() => {}}
+                      activeTool="select"
+                      setActiveTool={() => {}}
+                      units="cm"
+                      showMeasurements={false}
+                      seats={seats || []}
+                      selectedSeats={selectedSeats}
+                      onSeatSelect={handleSeatSelect}
+                      onSeatPositionSelect={handleSeatPositionSelect}
+                      isSeatSelectionMode={true}
+                      zoom={zoom}
+                      setZoom={setZoom}
+                      offset={offset}
+                      setOffset={setOffset}
+                      selectedSection={selectedSection}
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-2xl">🗺️</span>
+                      </div>
+                      <p className="text-gray-600 font-medium">Mapa no disponible</p>
+                      <p className="text-sm text-gray-500 mt-2">El organizador aún no ha creado la distribución de asientos para este evento.</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
