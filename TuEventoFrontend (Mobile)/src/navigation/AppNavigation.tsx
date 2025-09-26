@@ -9,6 +9,7 @@ import CodeVerificationScreenRegister from '../screens/auth/CodeVerificationScre
 import CodeVerifcationForgotPassword from '../screens/auth/CodeVerifcationForgotPassword';
 import NewPasswordScreen from '../screens/auth/NewPasswordScreen';
 import EvenList from '../screens/home/EvenListScreen';
+import ReaderQr from '../screens/home/readerQr';
 import ProfileScreen from '../screens/home/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
@@ -25,7 +26,7 @@ function MainTabs() {
       }}
     >
       <Tab.Screen
-        name="Home"
+        name="Inicio"
         component={EvenList}
         options={{
           tabBarIcon: ({ color, size }) => (
@@ -34,11 +35,20 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="Profile"
+        name="Perfil"
         component={ProfileScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Lector Qr"
+        component={EvenList}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="qr-code-outline" size={size} color={color} />
           ),
         }}
       />
