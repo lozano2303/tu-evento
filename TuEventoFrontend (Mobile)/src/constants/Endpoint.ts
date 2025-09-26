@@ -16,4 +16,4 @@ export const LOGIN_ENDPOINT = `${API_BASE_URL}/login/start`; // Login endpoint
 
 export const USER_PROFILE_ENDPOINT = `${API_BASE_URL}/users`; // User profile endpoint
 
-export const GET_ALL_EVENTS_ENDPOINT = `${API_BASE_URL}/event/getAll`; // Get all events endpoint
+export const GET_ALL_EVENTS_ENDPOINT = `${API_BASE_URL}/event/getAll`; // Get all events endpoi

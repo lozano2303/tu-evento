@@ -10,7 +10,8 @@
       "tsconfigPaths": true
     },
     "plugins": [
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-camera"
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
