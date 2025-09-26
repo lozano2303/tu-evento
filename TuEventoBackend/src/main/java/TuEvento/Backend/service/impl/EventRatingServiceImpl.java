@@ -1,7 +1,9 @@
 package TuEvento.Backend.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -123,18 +125,17 @@ public class EventRatingServiceImpl implements EventRatingService {
     }
 
     @Override
-    public ResponseDto<EventRatingDto> getEventRatingByEvent(EventRatingDto eventRatingDto) {
+    public ResponseDto<List<EventRatingDto>> getEventRatingByEvent(EventRatingDto eventRatingDto) {
         try {
             Event event = eventRepository.findById(eventRatingDto.getEventId())
                 .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
-            Optional<EventRating> eventRating = eventRatingRepository.findByEventId(event);
-            if (eventRating.isPresent()) {
-                return new ResponseDto<>(true, "Calificación del evento encontrada", toDto(eventRating.get()));
-            } else {
-                return new ResponseDto<>(false, "Calificación del evento no encontrada");
-            }
+            List<EventRating> eventRatings = eventRatingRepository.findAllByEventId(event);
+            List<EventRatingDto> eventRatingDtos = eventRatings.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+            return new ResponseDto<>(true, "Calificaciones del evento encontradas", eventRatingDtos);
         } catch (Exception e) {
-            return new ResponseDto<>(false, "Error obteniendo la calificación del evento: " + e.getMessage());
+            return new ResponseDto<>(false, "Error obteniendo las calificaciones del evento: " + e.getMessage());
         }
     }
 
