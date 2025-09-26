@@ -3,7 +3,6 @@ import { API_BASE_URL } from './apiconstant.js';
 export const createTicketWithSeats = async (ticketData) => {
   try {
     const token = localStorage.getItem('token');
-    // Transform the payload to match backend expectations
     const payload = {
       eventId: ticketData.event.id,
       seatIDs: ticketData.seats.map(seat => seat.id),
