@@ -48,7 +48,7 @@ export default function EvenList() {
             keyExtractor={(item, index) => index.toString()}
             renderItem={renderEvent}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 140 }}
+            contentContainerStyle={{ paddingBottom: 170 }}
           />
         )}
       </View>
