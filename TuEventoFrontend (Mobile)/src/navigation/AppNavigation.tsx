@@ -45,7 +45,7 @@ function MainTabs() {
       />
       <Tab.Screen
         name="Lector Qr"
-        component={EvenList}
+        component={ReaderQr}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="qr-code-outline" size={size} color={color} />

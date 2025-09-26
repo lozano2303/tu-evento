@@ -39,18 +39,16 @@ export default function EvenList() {
       <View className="w-full top-12">
         <SearchHeader />
         {/* Título */}
-        <Text className="text-white text-2xl font-bold mb-4 text-center">EVENTOS</Text>
+        <Text className="text-white text-1xl font-bold mb-4 text-center">EVENTOS</Text>
         {loading ? (
           <Text className="text-white text-center">Cargando eventos...</Text>
         ) : (
           <FlatList
             data={events}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item, index) => index.toString()}
             renderItem={renderEvent}
-            numColumns={2}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            columnWrapperStyle={{ justifyContent: 'space-between' }}
+            contentContainerStyle={{ paddingBottom: 170 }}
           />
         )}
       </View>
