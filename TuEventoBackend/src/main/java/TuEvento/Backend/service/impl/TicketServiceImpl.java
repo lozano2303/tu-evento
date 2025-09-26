@@ -14,6 +14,8 @@ import TuEvento.Backend.service.email.TicketReservationEmailService;
 import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +67,7 @@ public class TicketServiceImpl implements TicketService {
 
         List<Seat> seats = seatRepository.findAllById(seatIDs);
         for (Seat seat : seats) {
-            if (seat.isStatus()) {
+            if (!seat.isStatus()) {
                 return ResponseDto.error("El asiento " + seat.getSeatID() + " ya está ocupado");
             }
         }
@@ -99,7 +101,7 @@ public class TicketServiceImpl implements TicketService {
         for (Seat seat : seats) {
             SeatTicket relation = new SeatTicket(seat, ticket);
             seatTicketRepository.save(relation);
-            seat.setStatus(true);
+            seat.setStatus(false);
             seatRepository.save(seat);
         }
 
@@ -115,7 +117,7 @@ public class TicketServiceImpl implements TicketService {
                     .toList();
 
                 String qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" +
-                    java.net.URLEncoder.encode("TICKET:" + ticket.getCode() + ":" + login.getEmail(), "UTF-8");
+                    URLEncoder.encode("TICKET:" + ticket.getCode() + ":" + login.getEmail(), StandardCharsets.UTF_8);
 
                 emailService.sendTicketReservationEmail(
                     login.getEmail(),

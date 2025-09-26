@@ -7,7 +7,7 @@ export const createTicketWithSeats = async (ticketData) => {
     const payload = {
       eventId: ticketData.event.id,
       seatIDs: ticketData.seats.map(seat => seat.id),
-      code: ticketData.code || 'TICKET-' + Date.now(),
+      code: ticketData.code || 'T' + Date.now().toString().slice(-9),
     };
     const response = await fetch(`${API_BASE_URL}/v1/tickets/create-with-seats`, {
       method: 'POST',

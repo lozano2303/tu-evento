@@ -26,7 +26,6 @@ const ReservaEvento = () => {
   const [tickets, setTickets] = useState([]);
   const [loadingTickets, setLoadingTickets] = useState(false);
   const [selectedSeats, setSelectedSeats] = useState([]);
-  const [selectedSeatPositions, setSelectedSeatPositions] = useState(new Set());
   const [reservingSeats, setReservingSeats] = useState(false);
   const [sections, setSections] = useState([]);
   const [seats, setSeats] = useState([]);
@@ -44,6 +43,7 @@ const ReservaEvento = () => {
   const [userInfo, setUserInfo] = useState({});
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [deletingRating, setDeletingRating] = useState(null);
+  const [updateKey, setUpdateKey] = useState(0);
 
   // Maximum seats per purchase
   const MAX_SEATS_PER_PURCHASE = 10;
@@ -51,37 +51,17 @@ const ReservaEvento = () => {
   // Memoized calculations - moved after all state declarations
   const selectedSeatDetails = useMemo(() => {
     const sectionPrice = selectedSection?.price || 30000;
-    const fromSeats = selectedSeats.map(seatId => {
+    return selectedSeats.map(seatId => {
       const seat = seats.find(s => s.id === seatId);
       return seat ? {
         key: seatId,
         row: seat.row,
         seatNumber: seat.seatNumber,
-        price: sectionPrice
+        price: sectionPrice,
+        seatId: seat.id
       } : null;
     }).filter(Boolean);
-
-    const fromPositions = Array.from(selectedSeatPositions).map(key => {
-      const [rowId, index] = key.split('-');
-      const element = layoutElements.find(el => el.id === rowId);
-      if (element && element.seatPositions && element.seatPositions[index]) {
-        const pos = element.seatPositions[index];
-        const seat = seats.find(s => s.row === pos.row && s.seatNumber === pos.seatNumber);
-        if (seat) {
-          return {
-            key,
-            row: pos.row,
-            seatNumber: pos.seatNumber,
-            price: sectionPrice,
-            seatId: seat.id
-          };
-        }
-      }
-      return null;
-    }).filter(Boolean);
-
-    return [...fromSeats, ...fromPositions];
-  }, [selectedSeats, seats, selectedSeatPositions, layoutElements, selectedSection]);
+  }, [selectedSeats, seats, selectedSection]);
 
   const selectedSeatCount = useMemo(() => selectedSeatDetails.length, [selectedSeatDetails]);
   const totalPrice = useMemo(() => {
@@ -99,13 +79,75 @@ const ReservaEvento = () => {
     return true;
   }, [navigate]);
 
+  // Handle rating submission
+  const handleSubmitRating = async () => {
+    if (!rating || !mensaje.trim()) {
+      alert('Por favor, selecciona una calificación y escribe un comentario.');
+      return;
+    }
+    if (!checkSession()) return;
+
+    setSubmittingRating(true);
+    try {
+      const result = await insertEventRating({
+        eventId: parseInt(eventId),
+        rating: rating,
+        comment: mensaje.trim()
+      });
+      if (result.success) {
+        setMensaje('');
+        setRating(0);
+        loadEventRatings(); // Reload ratings
+        alert('Comentario enviado exitosamente.');
+      } else {
+        alert(result.message || 'Error al enviar el comentario.');
+      }
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      alert('Error al enviar el comentario.');
+    } finally {
+      setSubmittingRating(false);
+    }
+  };
+
+  // Handle rating deletion
+  const handleDeleteRating = async (ratingId, userId) => {
+    if (!checkSession()) return;
+    if (!confirm('¿Estás seguro de que quieres eliminar este comentario?')) return;
+
+    setDeletingRating(ratingId);
+    try {
+      const result = await deleteEventRating(ratingId);
+      if (result.success) {
+        loadEventRatings(); // Reload ratings
+        alert('Comentario eliminado exitosamente.');
+      } else {
+        alert(result.message || 'Error al eliminar el comentario.');
+      }
+    } catch (error) {
+      console.error('Error deleting rating:', error);
+      alert('Error al eliminar el comentario.');
+    } finally {
+      setDeletingRating(null);
+    }
+  };
+
+  // Handle showing more comments
+  const handleShowMoreComments = () => {
+    setVisibleCommentsCount(prev => Math.min(prev + 5, eventRatings.length));
+  };
+
+  // Handle showing less comments
+  const handleShowLessComments = () => {
+    setVisibleCommentsCount(5);
+  };
+
   // Clear selections after 5 minutes of inactivity
   useEffect(() => {
     if (selectedSeatCount === 0) return;
 
     const timeout = setTimeout(() => {
       setSelectedSeats([]);
-      setSelectedSeatPositions(new Set());
       alert('Tu selección de asientos ha expirado por inactividad. Por favor, selecciona nuevamente.');
     }, 5 * 60 * 1000); // 5 minutes
 
@@ -116,9 +158,53 @@ const ReservaEvento = () => {
   useEffect(() => {
     if (!showMapModal) {
       setSelectedSeats([]);
-      setSelectedSeatPositions(new Set());
     }
   }, [showMapModal]);
+
+  // Real-time seat status updates
+  useEffect(() => {
+    if (!showMapModal || !selectedSection) return;
+
+    const interval = setInterval(async () => {
+      await loadSeatsForSection(selectedSection.sectionID);
+      await loadEventLayout();
+      setUpdateKey(prev => prev + 1);
+    }, 2000); // Update every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [showMapModal, selectedSection]);
+
+
+
+
+  const handleShowMap = async () => {
+    setShowMapModal(true);
+    setModalLoading(true);
+    setModalError(null);
+    setLoadingLayout(true);
+    try {
+      // Release any expired reservations first
+      await releaseExpiredReservations();
+
+      const loadedSeats = await loadSectionsAndSeats();
+      await loadEventLayout();
+      // Generate seats from layout if layout exists
+      if (selectedSection && layoutElements.some(el => el.type === 'seatRow')) {
+        await generateSeatsFromLayout(layoutElements);
+        // Reload seats after generation
+        await loadSeatsForSection(selectedSection.sectionID);
+      }
+
+    } catch (error) {
+      console.error('Error loading map:', error);
+      setModalError('Error al cargar el mapa del evento. Inténtalo de nuevo.');
+      setLayoutElements([]);
+      setLayoutId(null);
+    } finally {
+      setLoadingLayout(false);
+      setModalLoading(false);
+    }
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -146,7 +232,7 @@ const ReservaEvento = () => {
 
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [showMapModal, selectedSeatCount, reservingSeats]);
+  }, [showMapModal, selectedSeatCount, reservingSeats, handleShowMap]);
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -217,6 +303,29 @@ const ReservaEvento = () => {
 
   const handleStarClick = (starNumber) => {
     setRating(starNumber);
+  };
+
+  // Function to match seats with layout elements
+  const matchSeatsWithLayout = (layoutElements, seats) => {
+    return layoutElements.map(element => {
+      if (element.type === 'seatRow' && element.seatPositions) {
+        const updatedPositions = element.seatPositions.map(pos => {
+          const matchingSeat = seats.find(seat =>
+            seat.row === pos.row && seat.seatNumber === pos.seatNumber.toString()
+          );
+          if (matchingSeat) {
+            return {
+              ...pos,
+              status: matchingSeat.status,
+              id: matchingSeat.id
+            };
+          }
+          return pos;
+        });
+        return { ...element, seatPositions: updatedPositions };
+      }
+      return element;
+    });
   };
 
   const loadEventLayout = async () => {
@@ -329,50 +438,7 @@ const ReservaEvento = () => {
     }
   };
 
-  const handleShowMap = async () => {
-    setShowMapModal(true);
-    setModalLoading(true);
-    setModalError(null);
-    setLoadingLayout(true);
-    try {
-      // Release any expired reservations first
-      await releaseExpiredReservations();
 
-      const loadedSeats = await loadSectionsAndSeats();
-      await loadEventLayout();
-      // Generate seats from layout if layout exists
-      if (selectedSection && layoutElements.some(el => el.type === 'seatRow')) {
-        await generateSeatsFromLayout(layoutElements);
-        // Reload seats after generation
-        await loadSeatsForSection(selectedSection.sectionID);
-      }
-
-      // Load previously selected seat positions from layout
-      loadSelectedSeatPositionsFromLayout();
-    } catch (error) {
-      console.error('Error loading map:', error);
-      setModalError('Error al cargar el mapa del evento. Inténtalo de nuevo.');
-      setLayoutElements([]);
-      setLayoutId(null);
-    } finally {
-      setLoadingLayout(false);
-      setModalLoading(false);
-    }
-  };
-
-  const loadSelectedSeatPositionsFromLayout = () => {
-    const selectedPositions = new Set();
-    layoutElements.forEach(element => {
-      if (element.type === 'seatRow' && element.seatPositions) {
-        element.seatPositions.forEach((pos, index) => {
-          if (pos.status === 'RESERVED') {
-            selectedPositions.add(`${element.id}-${index}`);
-          }
-        });
-      }
-    });
-    setSelectedSeatPositions(selectedPositions);
-  };
 
   const loadSectionsAndSeats = async () => {
     if (!eventId) return [];
@@ -512,6 +578,10 @@ const ReservaEvento = () => {
       console.log("Asiento no encontrado:", seatId);
       return;
     }
+    if (seat.status !== "AVAILABLE") {
+      console.log("Asiento no disponible:", seatId);
+      return;
+    }
     setSelectedSeats(prev => {
       if (prev.includes(seatId)) {
         return prev.filter(id => id !== seatId);
@@ -523,43 +593,20 @@ const ReservaEvento = () => {
   };
 
   const handleSeatPositionSelect = (seatRowId, seatIndex) => {
-    const key = `${seatRowId}-${seatIndex}`;
-    setSelectedSeatPositions(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(key)) {
-        newSet.delete(key);
-        // Update layout element status to AVAILABLE
-        setLayoutElements(prevElements =>
-          prevElements.map(element =>
-            element.id === seatRowId && element.type === 'seatRow'
-              ? {
-                  ...element,
-                  seatPositions: element.seatPositions.map((pos, idx) =>
-                    idx === seatIndex ? { ...pos, status: 'AVAILABLE' } : pos
-                  )
-                }
-              : element
-          )
-        );
-      } else {
-        newSet.add(key);
-        // Update layout element status to RESERVED
-        setLayoutElements(prevElements =>
-          prevElements.map(element =>
-            element.id === seatRowId && element.type === 'seatRow'
-              ? {
-                  ...element,
-                  seatPositions: element.seatPositions.map((pos, idx) =>
-                    idx === seatIndex ? { ...pos, status: 'RESERVED' } : pos
-                  )
-                }
-              : element
-          )
-        );
+    const element = layoutElements.find(el => el.id === seatRowId);
+    if (element && element.seatPositions && element.seatPositions[seatIndex]) {
+      const pos = element.seatPositions[seatIndex];
+      const seat = seats.find(s => s.row === pos.row && s.seatNumber === pos.seatNumber);
+      if (seat && seat.status === "AVAILABLE") {
+        setSelectedSeats(prev => {
+          if (prev.includes(seat.id)) {
+            return prev.filter(id => id !== seat.id);
+          } else {
+            return [...prev, seat.id];
+          }
+        });
       }
-      setLastUpdate(Date.now());
-      return newSet;
-    });
+    }
   };
 
   // Function to verify seat availability before purchase
@@ -618,23 +665,7 @@ const ReservaEvento = () => {
       if (!availabilityCheck.available) {
         alert(`Los siguientes asientos ya no están disponibles: ${availabilityCheck.unavailableSeats.join(', ')}. La selección se actualizará.`);
         // Remove unavailable seats from selection
-        const availableSeatIds = allSeatIds.filter(id => !availabilityCheck.unavailableSeats.includes(id));
-        setSelectedSeats(prev => prev.filter(id => availableSeatIds.includes(id)));
-        setSelectedSeatPositions(prev => {
-          const newSet = new Set();
-          prev.forEach(key => {
-            const [rowId, index] = key.split('-');
-            const element = layoutElements.find(el => el.id === rowId);
-            if (element && element.seatPositions && element.seatPositions[index]) {
-              const pos = element.seatPositions[index];
-              const seat = seats.find(s => s.row === pos.row && s.seatNumber === pos.seatNumber);
-              if (seat && availableSeatIds.includes(seat.id)) {
-                newSet.add(key);
-              }
-            }
-          });
-          return newSet;
-        });
+        setSelectedSeats(prev => prev.filter(id => !availabilityCheck.unavailableSeats.includes(id)));
         // Reload seats
         if (selectedSection) {
           await loadSeatsForSection(selectedSection.id);
@@ -691,11 +722,11 @@ const ReservaEvento = () => {
         ticketCreated = true;
         alert('¡Reserva realizada exitosamente! Revisa tu correo electrónico para el ticket con QR.');
         setSelectedSeats([]);
-        setSelectedSeatPositions(new Set());
         setShowPurchaseModal(false);
         // Reload seats to reflect changes
         if (selectedSection) {
           await loadSeatsForSection(selectedSection.sectionID);
+          await loadEventLayout();
         }
       } else {
         throw new Error(result.message || 'Error desconocido en la creación del ticket');
@@ -1101,7 +1132,7 @@ const ReservaEvento = () => {
 
       {/* Modal de confirmación de compra */}
       {showPurchaseModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
@@ -1208,7 +1239,6 @@ const ReservaEvento = () => {
                       const sec = sections.find(s => s.sectionID === secId);
                       setSelectedSection(sec);
                       setSelectedSeats([]);
-                      setSelectedSeatPositions(new Set());
                       loadSeatsForSection(sec.sectionID);
                     }}
                     className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -1239,21 +1269,10 @@ const ReservaEvento = () => {
                   </h4>
                   <div className="max-h-32 overflow-y-auto">
                     {selectedSeatDetails.map(seat => (
-                      <div key={seat.key} className="flex justify-between items-center bg-purple-100 p-2 rounded mb-1">
+                      <div key={seat.key} className="bg-purple-100 p-2 rounded mb-1">
                         <span className="text-sm">
                           Fila {seat.row} - Asiento {seat.seatNumber}
                         </span>
-                        <button
-                          onClick={() => {
-                            const newSelected = new Set(selectedSeatPositions);
-                            newSelected.delete(seat.key);
-                            setSelectedSeatPositions(newSelected);
-                          }}
-                          className="text-red-500 hover:text-red-700"
-                          disabled={reservingSeats}
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
                       </div>
                     ))}
                   </div>
@@ -1379,28 +1398,48 @@ const ReservaEvento = () => {
                       </button>
                     </div>
                   ) : (layoutElements && layoutElements.length > 0) || (seats && seats.length > 0) ? (
-                    <DrawingCanvas
-                      elements={layoutElements || []}
-                      selectedElementId={null}
-                      onSelect={() => {}}
-                      onCreate={() => {}}
-                      onUpdate={() => {}}
-                      onDelete={() => {}}
-                      activeTool="select"
-                      setActiveTool={() => {}}
-                      units="cm"
-                      showMeasurements={false}
-                      seats={seats || []}
-                      selectedSeats={selectedSeats}
-                      onSeatSelect={handleSeatSelect}
-                      onSeatPositionSelect={handleSeatPositionSelect}
-                      isSeatSelectionMode={true}
-                      zoom={zoom}
-                      setZoom={setZoom}
-                      offset={offset}
-                      setOffset={setOffset}
-                      selectedSection={selectedSection}
-                    />
+                    (() => {
+                      const filteredSeats = seats.filter(seat => seat.sectionID === selectedSection?.sectionID) || [];
+                      const filteredElements = layoutElements.map(element => {
+                        if (element.type === 'seatRow' && element.seatPositions) {
+                          const updatedPositions = element.seatPositions.map(pos => {
+                            const matchingSeat = filteredSeats.find(seat => seat.row === pos.row && seat.seatNumber.toString() === pos.seatNumber);
+                            if (matchingSeat) {
+                              return { ...pos, status: matchingSeat.status };
+                            }
+                            return pos;
+                          });
+                          return { ...element, seatPositions: updatedPositions };
+                        }
+                        return element;
+                      });
+                      return (
+                        <DrawingCanvas
+                          key={updateKey}
+                          elements={filteredElements || []}
+                          selectedElementId={null}
+                          onSelect={() => {}}
+                          onCreate={() => {}}
+                          onUpdate={() => {}}
+                          onDelete={() => {}}
+                          activeTool="select"
+                          setActiveTool={() => {}}
+                          units="cm"
+                          showMeasurements={false}
+                          seats={filteredSeats}
+                          selectedSeats={selectedSeats}
+                          onSeatSelect={handleSeatSelect}
+                          onSeatPositionSelect={handleSeatPositionSelect}
+                          isSeatSelectionMode={true}
+                          allowMultipleSeats={true}
+                          zoom={zoom}
+                          setZoom={setZoom}
+                          offset={offset}
+                          setOffset={setOffset}
+                          selectedSection={selectedSection}
+                        />
+                      );
+                    })()
                   ) : (
                     <div className="text-center">
                       <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">

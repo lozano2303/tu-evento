@@ -151,7 +151,7 @@ public class SeatServiceImpl implements SeatService {
                         seat.getRow(),
                         seat.getX(),
                         seat.getY(),
-                        seat.isStatus() ? "AVAILABLE" : "OCCUPIED"
+                        seat.isStatus() ? "OCCUPIED" : "AVAILABLE"
                 ))
                 .collect(Collectors.toList());
 
