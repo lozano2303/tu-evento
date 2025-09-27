@@ -105,8 +105,62 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public ResponseDto<EventDto> updateEvent(ResponseEvent responseEvent, EventDto eventDto) {
         try {
-            // Implementation for update
-            return ResponseDto.error("Método no implementado");
+            // Find the event by ID
+            Optional<Event> eventOpt = eventRepository.findById(eventDto.getId());
+            if (!eventOpt.isPresent()) {
+                return ResponseDto.error("Evento no encontrado");
+            }
+
+            Event event = eventOpt.get();
+
+            // Update fields if provided
+            if (eventDto.getEventName() != null && !eventDto.getEventName().isEmpty()) {
+                // Simple duplicate check (can be improved)
+                Optional<Event> existingEvent = eventRepository.findByEventNameAndStatusNot(eventDto.getEventName(), 0);
+                if (existingEvent.isPresent() && existingEvent.get().getId() != eventDto.getId()) {
+                    return ResponseDto.error("Ya existe otro evento con este nombre");
+                }
+                event.setEventName(eventDto.getEventName());
+            }
+
+            if (eventDto.getDescription() != null) {
+                event.setDescription(eventDto.getDescription());
+            }
+
+            if (eventDto.getStartDate() != null) {
+                event.setStartDate(eventDto.getStartDate());
+            }
+
+            if (eventDto.getFinishDate() != null) {
+                event.setFinishDate(eventDto.getFinishDate());
+            }
+
+            // Status is int, so we can update it directly
+            event.setStatus(eventDto.getStatus());
+
+            // Validate location if provided
+            if (eventDto.getLocationID() != null) {
+                Optional<Location> locationOpt = locationRepository.findById(eventDto.getLocationID().getLocationID());
+                if (!locationOpt.isPresent()) {
+                    return ResponseDto.error("Ubicación no encontrada");
+                }
+                event.setLocationID(locationOpt.get());
+            }
+
+            // Validate user if provided
+            if (eventDto.getUserID() != null) {
+                Optional<User> userOpt = userRepository.findById(eventDto.getUserID().getUserID());
+                if (!userOpt.isPresent()) {
+                    return ResponseDto.error("Usuario no encontrado");
+                }
+                event.setUserID(userOpt.get());
+            }
+
+            Event savedEvent = eventRepository.save(event);
+            EventDto resultDto = toDto(savedEvent);
+
+            return ResponseDto.ok("Evento actualizado correctamente", resultDto);
+
         } catch (Exception e) {
             return ResponseDto.error("Error al actualizar el evento: " + e.getMessage());
         }
@@ -161,6 +215,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public ResponseDto<List<EventDto>> getAllEvent() {
         try {
+            // Return only active events (status = 1)
             List<Event> events = eventRepository.findAllByStatusNot(0);
             List<EventDto> eventDtos = events.stream()
                 .map(this::toDto)

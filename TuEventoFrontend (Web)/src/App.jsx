@@ -15,6 +15,7 @@ import EventManagement from "./components/views/EventManagement.jsx";
 import EventForm from "./components/views/EventForm.jsx";
 import OrganizerPetitionForm from "./components/views/OrganizerPetitionForm.jsx";
 import AboutUs from "./components/views/AboutUs.jsx";
+import EventImagesView from "./test/EventImagesView.jsx";
 
 const App = () => {
   return (
@@ -70,6 +71,7 @@ const App = () => {
           </MainLayout>
         }
       />
+      <Route path="/test" element={<EventImagesView />} />
     </Routes>
   );
 };

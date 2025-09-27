@@ -3,15 +3,18 @@ import { API_BASE_URL } from './apiconstant.js';
 export const getAllEvents = async () => {
   try {
     const token = localStorage.getItem('token');
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const response = await fetch(`${API_BASE_URL}/v1/event/getAll`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
     const data = await response.json();
-    return data;
+    return data.data || []; // Return the data array or empty array
   } catch (error) {
     console.error('Error obteniendo eventos:', error);
     throw error;

@@ -50,6 +50,39 @@ public class jwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
+        // Skip JWT processing for public endpoints
+        String requestURI = request.getRequestURI();
+        if (requestURI.startsWith("/api/v1/event/") ||
+            requestURI.startsWith("/api/v1/public/") ||
+            requestURI.startsWith("/api/v1/login/") ||
+            requestURI.startsWith("/api/v1/account-activation/") ||
+            requestURI.startsWith("/api/v1/register") ||
+            requestURI.startsWith("/api/v1/users/") ||
+            requestURI.startsWith("/oauth2/authorization/") ||
+            requestURI.startsWith("/login/oauth2/code/") ||
+            requestURI.startsWith("/api/v1/departments/") ||
+            requestURI.startsWith("/api/v1/cities/") ||
+            requestURI.startsWith("/api/v1/addresses/") ||
+            requestURI.startsWith("/api/v1/locations/") ||
+            requestURI.startsWith("/api/v1/eventLayout/") ||
+            requestURI.startsWith("/api/v1/eventRating/") ||
+            requestURI.startsWith("/api/v1/organizer-petitions/") ||
+            requestURI.startsWith("/api/v1/sections/") ||
+            requestURI.startsWith("/api/v1/tickets/") ||
+            requestURI.startsWith("/api/v1/notifications/") ||
+            requestURI.startsWith("/api/v1/seats/") ||
+            requestURI.startsWith("/api/v1/categories/") ||
+            requestURI.startsWith("/api/v1/category-events/") ||
+            requestURI.startsWith("/api/v1/event-img/") ||
+            requestURI.startsWith("/swagger-ui.html") ||
+            requestURI.startsWith("/swagger-ui/") ||
+            requestURI.startsWith("/v3/api-docs") ||
+            requestURI.startsWith("/swagger-resources/") ||
+            requestURI.startsWith("/webjars/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         final String authHeader = request.getHeader("Authorization");
         String jwt = null;
         String username = null;
