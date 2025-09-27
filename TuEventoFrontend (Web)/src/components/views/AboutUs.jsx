@@ -111,7 +111,7 @@ export default function AboutUs() {
             <div className="flex flex-wrap justify-center gap-4 mt-8">
               <div className="flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
                 <Zap className="w-5 h-5 text-yellow-300 mr-2" />
-                <span className="text-sm">Visualización 3D</span>
+                <span className="text-sm">Visualización 2D</span>
               </div>
               <div className="flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
                 <Target className="w-5 h-5 text-green-300 mr-2" />
@@ -324,7 +324,7 @@ export default function AboutUs() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Herramientas virtuales</h3>
-                    <p className="text-purple-200 text-sm">Maquetación 3D y visualización en tiempo real</p>
+                    <p className="text-purple-200 text-sm">Maquetación 2D y visualización en tiempo real</p>
                   </div>
                 </div>
                 
