@@ -71,6 +71,9 @@ class CategoryEventId {
 class SeatTicketId {
 }
 
+class EventImg {
+}
+
 ' Relationships
 User --> Address : address
 Address --> City : city
@@ -98,5 +101,6 @@ CategoryEvent --> Category : category
 CategoryEvent --> Event : event
 SeatTicket --> Seat : seat
 SeatTicket --> Ticket : ticket
+EventImg --> Event : event
 
 @enduml

@@ -404,6 +404,23 @@ class SeatTicketId {
     + int hashCode()
 }
 
+class EventImg {
+    - int eventImgID
+    - Event event
+    - String url
+    - int order
+    + EventImg()
+    + EventImg(int, Event, String, int)
+    + int getEventImgID()
+    + void setEventImgID(int)
+    + Event getEvent()
+    + void setEvent(Event)
+    + String getUrl()
+    + void setUrl(String)
+    + int getOrder()
+    + void setOrder(int)
+}
+
 ' Relationships
 User --> Address : address
 Address --> City : city
@@ -431,5 +448,6 @@ CategoryEvent --> Category : category
 CategoryEvent --> Event : event
 SeatTicket --> Seat : seat
 SeatTicket --> Ticket : ticket
+EventImg --> Event : event
 
 @enduml
