@@ -5,7 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-// Esto debe estar ANTES de cualquier componente
+
 WebBrowser.maybeCompleteAuthSession();
 
 export default function App() {
