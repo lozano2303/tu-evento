@@ -8,7 +8,7 @@ export default function LadingPage() {
     <div className="min-h-screen bg-gray-900 text-white">
   
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20">
+      <section className="relative overflow-hidden py-35">
         {/* Fondo degradado */}
         <div className="absolute inset-0 bg-purple-700"></div>
 

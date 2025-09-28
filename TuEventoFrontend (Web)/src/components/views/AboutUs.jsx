@@ -78,7 +78,7 @@ export default function AboutUs() {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20">
+      <section className="relative overflow-hidden py-0">
         {/* Fondo con partículas animadas */}
         <div className="absolute inset-0 bg-purple-700">
           <div className="absolute inset-0 opacity-20">
@@ -91,7 +91,7 @@ export default function AboutUs() {
           <div className="absolute inset-0 bg-gradient-to-br from-purple-700/80 via-purple-800/60 to-purple-900/40"></div>
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-4 py-10">
+        <div className="relative max-w-6xl mx-auto px-4 py-17">
           <div className="text-center space-y-8">
             <div className="inline-flex items-center px-6 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 mb-6">
               <Sparkles className="w-5 h-5 text-yellow-300 mr-2" />
