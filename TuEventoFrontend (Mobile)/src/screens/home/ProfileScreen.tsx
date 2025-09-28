@@ -1,7 +1,7 @@
-import { View, Text, Image } from 'react-native';
+import { View, Text, Image, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { getUserIdFromToken, removeToken } from '../../api/services/Token';
-import { getUserProfile } from '../../api/services/UserApi';
+import { getUserProfile, updateUserPhone } from '../../api/services/UserApi';
 import { IUserProfile } from '../../api/types/IUser';
 import Input from "../../components/common/Input";
 import Button from '../../components/common/Button';
@@ -13,13 +13,15 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editedProfile, setEditedProfile] = useState<Partial<IUserProfile>>({});
+  const [userId, setUserId] = useState<number | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const userId = await getUserIdFromToken();
-        if (userId) {
-          const response = await getUserProfile(userId);
+        const fetchedUserId = await getUserIdFromToken();
+        if (fetchedUserId) {
+          setUserId(fetchedUserId);
+          const response = await getUserProfile(fetchedUserId);
           setProfile(response.data);
           setEditedProfile(response.data);
         } else {
@@ -34,6 +36,25 @@ export default function ProfileScreen() {
 
     loadProfile();
   }, []);
+
+  const handleSave = async () => {
+    if (!userId || !editedProfile.telephone) {
+      Alert.alert('Error', 'Por favor, ingresa un número de teléfono válido.');
+      return;
+    }
+    try {
+      const newPhone = parseInt(editedProfile.telephone, 10);
+      if (isNaN(newPhone)) {
+        Alert.alert('Error', 'El teléfono debe ser un número válido.');
+        return;
+      }
+      await updateUserPhone({ id: userId, newTelephone: newPhone });
+      setProfile(prev => prev ? { ...prev, telephone: editedProfile.telephone! } : null);
+      Alert.alert('Éxito', 'Los datos han sido actualizados correctamente.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'No se pudo actualizar el teléfono.');
+    }
+  };
 
   const handleLogout = async () => {
     await removeToken();
@@ -83,7 +104,7 @@ export default function ProfileScreen() {
               value={editedProfile.address || ''}
               onChangeText={(value) => setEditedProfile(prev => ({ ...prev, address: value }))}
             />
-            <Button label="Guardar Cambios" onPress={() => {}} />
+            <Button label="Guardar Cambios" onPress={handleSave} />
             <Button label="Cerrar Sesión" onPress={handleLogout} />
           </View>
         )}

@@ -1,5 +1,5 @@
-import { USER_ENDPOINT, USER_PROFILE_ENDPOINT } from "../../constants/Endpoint";
-import { IRequestRegister, IUserProfileResponse } from "../types/IUser";
+import { USER_ENDPOINT, USER_PROFILE_ENDPOINT ,UPDATE_PHONE_ENDPOINT } from "../../constants/Endpoint";
+import { IRequestRegister, IUserProfileResponse , IUserUpdatePhone } from "../types/IUser";
 import { getToken } from "./Token";
 
 
@@ -61,3 +61,29 @@ export const getUserProfile = async (userId: number): Promise<IUserProfileRespon
     throw error;
   }
 };
+
+export const updateUserPhone = async (userData: IUserUpdatePhone): Promise<IUserProfileResponse> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("No token found");
+    }
+    const response = await fetch(`${UPDATE_PHONE_ENDPOINT}${userData.id}/telephone?newTelephone=${userData.newTelephone}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+    const responseData = await response.json();
+    if (!response.ok || responseData.success === false) {
+      throw new Error(responseData.message || "Error al actualizar el teléfono");
+    }
+    console.log('Teléfono actualizado:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error en updateUserPhone:', error);
+    throw error;
+  }
+};
+        
