@@ -129,7 +129,6 @@ export default function Login() {
 
   const handleVerificationSuccess = () => {
     setView('login');
-    // Ya no necesitamos alert aquí porque CodeVerification maneja su propia notificación
   };
 
   const handleContinueToVerification = () => {
@@ -459,7 +458,7 @@ export default function Login() {
       {/* Notificación de éxito elegante */}
       {showSuccessNotification && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform animate-pulse">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
             {/* Header con gradiente */}
             <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
               <div className="flex justify-center mb-4">
@@ -502,7 +501,7 @@ export default function Login() {
       {/* Notificación de login exitoso */}
       {showLoginSuccessNotification && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform animate-pulse">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
             {/* Header con gradiente */}
             <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
               <div className="flex justify-center mb-4">
