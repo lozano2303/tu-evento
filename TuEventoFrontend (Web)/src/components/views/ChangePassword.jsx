@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { changePassword } from "../../services/Login.js";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, Lock, ArrowRight } from "lucide-react";
 
 export default function ChangePassword({ onClose }) {
   const [formData, setFormData] = useState({
@@ -12,6 +12,7 @@ export default function ChangePassword({ onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -74,8 +75,7 @@ export default function ChangePassword({ onClose }) {
     try {
       const result = await changePassword(formData.oldPassword, formData.newPassword);
       if (result.success) {
-        alert("Contraseña cambiada exitosamente");
-        onClose();
+        setShowSuccessNotification(true);
       } else {
         setError(result.message || "Error al cambiar contraseña");
       }
@@ -84,6 +84,11 @@ export default function ChangePassword({ onClose }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleContinueAndClose = () => {
+    setShowSuccessNotification(false);
+    onClose();
   };
 
   return (
@@ -165,6 +170,49 @@ export default function ChangePassword({ onClose }) {
           </div>
         </form>
       </div>
+
+      {/* Notificación de cambio de contraseña exitoso */}
+      {showSuccessNotification && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform animate-pulse">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <CheckCircle className="w-8 h-8 text-blue-500" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">¡Contraseña Actualizada!</h3>
+              <p className="text-blue-100 text-sm">Tu contraseña ha sido cambiada exitosamente</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <Lock className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                  <p className="text-gray-700 text-sm font-medium mb-1">Seguridad mejorada</p>
+                  <p className="text-gray-500 text-xs">Tu cuenta ahora está más protegida</p>
+                </div>
+                
+                <div className="text-gray-600 text-sm">
+                  <p className="mb-2">🔐 <span className="font-medium">Nueva contraseña configurada</span></p>
+                  <p className="text-xs text-gray-500">Recuerda usar esta nueva contraseña en futuros inicios de sesión</p>
+                </div>
+              </div>
+
+              {/* Botón para continuar */}
+              <button
+                onClick={handleContinueAndClose}
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Entendido</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

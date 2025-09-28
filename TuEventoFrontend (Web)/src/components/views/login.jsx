@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { Calendar, Eye, EyeOff, Mail, Lock, User, CheckCircle, X, ArrowRight } from "lucide-react";
 import { loginUser, registerUser, getUserById } from "../../services/Login.js";
 import CodeVerification from "./CodeVerification.jsx";
 import ForgotPassword from "./ForgotPassword.jsx";
@@ -12,6 +12,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [showLoginSuccessNotification, setShowLoginSuccessNotification] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -49,7 +51,7 @@ export default function Login() {
       ...formData,
       [name]: value,
     });
-    // Limpiar error del campo al cambiar
+
     if (fieldErrors[name]) {
       setFieldErrors({
         ...fieldErrors,
@@ -127,7 +129,17 @@ export default function Login() {
 
   const handleVerificationSuccess = () => {
     setView('login');
-    alert("Cuenta activada. Ahora puedes iniciar sesión.");
+    // Ya no necesitamos alert aquí porque CodeVerification maneja su propia notificación
+  };
+
+  const handleContinueToVerification = () => {
+    setShowSuccessNotification(false);
+    setView('verification');
+  };
+
+  const handleContinueToHome = () => {
+    setShowLoginSuccessNotification(false);
+    window.location.href = '/';
   };
 
   const handleBackToLogin = () => {
@@ -179,18 +191,15 @@ export default function Login() {
           localStorage.setItem('token', result.data.token);
           localStorage.setItem('userID', result.data.userID);
           localStorage.setItem('role', result.data.role);
-          alert("¡Inicio de sesión exitoso!");
-          // Redirigir a landing page
-          window.location.href = '/';
+          setShowLoginSuccessNotification(true);
         } else {
           setError(result.message || "Error en login");
         }
       } else {
         const result = await registerUser(formData.name, formData.email, formData.password);
         if (result.success) {
-          alert("¡Registro exitoso! Revisa tu correo para el código de activación.");
+          setShowSuccessNotification(true);
           setUserID(result.data); // Asumiendo que result.data es el userID
-          setView('verification');
         } else {
           setError(result.message || "Error en registro");
         }
@@ -446,6 +455,92 @@ export default function Login() {
           </form>
         </div>
       </div>
+
+      {/* Notificación de éxito elegante */}
+      {showSuccessNotification && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform animate-pulse">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <CheckCircle className="w-8 h-8 text-green-500" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">¡Registro Exitoso!</h3>
+              <p className="text-green-100 text-sm">Tu cuenta ha sido creada correctamente</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <Mail className="w-6 h-6 text-gray-600 mx-auto mb-2" />
+                  <p className="text-gray-700 text-sm font-medium mb-1">Revisa tu bandeja de entrada</p>
+                  <p className="text-gray-500 text-xs">Te hemos enviado un código de activación</p>
+                </div>
+                
+                <div className="text-gray-600 text-sm">
+                  <p className="mb-2">📧 <span className="font-medium">{formData.email}</span></p>
+                  <p className="text-xs text-gray-500">Si no encuentras el correo, revisa tu carpeta de spam</p>
+                </div>
+              </div>
+
+              {/* Botón para continuar */}
+              <button
+                onClick={handleContinueToVerification}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Continuar a Verificación</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notificación de login exitoso */}
+      {showLoginSuccessNotification && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform animate-pulse">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <CheckCircle className="w-8 h-8 text-purple-500" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">¡Bienvenido de Vuelta!</h3>
+              <p className="text-purple-100 text-sm">Has iniciado sesión exitosamente</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <User className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                  <p className="text-gray-700 text-sm font-medium mb-1">Sesión iniciada</p>
+                  <p className="text-gray-500 text-xs">Accede a todas las funcionalidades de TuEvento</p>
+                </div>
+                
+                <div className="text-gray-600 text-sm">
+                  <p className="mb-2">👋 <span className="font-medium">¡Hola, {formData.email}!</span></p>
+                  <p className="text-xs text-gray-500">Serás redirigido a la página principal</p>
+                </div>
+              </div>
+
+              {/* Botón para continuar */}
+              <button
+                onClick={handleContinueToHome}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+              >
+                <ArrowRight className="w-4 h-4" />
+                <span>Ir a Inicio</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

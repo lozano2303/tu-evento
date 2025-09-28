@@ -54,7 +54,10 @@ public class jwtAuthenticationFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         if (requestURI.startsWith("/api/v1/event/") ||
             requestURI.startsWith("/api/v1/public/") ||
-            requestURI.startsWith("/api/v1/login/") ||
+            requestURI.startsWith("/api/v1/login/start") ||
+            requestURI.startsWith("/api/v1/login/forgot") ||
+            requestURI.startsWith("/api/v1/login/validateResetToken") ||
+            requestURI.startsWith("/api/v1/login/resetPasswordWithToken") ||
             requestURI.startsWith("/api/v1/account-activation/") ||
             requestURI.startsWith("/api/v1/register") ||
             requestURI.startsWith("/api/v1/users/") ||
