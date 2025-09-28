@@ -176,10 +176,10 @@ export default function ChangePassword({ onClose }) {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform animate-pulse">
             {/* Header con gradiente */}
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-center">
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
               <div className="flex justify-center mb-4">
                 <div className="bg-white rounded-full p-3">
-                  <CheckCircle className="w-8 h-8 text-blue-500" />
+                  <CheckCircle className="w-8 h-8 text-purple-500" />
                 </div>
               </div>
               <h3 className="text-xl font-bold text-white mb-2">¡Contraseña Actualizada!</h3>
@@ -190,7 +190,7 @@ export default function ChangePassword({ onClose }) {
             <div className="p-6 text-center">
               <div className="mb-6">
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <Lock className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                  <Lock className="w-6 h-6 text-purple-600 mx-auto mb-2" />
                   <p className="text-gray-700 text-sm font-medium mb-1">Seguridad mejorada</p>
                   <p className="text-gray-500 text-xs">Tu cuenta ahora está más protegida</p>
                 </div>
@@ -204,7 +204,7 @@ export default function ChangePassword({ onClose }) {
               {/* Botón para continuar */}
               <button
                 onClick={handleContinueAndClose}
-                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
               >
                 <CheckCircle className="w-4 h-4" />
                 <span>Entendido</span>

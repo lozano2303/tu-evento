@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { forgotPassword, resetPassword } from "../../services/Login.js";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, Lock, ArrowRight } from "lucide-react";
 
 export default function ForgotPassword({ onBackToLogin }) {
   const [step, setStep] = useState('email'); // 'email' or 'reset'
@@ -12,6 +12,7 @@ export default function ForgotPassword({ onBackToLogin }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
@@ -58,8 +59,7 @@ export default function ForgotPassword({ onBackToLogin }) {
     try {
       const result = await resetPassword(token, newPassword);
       if (result.success) {
-        alert("Contraseña restablecida exitosamente");
-        onBackToLogin();
+        setShowSuccessNotification(true);
       } else {
         setError(result.message || "Error al restablecer contraseña");
       }
@@ -68,6 +68,11 @@ export default function ForgotPassword({ onBackToLogin }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleContinueToLogin = () => {
+    setShowSuccessNotification(false);
+    onBackToLogin();
   };
 
   if (step === 'reset') {
@@ -163,6 +168,49 @@ export default function ForgotPassword({ onBackToLogin }) {
             </div>
           </div>
         </div>
+
+        {/* Notificación de contraseña restablecida exitosamente */}
+        {showSuccessNotification && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform animate-pulse">
+              {/* Header con gradiente morado */}
+              <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-white rounded-full p-3">
+                    <CheckCircle className="w-8 h-8 text-purple-500" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">¡Contraseña Restablecida!</h3>
+                <p className="text-purple-100 text-sm">Tu contraseña ha sido actualizada exitosamente</p>
+              </div>
+
+              {/* Contenido */}
+              <div className="p-6 text-center">
+                <div className="mb-6">
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <Lock className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                    <p className="text-gray-700 text-sm font-medium mb-1">Nueva contraseña configurada</p>
+                    <p className="text-gray-500 text-xs">Tu cuenta está ahora más segura</p>
+                  </div>
+
+                  <div className="text-gray-600 text-sm">
+                    <p className="mb-2">🔐 <span className="font-medium">Contraseña actualizada correctamente</span></p>
+                    <p className="text-xs text-gray-500">Ya puedes iniciar sesión con tu nueva contraseña</p>
+                  </div>
+                </div>
+
+                {/* Botón para continuar */}
+                <button
+                  onClick={handleContinueToLogin}
+                  className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                  <span>Ir al Login</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

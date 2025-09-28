@@ -91,21 +91,21 @@ export default function CodeVerification({ userID, onVerificationSuccess, onBack
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform animate-pulse">
             {/* Header con gradiente */}
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-center">
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
               <div className="flex justify-center mb-4">
                 <div className="bg-white rounded-full p-3">
-                  <CheckCircle className="w-8 h-8 text-green-500" />
+                  <CheckCircle className="w-8 h-8 text-purple-500" />
                 </div>
               </div>
               <h3 className="text-xl font-bold text-white mb-2">¡Cuenta Activada!</h3>
-              <p className="text-green-100 text-sm">Tu cuenta ha sido verificada exitosamente</p>
+              <p className="text-purple-100 text-sm">Tu cuenta ha sido verificada exitosamente</p>
             </div>
 
             {/* Contenido */}
             <div className="p-6 text-center">
               <div className="mb-6">
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                  <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                  <CheckCircle className="w-6 h-6 text-purple-600 mx-auto mb-2" />
                   <p className="text-gray-700 text-sm font-medium mb-1">Verificación completada</p>
                   <p className="text-gray-500 text-xs">Ya puedes acceder a todas las funcionalidades</p>
                 </div>
@@ -119,7 +119,7 @@ export default function CodeVerification({ userID, onVerificationSuccess, onBack
               {/* Botón para continuar */}
               <button
                 onClick={handleContinueToLogin}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
               >
                 <ArrowRight className="w-4 h-4" />
                 <span>Continuar al Login</span>
