@@ -12,9 +12,20 @@ import EvenList from '../screens/home/EvenListScreen';
 import ReaderQr from '../screens/home/readerQr';
 import ProfileScreen from '../screens/home/ProfileScreen';
 import EventImagesView from '../test/EventImagesView';
+import EventDetail from '../components/events/EventDetail';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+// Stack navigator for the Home tab
+function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="EvenList" component={EvenList} />
+      <Stack.Screen name="EventDetail" component={EventDetail} />
+    </Stack.Navigator>
+  );
+}
 
 function MainTabs() {
   return (
@@ -28,7 +39,7 @@ function MainTabs() {
     >
       <Tab.Screen
         name="Inicio"
-        component={EvenList}
+        component={HomeStack}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />

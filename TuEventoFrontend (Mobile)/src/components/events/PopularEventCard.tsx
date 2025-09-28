@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { IEvent } from '../../api/types/IEvent';
 
 interface PopularEventCardProps {
@@ -8,10 +9,10 @@ interface PopularEventCardProps {
 }
 
 const PopularEventCard: React.FC<PopularEventCardProps> = ({ event, onPress }) => {
+  const navigation = useNavigation();
+
   const handleDetails = () => {
-    Alert.alert('Detalles del Evento', 
-      `Evento: ${event.eventName}\n\nDescripción: ${event.description}\n\nUbicación: ${event.locationID.name}, ${event.locationID.address.city.name}\n\nOrganizador: ${event.userID.fullName}`
-    );
+    (navigation as any).navigate('EventDetail', { eventId: event.id });
   };
 
   // Función para truncar la descripción si es muy larga
