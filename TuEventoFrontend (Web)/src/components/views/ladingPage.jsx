@@ -8,7 +8,6 @@ export default function LadingPage() {
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    // Verificar si hay parámetros OAuth en la URL (desde redirección del backend)
     const urlParams = new URLSearchParams(window.location.search);
     const oauthToken = urlParams.get('token');
     const oauthUserID = urlParams.get('userID');
@@ -16,32 +15,26 @@ export default function LadingPage() {
     const isOAuth = urlParams.get('oauth');
 
     if (isOAuth && oauthToken && oauthUserID && oauthRole) {
-      // Limpiar parámetros de URL
       window.history.replaceState({}, document.title, window.location.pathname);
 
-      // Guardar datos OAuth en localStorage
       localStorage.setItem('token', oauthToken);
       localStorage.setItem('userID', oauthUserID);
       localStorage.setItem('role', oauthRole);
 
-      // Obtener datos del usuario
       getUserById(oauthUserID).then(result => {
         if (result.success) {
           setUserData(result.data);
         } else {
-          // Token inválido, limpiar
           localStorage.removeItem('token');
           localStorage.removeItem('userID');
           localStorage.removeItem('role');
         }
       }).catch(() => {
-        // Error, limpiar
         localStorage.removeItem('token');
         localStorage.removeItem('userID');
         localStorage.removeItem('role');
       });
     } else {
-      // Verificar si hay sesión existente
       const token = localStorage.getItem('token');
       const storedUserID = localStorage.getItem('userID');
       if (token && storedUserID) {

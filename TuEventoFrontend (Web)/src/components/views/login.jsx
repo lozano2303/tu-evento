@@ -25,19 +25,16 @@ export default function Login() {
     const token = localStorage.getItem('token');
     const storedUserID = localStorage.getItem('userID');
     if (token && storedUserID) {
-      // Usuario logueado, obtener datos
       getUserById(storedUserID).then(result => {
         if (result.success) {
           setUserData(result.data);
           setView('profile');
         } else {
-          // Token inválido, limpiar
           localStorage.removeItem('token');
           localStorage.removeItem('userID');
           localStorage.removeItem('role');
         }
       }).catch(() => {
-        // Error, limpiar
         localStorage.removeItem('token');
         localStorage.removeItem('userID');
         localStorage.removeItem('role');
@@ -161,7 +158,6 @@ export default function Login() {
 
     const errors = {};
 
-    // Validaciones comunes
     const emailError = validateEmail(formData.email);
     if (emailError) errors.email = emailError;
 
@@ -186,7 +182,6 @@ export default function Login() {
       if (view === 'login') {
         const result = await loginUser(formData.email, formData.password);
         if (result.success) {
-          // Guardar datos en localStorage
           localStorage.setItem('token', result.data.token);
           localStorage.setItem('userID', result.data.userID);
           localStorage.setItem('role', result.data.role);
@@ -198,8 +193,8 @@ export default function Login() {
         const result = await registerUser(formData.name, formData.email, formData.password);
         if (result.success) {
           setShowSuccessNotification(true);
-          setUserID(result.data); // Asumiendo que result.data es el userID
-        } else {
+          setUserID(result.data); 
+          } else {
           setError(result.message || "Error en registro");
         }
       }
@@ -422,22 +417,14 @@ export default function Login() {
               <img src="/src/assets/images/gogle.png" alt="Google" className="w-5 h-5" />
             </button>
 
-            {/* Twitter/X */}
-            <button
-              type="button"
-              className="w-10 h-10 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors flex items-center justify-center"
-            >
-              <img src="/src/assets/images/x.png" alt="Twitter/X" className="w-5 h-5" />
-            </button>
-
-            {/* Facebook */}
-            <button
-              type="button"
-              className="w-10 h-10 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors flex items-center justify-center"
-            >
-              <img src="/src/assets/images/facebok.png" alt="Facebook" className="w-5 h-5" />
-            </button>
-          </div>
+             {/* Facebook */}
+             <button
+               type="button"
+               className="w-10 h-10 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors flex items-center justify-center"
+             >
+               <img src="/src/assets/images/facebok.png" alt="Facebook" className="w-5 h-5" />
+             </button>
+           </div>
 
             {/* Texto final */}
             <div className="text-center pt-2">
