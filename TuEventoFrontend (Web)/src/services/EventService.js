@@ -14,7 +14,7 @@ export const getAllEvents = async () => {
       headers,
     });
     const data = await response.json();
-    return data.data || []; // Return the data array or empty array
+    return { success: data.success, data: data.data || [], message: data.message }; // Return consistent format
   } catch (error) {
     console.error('Error obteniendo eventos:', error);
     throw error;
@@ -23,14 +23,19 @@ export const getAllEvents = async () => {
 
 export const getEventById = async (eventId) => {
   try {
+    const token = localStorage.getItem('token');
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const response = await fetch(`${API_BASE_URL}/v1/event/${eventId}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
     const data = await response.json();
-    return data;
+    return { success: data.success, data: data.data, message: data.message };
   } catch (error) {
     console.error('Error obteniendo evento:', error);
     throw error;
