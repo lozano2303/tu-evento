@@ -2,7 +2,7 @@ import { View, Text, Image, TouchableOpacity, Alert } from "react-native";
 import { useState } from "react";
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
-import RedSocialButton from "../../components/common/RedSocialButton";
+
 import { useNavigation } from "@react-navigation/native";
 import { login } from "../../api/services/LoginApi";
 
@@ -116,26 +116,8 @@ export default function LoginScreen() {
           ___________________________________________________________
         </Text>
 
-        {/* Texto "Inicia sesión con:" */}
-        <Text className="text-gray-300 text-lg text-center mb-4 font-semibold">
-          Inicia sesión con:
-        </Text>
-        
-        {/* Botones de redes sociales con solo iconos */}
-        <View className="flex-row justify-center items-center mb-4" style={{ gap: 20 }}>
-          <RedSocialButton 
-            social="google" 
-            onSuccess={handleOAuthSuccess}
-            onError={handleOAuthError}
-            iconOnly={true}
-          />
-          <RedSocialButton 
-            social="facebook" 
-            onSuccess={handleOAuthSuccess}
-            onError={handleOAuthError}
-            iconOnly={true}
-          />
-        </View>
+     
+       
 
         {/* Terminos y condiciones */}
         <Text className="text-white text-base text-center mt-3 px-3">

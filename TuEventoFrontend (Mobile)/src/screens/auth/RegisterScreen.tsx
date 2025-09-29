@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Image, Alert } from 'react-native';
 import Input from "../../components/common/Input";
 import Button from "../../components/common/Button";
-import RedSocialButton from "../../components/common/RedSocialButton";
+
 import { registerUser } from '../../api/services/UserApi';
 import { useNavigation } from "@react-navigation/native";
 
@@ -134,27 +134,7 @@ export default function RegisterScreen() {
           _______________________________________________________
         </Text>
         
-        {/* Texto "Inicia sesión con:" */}
-       <Text className="text-gray-300 text-lg text-center mb-4 font-semibold">
-          Registrate mediante:
-        </Text>
-        
-        {/* Botones de redes sociales con solo iconos */}
-        <View className="flex-row justify-center items-center mb-4" style={{ gap: 20 }}>
-          <RedSocialButton 
-            social="google" 
-            onSuccess={handleOAuthSuccess}
-            onError={handleOAuthError}
-            iconOnly={true}
-          />
-          <RedSocialButton 
-            social="facebook" 
-            onSuccess={handleOAuthSuccess}
-            onError={handleOAuthError}
-            iconOnly={true}
-          />
-        </View>
-        
+      
         {/* Terminos y condiciones */}
         <Text className="text-white text-base text-center mt-4 px-4">
           Al crear una cuenta, aceptas nuestros{" "}

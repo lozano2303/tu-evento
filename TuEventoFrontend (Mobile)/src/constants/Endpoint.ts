@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://192.168.0.14:8080/api/v1"; //  API base URL
+const API_BASE_URL = "http://10.3.234.245:8080/api/v1"; //  API base URL
 
 export const USER_ENDPOINT = `${API_BASE_URL}/register`; // User registration endpoint
 
