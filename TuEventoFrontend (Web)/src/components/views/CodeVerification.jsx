@@ -32,23 +32,23 @@ export default function CodeVerification({ userID, onVerificationSuccess, onBack
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col md:flex-row">
       {/* Columna izquierda - Ilustración con gradiente púrpura */}
-      <div className="w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 flex items-center justify-center p-8">
+      <div className="w-full md:w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 flex items-center justify-center p-4 md:p-8">
         <div className="text-center space-y-6 max-w-sm">
           <img
             src="/src/assets/images/fondologin.png"
             alt="Ilustración escritorio"
-            className="w-380 h-130 mx-auto drop-shadow-2xl"
+            className="w-full max-w-xs md:w-380 h-auto md:h-130 mx-auto drop-shadow-2xl"
           />
         </div>
       </div>
 
-      <div className="w-1/2 bg-gray-900 flex items-center justify-center p-8">
+      <div className="w-full md:w-1/2 bg-gray-900 flex items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-sm space-y-6">
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold text-white mb-1">Verificar Cuenta</h1>
-            <p className="text-gray-400 text-sm">Ingresa el código de activación enviado a tu correo</p>
+            <h1 className="text-xl md:text-2xl font-bold text-white mb-1">Verificar Cuenta</h1>
+            <p className="text-gray-400 text-xs md:text-sm">Ingresa el código de activación enviado a tu correo</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

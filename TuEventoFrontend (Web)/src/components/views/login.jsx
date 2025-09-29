@@ -230,18 +230,18 @@ export default function Login() {
 
   if (view === 'profile' && userData) {
     return (
-      <div className="min-h-screen flex">
-        <div className="w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 flex items-center justify-center p-8">
+      <div className="min-h-screen flex flex-col md:flex-row">
+        <div className="w-full md:w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 flex items-center justify-center p-4 md:p-8">
           <div className="text-center space-y-6 max-w-sm">
             <img
               src="/src/assets/images/fondologin.png"
               alt="Ilustración escritorio"
-              className="w-380 h-130 mx-auto drop-shadow-2xl"
+              className="w-full max-w-xs md:w-380 h-auto md:h-130 mx-auto drop-shadow-2xl"
             />
           </div>
         </div>
 
-        <div className="w-1/2 bg-gray-900 flex items-center justify-center p-8">
+        <div className="w-full md:w-1/2 bg-gray-900 flex items-center justify-center p-4 md:p-8">
           <div className="w-full max-w-sm space-y-6">
             <div className="text-center space-y-2">
               <h1 className="text-2xl font-bold text-white mb-1">Perfil de Usuario</h1>
@@ -276,26 +276,26 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex">
-   {/* Columna izquierda - Ilustración con gradiente púrpura */}
-   <div className="w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 flex items-center justify-center p-8">
-     <div className="text-center space-y-6 max-w-sm">
-       {/* Ilustración en vez de divs */}
-       <img
-         src="/src/assets/images/fondologin.png"
-         alt="Ilustración escritorio"
-         className="w-380 h-130 mx-auto drop-shadow-2xl"
-       />
-     </div>
-   </div>
+    <div className="min-h-screen flex flex-col md:flex-row">
+    {/* Columna izquierda - Ilustración con gradiente púrpura */}
+    <div className="w-full md:w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 flex items-center justify-center p-4 md:p-8">
+      <div className="text-center space-y-6 max-w-sm">
+        {/* Ilustración en vez de divs */}
+        <img
+          src="/src/assets/images/fondologin.png"
+          alt="Ilustración escritorio"
+          className="w-full max-w-xs md:w-380 h-auto md:h-130 mx-auto drop-shadow-2xl"
+        />
+      </div>
+    </div>
 
 
-       <div className="w-1/2 bg-gray-900 flex items-center justify-center p-8">
+        <div className="w-full md:w-1/2 bg-gray-900 flex items-center justify-center p-4 md:p-8">
          <div className="w-full max-w-sm space-y-6">
            {/* Header */}
            <div className="text-center space-y-2">
-             <h1 className="text-2xl font-bold text-white mb-1">{view === 'login' ? "Iniciar Sesión" : "Registrarse"}</h1>
-             <p className="text-gray-400 text-sm">Ingresa tus datos personales</p>
+             <h1 className="text-xl md:text-2xl font-bold text-white mb-1">{view === 'login' ? "Iniciar Sesión" : "Registrarse"}</h1>
+             <p className="text-gray-400 text-xs md:text-sm">Ingresa tus datos personales</p>
            </div>
 
           {/* Tabs */}
@@ -412,7 +412,7 @@ export default function Login() {
             </div>
 
             {/* Botones de redes sociales */}
-            <div className="flex justify-center space-x-3">
+            <div className="flex justify-center gap-3 flex-wrap">
       {/* Google */}
             <button
               type="button"

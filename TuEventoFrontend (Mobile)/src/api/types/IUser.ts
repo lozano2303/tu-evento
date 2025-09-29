@@ -25,3 +25,8 @@ export interface IUserProfileResponse {
   data: IUserProfile;
 }
 
+export interface IUserUpdatePhone {
+  id: number;
+  newTelephone: number;
+}
+

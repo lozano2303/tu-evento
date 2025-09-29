@@ -805,7 +805,7 @@ const ReservaEvento = () => {
             </h1>
 
             {/* Imágenes del evento */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <div className="relative">
                 <img
                   src={event.image || "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop"}
@@ -837,7 +837,7 @@ const ReservaEvento = () => {
             </div>
 
             {/* Grid de imágenes */}
-            <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               <div className="relative">
                 <img 
                   src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop" 
@@ -1197,7 +1197,7 @@ const ReservaEvento = () => {
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[95vh] overflow-hidden">
             <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-2xl font-bold text-gray-800">Reservar Asientos - {event?.eventName}</h2>
+              <h2 className="text-lg md:text-2xl font-bold text-gray-800">Reservar Asientos - {event?.eventName}</h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={async () => {
@@ -1222,9 +1222,9 @@ const ReservaEvento = () => {
               </div>
             </div>
 
-            <div className="flex">
+            <div className="flex flex-col lg:flex-row">
               {/* Panel lateral de controles */}
-              <div className="w-80 bg-gray-50 p-6 border-r">
+              <div className="w-full lg:w-80 bg-gray-50 p-6 border-r lg:border-r border-b lg:border-b-0">
                 <h3 className="text-lg font-semibold mb-4">Seleccionar Asientos</h3>
 
                 {/* Selector de sección */}
