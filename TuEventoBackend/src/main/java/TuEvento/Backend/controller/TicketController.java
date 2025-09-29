@@ -13,7 +13,7 @@ import TuEvento.Backend.service.TicketService;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping("/v1/tickets")
+@RequestMapping("/api/v1/tickets")
 public class TicketController {
 
     @Autowired

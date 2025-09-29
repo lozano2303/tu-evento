@@ -14,6 +14,22 @@ public class SeatTicketId implements Serializable {
         this.ticket = ticket;
     }
 
+    public int getSeat() {
+        return seat;
+    }
+
+    public void setSeat(int seat) {
+        this.seat = seat;
+    }
+
+    public int getTicket() {
+        return ticket;
+    }
+
+    public void setTicket(int ticket) {
+        this.ticket = ticket;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

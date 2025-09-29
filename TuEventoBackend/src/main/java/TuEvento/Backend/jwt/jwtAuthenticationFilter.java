@@ -71,7 +71,6 @@ public class jwtAuthenticationFilter extends OncePerRequestFilter {
             requestURI.startsWith("/api/v1/eventRating/") ||
             requestURI.startsWith("/api/v1/organizer-petitions/") ||
             requestURI.startsWith("/api/v1/sections/") ||
-            requestURI.startsWith("/api/v1/tickets/") ||
             requestURI.startsWith("/api/v1/notifications/") ||
             requestURI.startsWith("/api/v1/seats/") ||
             requestURI.startsWith("/api/v1/categories/") ||
