@@ -31,15 +31,13 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
 
-        // Usar un método especial para OAuth
         ResponseDto<ResponseLogin> loginResponse = userService.loginOAuth2(email, name);
 
         String token = loginResponse.getData().getToken();
+        String userID = String.valueOf(loginResponse.getData().getUserID());
+        String role = loginResponse.getData().getRole();
 
-        // Para simplificar, devolvemos JSON (sirve para Android y Web SPA)
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write("{\"token\": \"" + token + "\"}");
-        response.getWriter().flush();
+        // Redirigir al frontend con el token y datos del usuario
+        response.sendRedirect("http://localhost:5173/?token=" + token + "&userID=" + userID + "&role=" + role + "&oauth=true");
     }
 }

@@ -1,14 +1,72 @@
 import { Calendar, Users, Gift, Smartphone, Globe, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { getUserById } from '../../services/Login.js';
 
 export default function LadingPage() {
   const navigate = useNavigate();
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    // Verificar si hay parámetros OAuth en la URL (desde redirección del backend)
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthToken = urlParams.get('token');
+    const oauthUserID = urlParams.get('userID');
+    const oauthRole = urlParams.get('role');
+    const isOAuth = urlParams.get('oauth');
+
+    if (isOAuth && oauthToken && oauthUserID && oauthRole) {
+      // Limpiar parámetros de URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Guardar datos OAuth en localStorage
+      localStorage.setItem('token', oauthToken);
+      localStorage.setItem('userID', oauthUserID);
+      localStorage.setItem('role', oauthRole);
+
+      // Obtener datos del usuario
+      getUserById(oauthUserID).then(result => {
+        if (result.success) {
+          setUserData(result.data);
+        } else {
+          // Token inválido, limpiar
+          localStorage.removeItem('token');
+          localStorage.removeItem('userID');
+          localStorage.removeItem('role');
+        }
+      }).catch(() => {
+        // Error, limpiar
+        localStorage.removeItem('token');
+        localStorage.removeItem('userID');
+        localStorage.removeItem('role');
+      });
+    } else {
+      // Verificar si hay sesión existente
+      const token = localStorage.getItem('token');
+      const storedUserID = localStorage.getItem('userID');
+      if (token && storedUserID) {
+        getUserById(storedUserID).then(result => {
+          if (result.success) {
+            setUserData(result.data);
+          } else {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userID');
+            localStorage.removeItem('role');
+          }
+        }).catch(() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('userID');
+          localStorage.removeItem('role');
+        });
+      }
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
   
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-35">
+      <section className="relative overflow-hidden" style={{ paddingBlock: 'calc(var(--spacing) * 33)' }}>
         {/* Fondo degradado */}
         <div className="absolute inset-0 bg-purple-700"></div>
 
@@ -19,8 +77,8 @@ export default function LadingPage() {
             {/* Texto */}
             <div className="space-y-6">
               <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-                Visualiza el evento
-                <span className="block text-yellow-300">ideal.</span>
+                {userData ? `¡Hola, ${userData.fullName}!` : 'Visualiza el evento'}
+                <span className="block text-yellow-300">{userData ? 'Bienvenido de vuelta.' : 'ideal.'}</span>
               </h1>
               <p className="text-lg text-purple-100">
                 Diseña, planifica y vive experiencias únicas que marquen la diferencia. 
