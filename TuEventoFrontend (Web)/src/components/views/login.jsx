@@ -22,9 +22,24 @@ export default function Login() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    // Check for OAuth2 login parameters in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const userID = urlParams.get('userID');
+    const role = urlParams.get('role');
+    const oauth = urlParams.get('oauth');
+
+    if (oauth === 'true' && token && userID && role) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('userID', userID);
+      localStorage.setItem('role', role);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      window.location.href = '/';
+      return;
+    }
+    const storedToken = localStorage.getItem('token');
     const storedUserID = localStorage.getItem('userID');
-    if (token && storedUserID) {
+    if (storedToken && storedUserID) {
       getUserById(storedUserID).then(result => {
         if (result.success) {
           setUserData(result.data);
@@ -420,6 +435,7 @@ export default function Login() {
              {/* Facebook */}
              <button
                type="button"
+               onClick={() => window.location.href = 'http://localhost:8080/oauth2/authorization/facebook'}
                className="w-10 h-10 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg transition-colors flex items-center justify-center"
              >
                <img src="/src/assets/images/facebok.png" alt="Facebook" className="w-5 h-5" />
