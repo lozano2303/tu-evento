@@ -60,16 +60,16 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional
     public ResponseDto<String> createTicketWithSeats(TicketDto ticketDto) {
+        System.out.println("Creating ticket with seats: " + ticketDto);
         List<Integer> seatIDs = ticketDto.getSeatIDs();
         if (seatIDs == null || seatIDs.isEmpty()) {
             return ResponseDto.error("No se seleccionaron asientos");
         }
 
         List<Seat> seats = seatRepository.findAllById(seatIDs);
-        for (Seat seat : seats) {
-            if (!seat.isStatus()) {
-                return ResponseDto.error("El asiento " + seat.getSeatID() + " ya está ocupado");
-            }
+        System.out.println("Found seats: " + seats.size() + " for requested: " + seatIDs.size());
+        if (seats.size() != seatIDs.size()) {
+            return ResponseDto.error("Algunos asientos no existen");
         }
 
         Optional<User> userOpt = userRepository.findById(ticketDto.getUserId());
@@ -150,7 +150,7 @@ public class TicketServiceImpl implements TicketService {
 
         for (SeatTicket relation : relations) {
             Seat seat = relation.getSeat();
-            seat.setStatus(false);
+            seat.setStatus(true);
             seatRepository.save(seat);
             seatTicketRepository.delete(relation);
         }
@@ -173,7 +173,7 @@ public class TicketServiceImpl implements TicketService {
 
                 for (SeatTicket relation : relations) {
                     Seat seat = relation.getSeat();
-                    seat.setStatus(false);
+                    seat.setStatus(true);
                     seatRepository.save(seat);
                     seatTicketRepository.delete(relation);
                 }

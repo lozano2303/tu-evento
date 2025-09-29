@@ -11,4 +11,4 @@ application:
   bucket:
     name: tu-evento-storage
 server:
-  port: 9090
+   port: 8080
