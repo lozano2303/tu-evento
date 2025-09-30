@@ -4,11 +4,11 @@ cloud:
       access-key: 
       secret-key: 
     region:
-      static:
+      static: us-east-2
     stack:
       auto: false
 application:
-  bucket: 
-    name: tu-evento-storage
+  bucket:
+    name: tu-evento-storege2
 server:
   port: 9090
