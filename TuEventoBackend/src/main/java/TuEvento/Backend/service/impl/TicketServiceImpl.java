@@ -85,12 +85,12 @@ public class TicketServiceImpl implements TicketService {
         }
 
         // Validar que los asientos estén disponibles
-        for (Seat seat : seats) {
-            if (!seat.isStatus()) {
-                System.out.println("Seat " + seat.getSeatID() + " is already occupied");
-                return ResponseDto.error("Uno o más asientos ya están ocupados");
-            }
-        }
+        //for (Seat seat : seats) {
+            //if (!seat.isStatus()) {
+                //System.out.println("Seat " + seat.getSeatID() + " is already occupied");
+                //return ResponseDto.error("Uno o más asientos ya están ocupados");
+            //}
+        //}
 
         System.out.println("User ID: " + ticketDto.getUserId() + ", Event ID: " + ticketDto.getEventId());
         Optional<User> userOpt = userRepository.findById(ticketDto.getUserId());
@@ -186,7 +186,7 @@ public class TicketServiceImpl implements TicketService {
                         .toList();
 
                 String qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" +
-                        URLEncoder.encode("TICKET:" + ticket.getCode() + ":" + login.getEmail(),
+                        URLEncoder.encode("TICKET:" + ticket.getTicketID() + ":" + login.getEmail(),
                                 StandardCharsets.UTF_8);
 
                 emailService.sendTicketReservationEmail(
@@ -258,7 +258,7 @@ public class TicketServiceImpl implements TicketService {
             System.err.println("Error updating event layout on cancel: " + e.getMessage());
         }
 
-        ticket.setStatus(2); // Cancelado
+        ticket.setStatus(1); // Cancelado
         ticketRepository.save(ticket);
 
         return ResponseDto.ok("Ticket cancelado y asientos liberados");
