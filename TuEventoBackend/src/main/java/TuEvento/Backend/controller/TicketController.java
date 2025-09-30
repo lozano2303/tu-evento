@@ -22,11 +22,15 @@ public class TicketController {
     // ✅ Crear ticket con múltiples asientos
     @PostMapping("/create-with-seats")
     public ResponseEntity<ResponseDto<String>> createTicketWithSeats(@RequestBody TicketDto ticketDto, HttpServletRequest request) {
+        System.out.println("Controller: Creating ticket with dto: " + ticketDto);
         Integer userId = (Integer) request.getAttribute("userID");
+        System.out.println("Controller: User ID from request: " + userId);
         if (userId == null) {
+            System.out.println("Controller: User not authenticated");
             return ResponseEntity.status(401).body(ResponseDto.error("Usuario no autenticado"));
         }
         ticketDto.setUserId(userId);
+        System.out.println("Controller: Calling service with userId: " + userId);
         ResponseDto<String> response = ticketService.createTicketWithSeats(ticketDto);
         return ResponseEntity.status(response.isSuccess() ? 201 : 400).body(response);
     }
