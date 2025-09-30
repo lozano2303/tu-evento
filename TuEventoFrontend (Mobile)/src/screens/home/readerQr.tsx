@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
 import { CameraView, Camera } from "expo-camera";
 import Button from "../../components/common/Button";
+import {cancelTicket } from "../../api/services/ticket";
 import { useNavigation } from "@react-navigation/native";
 
 export default function QrScannerScreen() {
@@ -19,8 +20,10 @@ export default function QrScannerScreen() {
 
   const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
     setScanned(true);
-    setDataQR(data);
+    const tikect = data.split(":")[1];  
+    setDataQR(tikect);
   };
+  
 
   if (hasPermission === null) {
     return (
@@ -49,13 +52,23 @@ export default function QrScannerScreen() {
       {/* Overlay transparente */}
       <View style={styles.overlay}>
         <Text style={styles.text}>
-          {scanned ? `Si el pago esta completado oplime el boton para confirmar` : "Asegurate de ubicar bien la camara"}
+          {scanned ? `Si el pago esta completado oplime el boton para confirmar ${dataQR}` : "Asegurate de ubicar bien la camara"}
         </Text>
-
         {scanned && (
           <View style={{ marginTop: 20, width: "80%" }}>
             <Button label="Escanear de nuevo" onPress={() => setScanned(false)} />
-            <Button label="Confirmar pago" onPress={() => navigation.goBack()} />
+            <Button label="Confirmar pago" onPress={async () => {
+              if (dataQR) {
+                const result = await cancelTicket(dataQR);
+                if (result.success) {
+                  alert("✅ Ticket cancelado con éxito");
+                  navigation.goBack();
+                } else {
+                  alert("❌ " + result.message);
+                }
+              }
+        }} 
+      />
           </View>
         )}
       </View>
