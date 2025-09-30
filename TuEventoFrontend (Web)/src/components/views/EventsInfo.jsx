@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Star, Send, X, ShoppingCart, CheckCircle, AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
+import { Star, Send, X, ShoppingCart, CheckCircle, AlertTriangle, RefreshCw, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import DrawingCanvas from '../DrawingCanvas.jsx';
 import { getEventById } from '../../services/EventService.js';
 import { getEventLayoutByEventId } from '../../services/EventLayoutService.js';
@@ -9,6 +9,7 @@ import { getSeatsBySection, updateSeatStatus, createSeat, releaseExpiredReservat
 import { getAllSections, createSection } from '../../services/SectionService.js';
 import { insertEventRating, getEventRatingByEvent, deleteEventRating } from '../../services/EventRatingService.js';
 import { getUserById } from '../../services/UserService.js';
+import { getEventImages } from '../../services/EventImgService.js';
 
 const ReservaEvento = () => {
   const [searchParams] = useSearchParams();
@@ -44,11 +45,12 @@ const ReservaEvento = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [deletingRating, setDeletingRating] = useState(null);
   const [updateKey, setUpdateKey] = useState(0);
+  const [eventImages, setEventImages] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [loadingImages, setLoadingImages] = useState(false);
 
-  // Maximum seats per purchase
   const MAX_SEATS_PER_PURCHASE = 10;
 
-  // Memoized calculations - moved after all state declarations
   const selectedSeatDetails = useMemo(() => {
     const sectionPrice = selectedSection?.price || 30000;
     return selectedSeats.map(seatId => {
@@ -68,7 +70,6 @@ const ReservaEvento = () => {
     return selectedSeatDetails.reduce((sum, seat) => sum + seat.price, 0);
   }, [selectedSeatDetails]);
 
-  // Session expiration check
   const checkSession = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -79,7 +80,6 @@ const ReservaEvento = () => {
     return true;
   }, [navigate]);
 
-  // Handle rating submission
   const handleSubmitRating = async () => {
     if (!rating || !mensaje.trim()) {
       alert('Por favor, selecciona una calificación y escribe un comentario.');
@@ -97,7 +97,7 @@ const ReservaEvento = () => {
       if (result.success) {
         setMensaje('');
         setRating(0);
-        loadEventRatings(); // Reload ratings
+        loadEventRatings(); 
         alert('Comentario enviado exitosamente.');
       } else {
         alert(result.message || 'Error al enviar el comentario.');
@@ -110,7 +110,6 @@ const ReservaEvento = () => {
     }
   };
 
-  // Handle rating deletion
   const handleDeleteRating = async (ratingId, userId) => {
     if (!checkSession()) return;
     if (!confirm('¿Estás seguro de que quieres eliminar este comentario?')) return;
@@ -119,7 +118,7 @@ const ReservaEvento = () => {
     try {
       const result = await deleteEventRating(ratingId);
       if (result.success) {
-        loadEventRatings(); // Reload ratings
+        loadEventRatings(); 
         alert('Comentario eliminado exitosamente.');
       } else {
         alert(result.message || 'Error al eliminar el comentario.');
@@ -132,36 +131,53 @@ const ReservaEvento = () => {
     }
   };
 
-  // Handle showing more comments
   const handleShowMoreComments = () => {
     setVisibleCommentsCount(prev => Math.min(prev + 5, eventRatings.length));
   };
 
-  // Handle showing less comments
   const handleShowLessComments = () => {
     setVisibleCommentsCount(5);
   };
 
-  // Clear selections after 5 minutes of inactivity
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % eventImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + eventImages.length) % eventImages.length);
+  };
+
+  const goToImage = (index) => {
+    setCurrentImageIndex(index);
+  };
+
   useEffect(() => {
     if (selectedSeatCount === 0) return;
 
     const timeout = setTimeout(() => {
       setSelectedSeats([]);
       alert('Tu selección de asientos ha expirado por inactividad. Por favor, selecciona nuevamente.');
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000);
 
     return () => clearTimeout(timeout);
   }, [selectedSeatCount]);
 
-  // Clear selections when modal closes
   useEffect(() => {
     if (!showMapModal) {
       setSelectedSeats([]);
     }
   }, [showMapModal]);
 
-  // Real-time seat status updates
+  useEffect(() => {
+    if (eventImages.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % eventImages.length);
+      }, 3000); 
+
+      return () => clearInterval(interval);
+    }
+  }, [eventImages.length]);
+
   useEffect(() => {
     if (!showMapModal || !selectedSection) return;
 
@@ -169,7 +185,7 @@ const ReservaEvento = () => {
       await loadSeatsForSection(selectedSection.sectionID);
       await loadEventLayout();
       setUpdateKey(prev => prev + 1);
-    }, 2000); // Update every 2 seconds
+    }, 2000); 
 
     return () => clearInterval(interval);
   }, [showMapModal, selectedSection]);
@@ -183,15 +199,14 @@ const ReservaEvento = () => {
     setModalError(null);
     setLoadingLayout(true);
     try {
-      // Release any expired reservations first
       await releaseExpiredReservations();
 
       const loadedSeats = await loadSectionsAndSeats();
       await loadEventLayout();
-      // Generate seats from layout if layout exists
+    
       if (selectedSection && layoutElements.some(el => el.type === 'seatRow')) {
         await generateSeatsFromLayout(layoutElements);
-        // Reload seats after generation
+  
         await loadSeatsForSection(selectedSection.sectionID);
       }
 
@@ -206,7 +221,6 @@ const ReservaEvento = () => {
     }
   };
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (!showMapModal) return;
@@ -271,12 +285,12 @@ const ReservaEvento = () => {
     loadEvent();
   }, [eventId, checkSession]);
 
-  // Load tickets and sections when event is loaded
   useEffect(() => {
     if (event) {
       loadEventTickets();
       loadSections();
       loadEventRatings();
+      loadEventImages();
     }
   }, [event]);
 
@@ -305,7 +319,6 @@ const ReservaEvento = () => {
     setRating(starNumber);
   };
 
-  // Function to match seats with layout elements
   const matchSeatsWithLayout = (layoutElements, seats) => {
     return layoutElements.map(element => {
       if (element.type === 'seatRow' && element.seatPositions) {
@@ -438,18 +451,37 @@ const ReservaEvento = () => {
     }
   };
 
+  const loadEventImages = async () => {
+    if (!eventId) return;
+
+    try {
+      setLoadingImages(true);
+      const result = await getEventImages(eventId);
+      if (result.success) {
+        const sortedImages = (result.data || []).sort((a, b) => (a.order || 0) - (b.order || 0));
+        setEventImages(sortedImages);
+      } else {
+        setEventImages([]);
+      }
+    } catch (error) {
+      console.error('Error loading event images:', error);
+      setEventImages([]);
+    } finally {
+      setLoadingImages(false);
+    }
+  };
+
 
 
   const loadSectionsAndSeats = async () => {
     if (!eventId) return [];
 
     try {
-      // Load sections for this event
       const sectionsResult = await getAllSections();
       if (sectionsResult.success) {
         let eventSections = sectionsResult.data.filter(section => section.eventId === parseInt(eventId));
 
-        // If no sections exist, create a default section
+    
         if (eventSections.length === 0) {
           const defaultSection = {
             eventId: parseInt(eventId),
@@ -468,7 +500,7 @@ const ReservaEvento = () => {
         setSections(eventSections);
         if (eventSections.length > 0) {
           setSelectedSection(eventSections[0]);
-          // Load seats for the first section
+
           const loadedSeats = await loadSeatsForSection(eventSections[0].sectionID);
           return loadedSeats;
         }
@@ -483,37 +515,35 @@ const ReservaEvento = () => {
     if (!selectedSection || !layoutElements) return;
 
     try {
-      // Buscar elementos seatRow en el layout y ordenarlos por y descendente (última fila primero)
       const seatRows = layoutElements
         .filter(el => el.type === 'seatRow')
-        .sort((a, b) => b.y - a.y); // Orden descendente por y
+        .sort((a, b) => b.y - a.y); 
       console.log("Generando seats para seatRows ordenados:", seatRows.length);
 
-      // Obtener seats existentes para actualizar
+     
       const existingSeats = await getSeatsBySection(selectedSection.sectionID);
       const existingSeatsData = existingSeats.success ? existingSeats.data : [];
 
       for (let i = 0; i < seatRows.length; i++) {
         const seatRow = seatRows[i];
-        const rowLetter = String.fromCharCode(65 + i); // A, B, C, ...
+        const rowLetter = String.fromCharCode(65 + i);
         if (seatRow.seatPositions) {
           console.log("Procesando seats para row:", rowLetter, "con", seatRow.seatPositions.length, "posiciones");
-          // Procesar asientos para cada posición
+        
           for (let j = 0; j < seatRow.seatPositions.length; j++) {
             const seatPos = seatRow.seatPositions[j];
             const x = Math.round(seatPos.x);
             const y = Math.round(seatPos.y);
-            const seatNumber = (j + 1).toString(); // 1, 2, 3, ...
+            const seatNumber = (j + 1).toString(); 
 
-            // Buscar si el asiento ya existe por coordenadas
             const existingSeat = existingSeatsData.find(seat => Math.round(seat.x) === x && Math.round(seat.y) === y);
 
             if (existingSeat) {
-              // Actualizar asiento existente
+          
               const updateData = {
                 seatNumber: seatNumber,
                 row: rowLetter,
-                status: existingSeat.status, // Mantener el status actual
+                status: existingSeat.status, 
                 sectionID: selectedSection.sectionID,
                 eventLayoutID: layoutId,
                 x: x,
@@ -526,7 +556,7 @@ const ReservaEvento = () => {
                 console.log('Error actualizando seat:', error);
               }
             } else {
-              // Crear nuevo asiento
+        
               const seatData = {
                 seatNumber: seatNumber,
                 row: rowLetter,
@@ -547,7 +577,6 @@ const ReservaEvento = () => {
         }
       }
 
-      // Recargar asientos después de procesarlos
       if (selectedSection) {
         loadSeatsForSection(selectedSection.sectionID);
       }
@@ -609,7 +638,6 @@ const ReservaEvento = () => {
     }
   };
 
-  // Function to verify seat availability before purchase
   const verifySeatAvailability = async (seatIds) => {
     try {
       const currentSeats = await getSeatsBySection(selectedSection.sectionID);
@@ -627,7 +655,7 @@ const ReservaEvento = () => {
 
 
   const handlePurchaseSeats = async () => {
-    // Pre-purchase validations
+
     if (!checkSession()) return;
 
     const allSeatIds = selectedSeatDetails.map(s => s.seatId).filter(id => id);
@@ -804,69 +832,58 @@ const ReservaEvento = () => {
               {event.eventName || 'Evento'}
             </h1>
 
-            {/* Imágenes del evento */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="relative">
-                <img
-                  src={event.image || "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop"}
-                  alt={event.name}
-                  className="w-full h-40 object-cover rounded-lg"
-                />
+            {/* Carrusel de imágenes del evento */}
+            {loadingImages ? (
+              <div className="flex justify-center items-center h-64 mb-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
               </div>
-              <div className="relative">
-                <img
-                  src={event.image || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=300&h=200&fit=crop"}
-                  alt={event.name}
-                  className="w-full h-40 object-cover rounded-lg"
-                />
-              </div>
-              <div className="relative">
-                <img
-                  src={event.image || "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop"}
-                  alt={event.name}
-                  className="w-full h-40 object-cover rounded-lg"
-                />
-              </div>
-              <div className="relative">
-                <img
-                  src={event.image || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=300&h=200&fit=crop"}
-                  alt={event.name}
-                  className="w-full h-40 object-cover rounded-lg"
-                />
-              </div>
-            </div>
+            ) : eventImages.length > 0 ? (
+              <div className="relative mb-8">
+                {/* Imagen principal del carrusel */}
+                <div className="relative w-full h-80 md:h-96 overflow-hidden rounded-lg flex items-center justify-center">
+                  <img
+                    src={eventImages[currentImageIndex]?.url}
+                    alt={`${event.eventName} - Imagen ${currentImageIndex + 1}`}
+                    className="w-full h-full object-contain transition-opacity duration-500"
+                  />
 
-            {/* Grid de imágenes */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop" 
-                  alt="Shakira 1" 
-                  className="w-full h-40 object-cover rounded-lg"
-                />
+                  {/* Botones de navegación */}
+                  {eventImages.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevImage}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-purple-600 bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-all duration-200"
+                      >
+                        <ChevronLeft className="w-6 h-6" />
+                      </button>
+                      <button
+                        onClick={nextImage}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-purple-600 bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-all duration-200"
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Indicadores */}
+                {eventImages.length > 1 && (
+                  <div className="flex justify-center mt-4 space-x-2">
+                    {eventImages.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => goToImage(index)}
+                        className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                          index === currentImageIndex
+                            ? 'bg-purple-600'
+                            : 'bg-gray-400 hover:bg-gray-600'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=300&h=200&fit=crop" 
-                  alt="Concierto" 
-                  className="w-full h-40 object-cover rounded-lg"
-                />
-              </div>
-              <div className="relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop" 
-                  alt="Shakira 2" 
-                  className="w-full h-40 object-cover rounded-lg"
-                />
-              </div>
-              <div className="relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=300&h=200&fit=crop" 
-                  alt="Shakira 3" 
-                  className="w-full h-40 object-cover rounded-lg"
-                />
-              </div>
-            </div>
+            ) : null}
 
           </div>
         </div>

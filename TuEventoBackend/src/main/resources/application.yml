@@ -1,10 +1,12 @@
 cloud:
   aws:
     credentials:
-      access-key:
-      secret-key:
+      access-key: AKIATCFIJTG2LLF7UBXG
+      secret-key: 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
     region:
-      static:
+      static: us-east-2
+    s3:
+      bucket: tu-evento-storage
     stack:
       auto: false
 application:
