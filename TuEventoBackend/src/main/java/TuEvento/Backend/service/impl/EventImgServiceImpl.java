@@ -9,6 +9,7 @@ import TuEvento.Backend.repository.EventRepository;
 import TuEvento.Backend.service.EventImgService;
 import TuEvento.Backend.service.aws.StorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +22,9 @@ public class EventImgServiceImpl implements EventImgService {
     private final EventImgRepository eventImgRepository;
     private final EventRepository eventRepository;
     private final StorageService storageService;
+
+    @Value("${application.bucket.name}")
+    private String bucketName;
 
     @Override
     public EventImgResponseDto saveEventImg(EventImgRequestDto requestDto) {
@@ -58,7 +62,7 @@ public class EventImgServiceImpl implements EventImgService {
         }
 
         String fileName = storageService.uploadFile(requestDto.getFile());
-        String url = "https://" + "tu-evento-storage" + ".s3.amazonaws.com/" + fileName; // Ajustar según configuración
+        String url = "https://" + bucketName + ".s3.amazonaws.com/" + fileName;
 
         EventImg eventImg = new EventImg();
         eventImg.setEvent(event);
