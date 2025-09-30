@@ -30,3 +30,19 @@ export interface IUserUpdatePhone {
   newTelephone: number;
 }
 
+export interface IAdress {
+  cityID: number;
+  street: string;
+  postalCode: string;
+}
+
+export interface IDepartment {
+  id: number;
+  name: string;
+}
+
+export interface ICity {
+  departmentID: number;
+  name: string;
+}
+

@@ -1,9 +1,10 @@
-import { View, Text, Image, Alert, TouchableOpacity, Platform, ScrollView, Modal } from 'react-native';
+import { View, Text, Image, Alert, TouchableOpacity, Platform, ScrollView, Modal, TextInput } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getUserIdFromToken, removeToken } from '../../api/services/Token';
-import { getUserProfile, updateUserPhone, updateUserBirthDate } from '../../api/services/UserApi';
-import { IUserProfile } from '../../api/types/IUser';
+import { getUserProfile, updateUserPhone, updateUserBirthDate, getAllDepartments, getCitiesByDepartment } from '../../api/services/UserApi';
+import { IUserProfile, IDepartment, ICity } from '../../api/types/IUser';
 import Input from "../../components/common/Input";
 import Button from '../../components/common/Button';
 import { useNavigation } from '@react-navigation/native';
@@ -24,9 +25,12 @@ export default function ProfileScreen() {
 
   // Estados para el modal de dirección
   const [showAddressModal, setShowAddressModal] = useState(false);
-  const [department, setDepartment] = useState('');
-  const [city, setCity] = useState('');
+  const [departments, setDepartments] = useState<IDepartment[]>([]);
+  const [cities, setCities] = useState<ICity[]>([]);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+  const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
   const [address, setAddress] = useState('');
+  const [postalCode, setPostalCode] = useState('');
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -52,6 +56,22 @@ export default function ProfileScreen() {
     };
 
     loadProfile();
+  }, []);
+
+  useEffect(() => {
+    const loadDepartmentsAndCities = async () => {
+      try {
+        const deptResponse = await getAllDepartments();
+        setDepartments(deptResponse.data || []);
+
+        const cityResponse = await getCitiesByDepartment();
+        setCities(cityResponse.data || []);
+      } catch (error) {
+        console.error('Error loading departments and cities:', error);
+      }
+    };
+
+    loadDepartmentsAndCities();
   }, []);
 
   const formatDate = (date: Date): string => {
@@ -121,7 +141,7 @@ export default function ProfileScreen() {
 
   const handleSaveAddress = () => {
     // Aquí iría tu lógica para guardar la dirección
-    console.log('Guardando dirección:', { department, city, address });
+    console.log('Guardando dirección:', { selectedDepartmentId, selectedCityId, address, postalCode });
     setShowAddressModal(false);
     Alert.alert('Éxito', 'Dirección actualizada correctamente');
   };
@@ -280,17 +300,19 @@ export default function ProfileScreen() {
               >
                 <View className="flex-row justify-between items-center">
                   <View className="flex-1">
-                    {department || city || address ? (
+                    {selectedDepartmentId || selectedCityId || address || postalCode ? (
                       <>
                         <Text className="text-white text-base font-semibold mb-1">
-                          {city || 'Ciudad'}
+                          {selectedCityId || 'Ciudad'}
                         </Text>
                         <Text className="text-gray-400 text-sm">
-                          {department || 'Departamento'}
-                        </Text>
-                        <Text className="text-gray-400 text-sm mt-1">
                           {address || 'Dirección'}
                         </Text>
+                        {postalCode && (
+                          <Text className="text-gray-400 text-sm mt-1">
+                            CP: {postalCode}
+                          </Text>
+                        )}
                       </>
                     ) : (
                       <Text className="text-gray-400 text-base">
@@ -335,37 +357,53 @@ export default function ProfileScreen() {
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>Editar Dirección</Text>
             </View>
 
-            {/* Departamento */}
-            <Text style={{ fontSize: 14, marginBottom: 6, color: '#555' }}>Departamento</Text>
-            <Input
-              value={department}
-              onChangeText={setDepartment}
-              placeholder="Ej: Huila"
-              label=""
-              style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12 }}
-            />
-
             {/* Ciudad */}
-            <Text style={{ fontSize: 14, marginBottom: 6, marginTop: 12, color: '#555' }}>Ciudad</Text>
-            <Input
-              value={city}
-              onChangeText={setCity}
-              placeholder="Ej: Neiva"
-              label=""
-              style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12 }}
-            />
+            <Text style={{ fontSize: 14, marginBottom: 6, color: '#555' }}>Ciudad</Text>
+            <View style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12 }}>
+              <Picker
+                selectedValue={selectedCityId}
+                onValueChange={(itemValue) => {
+                  setSelectedCityId(itemValue);
+                  const selectedCity = cities.find(c => c.name === itemValue);
+                  if (selectedCity) {
+                    setSelectedDepartmentId(selectedCity.departmentID);
+                  }
+                }}
+                style={{ height: 50, color: '#333' }}
+              >
+                <Picker.Item label="Seleccionar ciudad" value={null} />
+                {cities.map((city, index) => (
+                  <Picker.Item key={index} label={city.name} value={city.name} />
+                ))}
+              </Picker>
+            </View>
 
             {/* Dirección */}
             <Text style={{ fontSize: 14, marginBottom: 6, marginTop: 12, color: '#555' }}>Dirección</Text>
-            <Input
-              value={address}
-              onChangeText={setAddress}
-              placeholder="Ej: Calle 10 #5-20"
-              multiline
-              numberOfLines={2}
-              label=""
-              style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12 }}
-            />
+            <View style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 }}>
+              <TextInput
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Ej: Calle 10 #5-20"
+                multiline
+                numberOfLines={2}
+                style={{ color: '#333', fontSize:14}}
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            {/* Código Postal */}
+            <Text style={{ fontSize: 14, marginBottom: 6, marginTop: 12, color: '#555' }}>Código Postal</Text>
+            <View style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 }}>
+              <TextInput
+                value={postalCode}
+                onChangeText={setPostalCode}
+                placeholder="Ej: 050001"
+                style={{ color: '#333', fontSize: 16 }}
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+              />
+            </View>
 
             {/* Botones */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 25 }}>

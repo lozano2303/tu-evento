@@ -1,5 +1,5 @@
-import { USER_ENDPOINT, USER_PROFILE_ENDPOINT ,UPDATE_PHONE_ENDPOINT  } from "../../constants/Endpoint";
-import { IRequestRegister, IUserProfileResponse , IUserUpdatePhone } from "../types/IUser";
+import { USER_ENDPOINT, USER_PROFILE_ENDPOINT ,UPDATE_PHONE_ENDPOINT , GET_ALL_DEPARTMENTS_ENDPOINT , GET_CITIES_BY_DEPARTMENT_ENDPOINT , SEND_ADRESS_ENDPOINT } from "../../constants/Endpoint";
+import { IRequestRegister, IUserProfileResponse , IUserUpdatePhone , IAdress } from "../types/IUser";
 import { getToken } from "./Token";
 
 
@@ -146,6 +146,7 @@ export const updateUserBirthDate = async (userId: number, newBirthDate: string):
   }
 }; 
 
+// No funciona en el backend por el momento
 export const deactivateUserAccount = async (userId: number): Promise<IUserProfileResponse> => {
   try {
     const token = await getToken();
@@ -170,3 +171,47 @@ export const deactivateUserAccount = async (userId: number): Promise<IUserProfil
     throw error;
   }
 };
+
+// Traer todos los departamentos
+export const getAllDepartments = async (): Promise<any> => {
+  try {
+    const response = await fetch(`${GET_ALL_DEPARTMENTS_ENDPOINT}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const responseData = await response.json();
+    if (!response.ok) {
+      throw new Error(responseData.message || "Error al obtener los departamentos");
+    }
+    console.log('Departamentos obtenidos:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error en getAllDepartments:', error);
+    throw error;
+  }
+};
+
+// Traer ciudades
+export const getCitiesByDepartment = async(): Promise<any> => {
+  try {
+    const response = await fetch(`${GET_CITIES_BY_DEPARTMENT_ENDPOINT}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const responseData = await response.json();
+    if (!response.ok) {
+      throw new Error(responseData.message || "Error al obtener las ciudades");
+    }
+    console.log('Ciudades obtenidas:', responseData);
+    return responseData;
+  }
+  catch (error) {
+    console.error('Error en getCitiesByDepartment:', error);
+    throw error;
+  }
+};
+
