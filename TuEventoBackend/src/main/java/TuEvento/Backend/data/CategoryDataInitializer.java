@@ -5,6 +5,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import TuEvento.Backend.model.Category;
 import TuEvento.Backend.repository.CategoryRepository;
+import java.util.Optional; // Necesario para la búsqueda Optional
 
 @Component
 public class CategoryDataInitializer implements CommandLineRunner {
@@ -12,62 +13,52 @@ public class CategoryDataInitializer implements CommandLineRunner {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    // Método auxiliar para buscar o crear una categoría padre (Categoría raíz)
+    private Category findOrCreateParent(String name, String description) {
+        // Usa el método de repositorio optimizado: findByNameIgnoreCaseAndParentCategoryIsNull
+        return categoryRepository.findByNameIgnoreCaseAndParentCategoryIsNull(name)
+                .orElseGet(() -> {
+                    Category newCat = new Category();
+                    newCat.setName(name);
+                    newCat.setDescription(description);
+                    newCat.setParentCategory(null);
+                    return categoryRepository.save(newCat);
+                });
+    }
+
+    // Método auxiliar para crear una subcategoría solo si no existe
+    private void createSubcategoryIfNotExists(String name, String description, Category parent) {
+        // Usa el método de repositorio optimizado: existsByNameIgnoreCaseAndParentCategory
+        if (!categoryRepository.existsByNameIgnoreCaseAndParentCategory(name, parent)) {
+            Category subCat = new Category();
+            subCat.setName(name);
+            subCat.setDescription(description);
+            subCat.setParentCategory(parent);
+            categoryRepository.save(subCat);
+        }
+    }
+
     @Override
     public void run(String... args) throws Exception {
-        // Verificar y crear categoría padre Música
-        final Category musica = categoryRepository.findAll().stream()
-                .filter(c -> "Música".equalsIgnoreCase(c.getName()))
-                .findFirst().orElseGet(() -> {
-                    Category newCat = new Category();
-                    newCat.setName("Música");
-                    newCat.setDescription("Categoría para eventos musicales");
-                    newCat.setParentCategory(null);
-                    return categoryRepository.save(newCat);
-                });
+        
+        // 1. Categoría Padre: Música (Busca o Crea)
+        final Category musica = findOrCreateParent(
+            "Música", 
+            "Categoría para eventos musicales"
+        );
 
-        // Verificar y crear categoría padre Juegos
-        final Category juegos = categoryRepository.findAll().stream()
-                .filter(c -> "Juegos".equalsIgnoreCase(c.getName()))
-                .findFirst().orElseGet(() -> {
-                    Category newCat = new Category();
-                    newCat.setName("Juegos");
-                    newCat.setDescription("Categoría para eventos de juegos");
-                    newCat.setParentCategory(null);
-                    return categoryRepository.save(newCat);
-                });
+        // 2. Categoría Padre: Juegos (Busca o Crea)
+        final Category juegos = findOrCreateParent(
+            "Juegos", 
+            "Categoría para eventos de juegos"
+        );
 
-        // Subcategorías para Música
-        if (categoryRepository.findAll().stream().noneMatch(c -> "Rock".equalsIgnoreCase(c.getName()) && musica.equals(c.getParentCategory()))) {
-            Category rock = new Category();
-            rock.setName("Rock");
-            rock.setDescription("Subcategoría de rock");
-            rock.setParentCategory(musica);
-            categoryRepository.save(rock);
-        }
+        // 3. Subcategorías para Música (Verifica y Crea)
+        createSubcategoryIfNotExists("Rock", "Subcategoría de rock", musica);
+        createSubcategoryIfNotExists("Reguetón", "Subcategoría de reguetón", musica);
 
-        if (categoryRepository.findAll().stream().noneMatch(c -> "Reguetón".equalsIgnoreCase(c.getName()) && musica.equals(c.getParentCategory()))) {
-            Category regueton = new Category();
-            regueton.setName("Reguetón");
-            regueton.setDescription("Subcategoría de reguetón");
-            regueton.setParentCategory(musica);
-            categoryRepository.save(regueton);
-        }
-
-        // Subcategorías para Juegos
-        if (categoryRepository.findAll().stream().noneMatch(c -> "Estrategia".equalsIgnoreCase(c.getName()) && juegos.equals(c.getParentCategory()))) {
-            Category estrategia = new Category();
-            estrategia.setName("Estrategia");
-            estrategia.setDescription("Subcategoría de estrategia");
-            estrategia.setParentCategory(juegos);
-            categoryRepository.save(estrategia);
-        }
-
-        if (categoryRepository.findAll().stream().noneMatch(c -> "Acción".equalsIgnoreCase(c.getName()) && juegos.equals(c.getParentCategory()))) {
-            Category accion = new Category();
-            accion.setName("Acción");
-            accion.setDescription("Subcategoría de acción");
-            accion.setParentCategory(juegos);
-            categoryRepository.save(accion);
-        }
+        // 4. Subcategorías para Juegos (Verifica y Crea)
+        createSubcategoryIfNotExists("Estrategia", "Subcategoría de estrategia", juegos);
+        createSubcategoryIfNotExists("Acción", "Subcategoría de acción", juegos);
     }
 }
