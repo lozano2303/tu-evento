@@ -1,14 +1,14 @@
 cloud:
   aws:
     credentials:
-      access-key:
-      secret-key:
+      access-key: 
+      secret-key: 
     region:
       static:
     stack:
       auto: false
 application:
-  bucket:
+  bucket: 
     name: tu-evento-storage
 server:
   port: 9090
