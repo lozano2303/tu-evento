@@ -301,16 +301,12 @@ const DrawingCanvas = ({
     if (e.button !== 0) return
 
     const pos = toViewCoords(e.clientX, e.clientY)
-    console.log("Mouse down at:", pos)
 
     // Modo selección de asientos
     if (isSeatSelectionMode) {
-      console.log("Seat selection mode active")
       // Verificar si se hizo clic en un asiento de base de datos
       const clickedSeat = getSeatAt(pos)
-      console.log("Clicked seat:", clickedSeat)
       if (clickedSeat && clickedSeat.status === 'AVAILABLE') {
-        console.log("Selecting seat:", clickedSeat.id)
         onSeatSelect && onSeatSelect(clickedSeat.id)
         return
       }
@@ -447,8 +443,10 @@ const DrawingCanvas = ({
     const pos = toViewCoords(e.clientX, e.clientY)
 
     if (isPanning) {
-      const dx = (panOrigin.current.x - e.clientX) * (viewWidth / (zoom * svgRef.current.clientWidth))
-      const dy = (panOrigin.current.y - e.clientY) * (viewHeight / (zoom * svgRef.current.clientHeight))
+      const svg = svgRef.current
+      const rect = svg.getBoundingClientRect()
+      const dx = (panOrigin.current.x - e.clientX) * (viewWidth / (zoom * rect.width))
+      const dy = (panOrigin.current.y - e.clientY) * (viewHeight / (zoom * rect.height))
       setOffset({
         x: panOrigin.current.offset.x + dx,
         y: panOrigin.current.offset.y + dy,
@@ -631,9 +629,9 @@ const DrawingCanvas = ({
   const handleWheel = (e) => {
     e.preventDefault()
     const delta = -e.deltaY
-    const zoomFactor = 0.001
+    const zoomFactor = 0.001 // Increased sensitivity for better user experience
     let newZoom = zoom + delta * zoomFactor
-    newZoom = Math.max(0.2, Math.min(4, newZoom))
+    newZoom = Math.max(0.2, Math.min(4, newZoom)) // Consistent zoom limits with keyboard shortcuts
 
     const svg = svgRef.current
     const rect = svg.getBoundingClientRect()
@@ -884,8 +882,6 @@ const DrawingCanvas = ({
               const isSelected = selectedSeats.includes(seat.id)
               const isOccupied = seat.status === 'OCCUPIED'
               const isReserved = seat.status === 'RESERVED'
-
-              console.log("Rendering seat:", seat.id, "selectedSeats:", selectedSeats, "isSelected:", isSelected, "isOccupied:", isOccupied);
 
               let fillColor = '#22c55e' // Verde para disponible
               if (isSelected) fillColor = '#3b82f6' // Azul para seleccionado

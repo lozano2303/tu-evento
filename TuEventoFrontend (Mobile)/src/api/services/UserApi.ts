@@ -1,4 +1,4 @@
-import { USER_ENDPOINT, USER_PROFILE_ENDPOINT ,UPDATE_PHONE_ENDPOINT } from "../../constants/Endpoint";
+import { USER_ENDPOINT, USER_PROFILE_ENDPOINT ,UPDATE_PHONE_ENDPOINT  } from "../../constants/Endpoint";
 import { IRequestRegister, IUserProfileResponse , IUserUpdatePhone } from "../types/IUser";
 import { getToken } from "./Token";
 
@@ -144,4 +144,29 @@ export const updateUserBirthDate = async (userId: number, newBirthDate: string):
     
     throw new Error(error.message || 'Error desconocido al actualizar fecha');
   }
-};  
+}; 
+
+export const deactivateUserAccount = async (userId: number): Promise<IUserProfileResponse> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("No token found");
+    }
+    const response = await fetch(`${USER_PROFILE_ENDPOINT}/${userId}/deactive`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+    const responseData = await response.json();
+    if (!response.ok || responseData.success === false) {
+      throw new Error(responseData.message || "Error al desactivar la cuenta");
+    }
+    console.log('Cuenta desactivada:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error en deactivateUserAccount:', error);
+    throw error;
+  }
+};

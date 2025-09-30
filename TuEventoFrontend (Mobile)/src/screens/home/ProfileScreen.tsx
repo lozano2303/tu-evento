@@ -1,4 +1,4 @@
-import { View, Text, Image, Alert, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, Image, Alert, TouchableOpacity, Platform, ScrollView, Modal } from 'react-native';
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getUserIdFromToken, removeToken } from '../../api/services/Token';
@@ -8,6 +8,7 @@ import Input from "../../components/common/Input";
 import Button from '../../components/common/Button';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
@@ -21,6 +22,12 @@ export default function ProfileScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
+  // Estados para el modal de dirección
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [department, setDepartment] = useState('');
+  const [city, setCity] = useState('');
+  const [address, setAddress] = useState('');
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -31,7 +38,6 @@ export default function ProfileScreen() {
           setProfile(response.data);
           setEditedProfile(response.data);
           
-          // Si hay fecha de nacimiento, convertirla a Date
           if (response.data.birthDate) {
             setSelectedDate(new Date(response.data.birthDate));
           }
@@ -48,7 +54,6 @@ export default function ProfileScreen() {
     loadProfile();
   }, []);
 
-  // Función para formatear la fecha
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -57,7 +62,6 @@ export default function ProfileScreen() {
     });
   };
 
-  // Manejar el cambio de fecha
   const onDateChange = (event: any, date?: Date) => {
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
@@ -65,7 +69,7 @@ export default function ProfileScreen() {
     
     if (date) {
       setSelectedDate(date);
-      const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      const formattedDate = date.toISOString().split('T')[0];
       setEditedProfile(prev => ({ 
         ...prev, 
         birthDate: formattedDate 
@@ -73,53 +77,55 @@ export default function ProfileScreen() {
     }
   };
 
-  // Mostrar el DatePicker
   const showDatePickerModal = () => {
     setShowDatePicker(true);
   };
 
-  // Componente personalizado para el campo de fecha
-const DatePickerInput = () => (
-  <View className="mb-4">
-    <Text className="text-white text-base mb-2">
-      Fecha de nacimiento
-    </Text>
-    
-    {/* Input con gradiente */}
-    <LinearGradient
-      colors={['#8B5CF6', '#3B82F6']} 
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={{
-        borderRadius: 8,
-        padding: 1, 
-      }}
-    >
-      <TouchableOpacity
-        onPress={showDatePickerModal}
-        className="bg-[#1a0033] rounded-lg px-4 py-3 flex-row justify-between items-center"
+  const DatePickerInput = () => (
+    <View className="mb-4">
+      <Text className="text-white text-base mb-2">
+        Fecha de nacimiento
+      </Text>
+      
+      <LinearGradient
+        colors={['#8B5CF6', '#3B82F6']} 
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={{
+          borderRadius: 8,
+          padding: 1, 
+        }}
       >
-        <Text className="text-white text-base">
-          {editedProfile.birthDate ? formatDate(selectedDate) : 'Seleccionar fecha'}
-        </Text>
-      </TouchableOpacity>
-    </LinearGradient>
-    
-    {/* DatePicker Modal */}
-    {showDatePicker && (
-      <DateTimePicker
-        value={selectedDate}
-        mode="date"
-        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-        onChange={onDateChange}
-        maximumDate={new Date()} // No permitir fechas futuras
-        minimumDate={new Date(1900, 0, 1)} // Fecha mínima razonable
-      />
-    )}
-  </View>
-);
+        <TouchableOpacity
+          onPress={showDatePickerModal}
+          className="bg-[#1a0033] rounded-lg px-4 py-3 flex-row justify-between items-center"
+        >
+          <Text className="text-white text-base">
+            {editedProfile.birthDate ? formatDate(selectedDate) : 'Seleccionar fecha'}
+          </Text>
+        </TouchableOpacity>
+      </LinearGradient>
+      
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={onDateChange}
+          maximumDate={new Date()}
+          minimumDate={new Date(1900, 0, 1)}
+        />
+      )}
+    </View>
+  );
 
-  // Guardar cambios
+  const handleSaveAddress = () => {
+    // Aquí iría tu lógica para guardar la dirección
+    console.log('Guardando dirección:', { department, city, address });
+    setShowAddressModal(false);
+    Alert.alert('Éxito', 'Dirección actualizada correctamente');
+  };
+
   const handleSave = async () => {
     if (!userId) return;
 
@@ -127,7 +133,6 @@ const DatePickerInput = () => (
     let errors: string[] = [];
 
     try {
-      // Update phone if changed
       if (editedProfile.telephone && editedProfile.telephone !== profile?.telephone) {
         try {
           const newPhone = parseInt(editedProfile.telephone, 10);
@@ -144,7 +149,6 @@ const DatePickerInput = () => (
         }
       }
 
-      // Update birth date if changed
       if (editedProfile.birthDate && editedProfile.birthDate !== profile?.birthDate) {
         try {
           console.log('Intentando actualizar fecha de:', profile?.birthDate, 'a:', editedProfile.birthDate);
@@ -158,7 +162,6 @@ const DatePickerInput = () => (
         }
       }
 
-      // Mostrar resultado
       if (errors.length > 0) {
         Alert.alert('Errores al actualizar', errors.join('\n'));
       } else if (updated) {
@@ -172,8 +175,6 @@ const DatePickerInput = () => (
     }
   };
 
-
-  // Cerrar sesión
   const handleLogout = async () => {
     Alert.alert(
       'Cerrar Sesión',
@@ -185,6 +186,24 @@ const DatePickerInput = () => (
           onPress: async () => {
             await removeToken();
             navigation.navigate('LoginScreen' as never);
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeactivateAccount = () => {
+    Alert.alert(
+      'Desactivar Cuenta',
+      '¿Estás seguro que deseas desactivar tu cuenta? Esta acción es reversible.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Desactivar', 
+          style: 'destructive',
+          onPress: () => {
+            // Aquí iría la lógica de desactivación
+            console.log('Cuenta desactivada');
           }
         }
       ]
@@ -215,52 +234,158 @@ const DatePickerInput = () => (
 
   return (
     <View className="flex-1 bg-[#1a0033]">
-      <View className="px-6 pt-16">
+      <ScrollView 
+        className="flex-1"
+        contentContainerStyle={{ 
+          paddingHorizontal: 24, 
+          paddingTop: 64, 
+          paddingBottom: 120 
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View className="items-center mb-8">
-          <View className="w-24 h-24 bg-purple-600 rounded-full justify-center items-center mb-4">
+          <LinearGradient
+            colors={['#8B5CF6', '#3B82F6']}
+            className="w-24 h-24 rounded-full justify-center items-center mb-4"
+          >
             <Text className="text-white text-3xl font-bold">
               {profile?.fullName?.charAt(0).toUpperCase() || '?'}
             </Text>
-          </View>
+          </LinearGradient>
           <Text className="text-white text-2xl font-bold text-center">
-            Perfil del Usuario
+            {profile?.fullName || 'Usuario'}
           </Text>
         </View>
 
         {profile && (
           <View className="space-y-4">
             <Input
-              label="Nombre completo"
-              value={editedProfile.fullName || ''}
-              onChangeText={(value) => setEditedProfile(prev => ({ ...prev, fullName: value }))}
-            />
-            
-            <Input
               label="Teléfono"
               value={editedProfile.telephone || ''}
               onChangeText={(value) => setEditedProfile(prev => ({ ...prev, telephone: value }))}
               keyboardType="phone-pad"
             />
-            
-            {/* Campo de fecha personalizado */}
+
             <DatePickerInput />
-            
+
+            {/* Card de Dirección */}
+            <View className="mb-4">
+              <Text className="text-white text-base mb-2">
+                Dirección
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowAddressModal(true)}
+                className="bg-purple-900/30 border border-purple-700/50 rounded-lg p-4"
+              >
+                <View className="flex-row justify-between items-center">
+                  <View className="flex-1">
+                    {department || city || address ? (
+                      <>
+                        <Text className="text-white text-base font-semibold mb-1">
+                          {city || 'Ciudad'}
+                        </Text>
+                        <Text className="text-gray-400 text-sm">
+                          {department || 'Departamento'}
+                        </Text>
+                        <Text className="text-gray-400 text-sm mt-1">
+                          {address || 'Dirección'}
+                        </Text>
+                      </>
+                    ) : (
+                      <Text className="text-gray-400 text-base">
+                        Agregar dirección
+                      </Text>
+                    )}
+                  </View>
+                  <Text className="text-purple-400 text-2xl ml-2">›</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+
             <View className="pt-4 space-y-3">
               <Button label="Guardar Cambios" onPress={handleSave} />
               <TouchableOpacity
                 onPress={handleLogout}
-                className="bg-red-600 py-3 rounded-lg mt-4 "
+                className="bg-red-600 py-3 rounded-lg mt-4"
                 style={{ borderRadius: 25 }}
               >
-                <Text className="text-white text-center font-semibold text-base ">
+                <Text className="text-white text-center font-semibold text-base">
                   Cerrar Sesión
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
-      </View>
+      </ScrollView>
+
+      {/* Modal Elegante para Dirección */}
+      <Modal
+        visible={showAddressModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAddressModal(false)}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ backgroundColor: 'white', width: '90%', borderRadius: 16, padding: 20 }}>
+            
+            {/* Header */}
+            <View style={{ alignItems: 'center', marginBottom: 15 }}>
+              <View style={{ width: 40, height: 4, backgroundColor: '#ccc', borderRadius: 2, marginBottom: 5 }} />
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>Editar Dirección</Text>
+            </View>
+
+            {/* Departamento */}
+            <Text style={{ fontSize: 14, marginBottom: 6, color: '#555' }}>Departamento</Text>
+            <Input
+              value={department}
+              onChangeText={setDepartment}
+              placeholder="Ej: Huila"
+              label=""
+              style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12 }}
+            />
+
+            {/* Ciudad */}
+            <Text style={{ fontSize: 14, marginBottom: 6, marginTop: 12, color: '#555' }}>Ciudad</Text>
+            <Input
+              value={city}
+              onChangeText={setCity}
+              placeholder="Ej: Neiva"
+              label=""
+              style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12 }}
+            />
+
+            {/* Dirección */}
+            <Text style={{ fontSize: 14, marginBottom: 6, marginTop: 12, color: '#555' }}>Dirección</Text>
+            <Input
+              value={address}
+              onChangeText={setAddress}
+              placeholder="Ej: Calle 10 #5-20"
+              multiline
+              numberOfLines={2}
+              label=""
+              style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12 }}
+            />
+
+            {/* Botones */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 25 }}>
+              <TouchableOpacity
+                onPress={() => setShowAddressModal(false)}
+                style={{ flex: 1, marginRight: 8, backgroundColor: '#f87171', paddingVertical: 12, borderRadius: 10 }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSaveAddress}
+                style={{ flex: 1, marginLeft: 8, backgroundColor: '#3b82f6', paddingVertical: 12, borderRadius: 10 }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }

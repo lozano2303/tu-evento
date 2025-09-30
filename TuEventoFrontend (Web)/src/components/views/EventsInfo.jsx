@@ -51,8 +51,11 @@ const ReservaEvento = () => {
 
   const MAX_SEATS_PER_PURCHASE = 10;
 
+  // Default price constant
+  const DEFAULT_SEAT_PRICE = 30000;
+
   const selectedSeatDetails = useMemo(() => {
-    const sectionPrice = selectedSection?.price || 30000;
+    const sectionPrice = selectedSection?.price || DEFAULT_SEAT_PRICE;
     return selectedSeats.map(seatId => {
       const seat = seats.find(s => s.id === seatId);
       return seat ? {
@@ -168,16 +171,7 @@ const ReservaEvento = () => {
     }
   }, [showMapModal]);
 
-  useEffect(() => {
-    if (eventImages.length > 1) {
-      const interval = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % eventImages.length);
-      }, 3000); 
-
-      return () => clearInterval(interval);
-    }
-  }, [eventImages.length]);
-
+  // Real-time seat status updates
   useEffect(() => {
     if (!showMapModal || !selectedSection) return;
 
@@ -185,7 +179,7 @@ const ReservaEvento = () => {
       await loadSeatsForSection(selectedSection.sectionID);
       await loadEventLayout();
       setUpdateKey(prev => prev + 1);
-    }, 2000); 
+    }, 2000); // Update every 2 seconds
 
     return () => clearInterval(interval);
   }, [showMapModal, selectedSection]);
@@ -201,12 +195,13 @@ const ReservaEvento = () => {
     try {
       await releaseExpiredReservations();
 
+      // Load sections and seats FIRST
       const loadedSeats = await loadSectionsAndSeats();
       await loadEventLayout();
-    
+      // Generate seats from layout if layout exists
       if (selectedSection && layoutElements.some(el => el.type === 'seatRow')) {
         await generateSeatsFromLayout(layoutElements);
-  
+        // Reload seats after generation
         await loadSeatsForSection(selectedSection.sectionID);
       }
 
@@ -319,21 +314,47 @@ const ReservaEvento = () => {
     setRating(starNumber);
   };
 
+  // Function to match seats with layout elements
   const matchSeatsWithLayout = (layoutElements, seats) => {
+    console.log("Matching layout with seats:", { layoutElementsCount: layoutElements.length, seatsCount: seats.length });
     return layoutElements.map(element => {
       if (element.type === 'seatRow' && element.seatPositions) {
         const updatedPositions = element.seatPositions.map(pos => {
           const matchingSeat = seats.find(seat =>
             seat.row === pos.row && seat.seatNumber === pos.seatNumber.toString()
           );
+
           if (matchingSeat) {
+            // CRITICAL: Always use the REAL database status - never override with layout status
+            let realStatus;
+            console.log(`Seat ${matchingSeat.id}: row=${matchingSeat.row}, seatNumber=${matchingSeat.seatNumber}, status=${matchingSeat.status}, type=${typeof matchingSeat.status}`);
+
+            if (typeof matchingSeat.status === 'boolean') {
+              // Boolean status from backend: true = available, false = occupied
+              realStatus = matchingSeat.status ? "AVAILABLE" : "OCCUPIED";
+            } else if (typeof matchingSeat.status === 'string') {
+              // String status: use as-is (should be "AVAILABLE" or "OCCUPIED")
+              realStatus = matchingSeat.status;
+            } else {
+              // Fallback - assume available if unknown
+              realStatus = "AVAILABLE";
+            }
+
+            console.log(`Setting seat ${matchingSeat.id} status to: ${realStatus}`);
+
             return {
               ...pos,
-              status: matchingSeat.status ? "AVAILABLE" : "OCCUPIED",
+              status: realStatus,
               id: matchingSeat.id
             };
           }
-          return pos;
+
+          // If no matching seat in database, mark as unavailable
+          console.log(`No matching seat found for position row=${pos.row}, seatNumber=${pos.seatNumber}`);
+          return {
+            ...pos,
+            status: "UNAVAILABLE"
+          };
         });
         return { ...element, seatPositions: updatedPositions };
       }
@@ -341,7 +362,7 @@ const ReservaEvento = () => {
     });
   };
 
-  const loadEventLayout = async () => {
+  const loadEventLayout = async (currentSeats = null) => {
     if (!eventId) return;
 
     try {
@@ -350,7 +371,12 @@ const ReservaEvento = () => {
       if (result.success && result.data && result.data.layoutData && result.data.layoutData.elements) {
         let elements = result.data.layoutData.elements;
         console.log("Layout elements cargados:", elements);
-        elements = matchSeatsWithLayout(elements, seats);
+
+        // Use provided seats or fall back to state
+        const seatsToMatch = currentSeats || seats;
+        console.log("Matching with seats:", seatsToMatch);
+
+        elements = matchSeatsWithLayout(elements, seatsToMatch);
         setLayoutElements(elements);
         setLayoutId(result.data.id);
       } else {
@@ -486,7 +512,7 @@ const ReservaEvento = () => {
           const defaultSection = {
             eventId: parseInt(eventId),
             sectionName: 'General',
-            price: 30000
+            price: DEFAULT_SEAT_PRICE
           };
           const createResult = await createSection(defaultSection);
           if (createResult.success && createResult.data) {
@@ -751,8 +777,32 @@ const ReservaEvento = () => {
         alert('¡Reserva realizada exitosamente! Revisa tu correo electrónico para el ticket con QR.');
         setSelectedSeats([]);
         setShowPurchaseModal(false);
-        // Reload seats to reflect changes
+        // CRITICAL: Immediately update UI to reflect occupied seats
         if (selectedSection) {
+          // Update seats state to mark purchased seats as occupied
+          setSeats(prevSeats =>
+            prevSeats.map(seat =>
+              allSeatIds.includes(seat.id)
+                ? { ...seat, status: 'OCCUPIED' }
+                : seat
+            )
+          );
+          // Update layout to reflect occupied seats
+          setLayoutElements(prevElements =>
+            prevElements.map(element => {
+              if (element.type === 'seatRow' && element.seatPositions) {
+                const updatedPositions = element.seatPositions.map(pos => {
+                  if (allSeatIds.includes(pos.id)) {
+                    return { ...pos, status: 'OCCUPIED' };
+                  }
+                  return pos;
+                });
+                return { ...element, seatPositions: updatedPositions };
+              }
+              return element;
+            })
+          );
+          // Then reload from server to ensure consistency
           await loadSeatsForSection(selectedSection.sectionID);
           await loadEventLayout();
         }
@@ -937,39 +987,10 @@ const ReservaEvento = () => {
                     </div>
                   ))
                 ) : (
-                  <>
-                    <div className="flex items-center justify-between bg-gray-800 p-4 rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-white">$30,000</span>
-                      </div>
-                      <span className="text-white">2:00 PM</span>
-                    </div>
-
-                    <div className="flex items-center justify-between bg-gray-800 p-4 rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-white">$30,000</span>
-                      </div>
-                      <span className="text-white">5:00 PM</span>
-                    </div>
-
-                    <div className="flex items-center justify-between bg-gray-800 p-4 rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-white">$30,000</span>
-                      </div>
-                      <span className="text-white">6:00 PM</span>
-                    </div>
-
-                    <div className="flex items-center justify-between bg-gray-800 p-4 rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span className="text-white">$30,000</span>
-                      </div>
-                      <span className="text-white">7:00 PM</span>
-                    </div>
-                  </>
+                  <div className="text-center py-4">
+                    <p className="text-gray-400">No hay tickets disponibles en este momento.</p>
+                    <p className="text-gray-500 text-sm mt-2">Los precios se mostrarán cuando estén disponibles.</p>
+                  </div>
                 )}
 
                 {/* Botón para ver mapa del evento */}
@@ -1271,7 +1292,7 @@ const ReservaEvento = () => {
                 {/* Precio de sección */}
                 <div className="mb-4 p-3 bg-purple-50 rounded-lg">
                   <div className="text-sm text-gray-600">Precio por asiento:</div>
-                  <div className="font-bold text-purple-600">${selectedSection?.price || 30000}</div>
+                  <div className="font-bold text-purple-600">${selectedSection?.price || DEFAULT_SEAT_PRICE}</div>
                 </div>
 
                 {/* Asientos seleccionados */}
@@ -1305,7 +1326,7 @@ const ReservaEvento = () => {
                       </span>
                     </div>
                     <div className="text-xs text-gray-600 mt-1">
-                      ${selectedSection?.price || 30000} × {selectedSeatCount} asiento(s)
+                      ${selectedSection?.price || DEFAULT_SEAT_PRICE} × {selectedSeatCount} asiento(s)
                     </div>
                   </div>
                 )}

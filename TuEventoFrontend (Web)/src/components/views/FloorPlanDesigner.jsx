@@ -969,6 +969,20 @@ const FloorPlanDesignerInner = () => {
         price: section.meta?.price || 0
       }));
 
+      // Validate section names are unique
+      const sectionNames = sections.map(s => s.sectionName);
+      const uniqueNames = new Set(sectionNames);
+      if (uniqueNames.size !== sectionNames.length) {
+        alert('Error: No se permiten secciones con nombres duplicados. Cada sección debe tener un nombre único.');
+        return;
+      }
+
+      // Check for empty section names
+      if (sectionNames.some(name => !name.trim())) {
+        alert('Error: Todas las secciones deben tener un nombre válido.');
+        return;
+      }
+
       // Save sections
       const createdSections = [];
       for (const section of sections) {
@@ -1452,6 +1466,18 @@ const FloorPlanDesignerInner = () => {
                     return;
                   }
 
+                  // Check for duplicate section names in current layout
+                  const existingSectionNamesInLayout = elements
+                    .filter(el => el.type === 'section')
+                    .map(el => el.meta?.label || 'Sección');
+
+                  if (existingSectionNamesInLayout.includes(newSectionData.name.trim())) {
+                    alert('Ya existe una sección con este nombre en el diseño actual. Por favor elija un nombre diferente.');
+                    return;
+                  }
+
+                  // Additional validation will be handled by backend
+
                   setIsCreatingSection(true);
 
                   try {
@@ -1470,11 +1496,18 @@ const FloorPlanDesignerInner = () => {
                     const sectionResult = await createSection(sectionData);
                     console.log('Respuesta completa de createSection:', sectionResult);
 
+                    // Check for validation errors from backend
+                    if (!sectionResult || !sectionResult.success) {
+                      const errorMessage = sectionResult?.message || 'Error desconocido al crear la sección';
+                      alert('Error: ' + errorMessage);
+                      return;
+                    }
+
                     // Verificar diferentes estructuras de respuesta posibles
                     let newSection = null;
-                    if (sectionResult && sectionResult.data) {
+                    if (sectionResult.data) {
                       newSection = sectionResult.data;
-                    } else if (sectionResult && typeof sectionResult === 'object' && sectionResult.sectionID) {
+                    } else if (typeof sectionResult === 'object' && sectionResult.sectionID) {
                       newSection = sectionResult;
                     }
 

@@ -1,16 +1,14 @@
 cloud:
   aws:
     credentials:
-      access-key: AKIATCFIJTG2LLF7UBXG
-      secret-key: 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
+      access-key:
+      secret-key:
     region:
-      static: us-east-2
-    s3:
-      bucket: tu-evento-storage
+      static:
     stack:
       auto: false
 application:
   bucket:
     name: tu-evento-storage
 server:
-   port: 8080
+  port: 9090

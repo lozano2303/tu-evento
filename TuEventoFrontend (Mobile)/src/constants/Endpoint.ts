@@ -21,3 +21,5 @@ export const UPDATE_PHONE_ENDPOINT = `${API_BASE_URL}/users/`; // Update phone e
 export const GET_ALL_EVENTS_ENDPOINT = `${API_BASE_URL}/event/getAll`; // Get all events endpoi
 
 export const GET_EVENT_BY_ID_ENDPOINT = `${API_BASE_URL}/event`; // Get event by ID endpoint
+
+export const BUY_TICKET_ENDPOINT = `${API_BASE_URL}/tickets/cancel `; // Cancel ticket endpoint
