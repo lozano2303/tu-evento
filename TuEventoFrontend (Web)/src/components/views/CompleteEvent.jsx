@@ -133,20 +133,19 @@ const CompleteEvent = () => {
           </div>
         );
 
-      case 2: // Complete
+      case 2: // Next to Event Management
         return (
           <div className="text-center">
             <h3 className="text-2xl font-bold text-white mb-4">¡Todo Listo!</h3>
             <p className="text-gray-300 mb-6">
               Tu evento tiene todas las imágenes y categorías necesarias.
-              ¿Quieres completarlo y publicarlo?
+              Haz clic en "Siguiente" para continuar con la publicación.
             </p>
             <button
-              onClick={handleComplete}
-              disabled={completing}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              onClick={() => navigate('/event-management')}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
-              {completing ? 'Completando...' : 'Completar Evento'}
+              Siguiente
             </button>
           </div>
         );
@@ -230,11 +229,11 @@ const CompleteEvent = () => {
           </button>
 
           <button
-            onClick={currentStep === steps.length - 1 ? handleComplete : handleNext}
+            onClick={currentStep === steps.length - 1 ? () => navigate('/event-management') : handleNext}
             disabled={(currentStep === 0 && !hasImages) || (currentStep === 1 && !hasCategories)}
             className="flex items-center bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
-            {currentStep === steps.length - 1 ? 'Completar' : 'Siguiente'}
+            {currentStep === steps.length - 1 ? 'Siguiente' : 'Siguiente'}
             {currentStep < steps.length - 1 && <ArrowRight className="w-5 h-5 ml-2" />}
           </button>
         </div>

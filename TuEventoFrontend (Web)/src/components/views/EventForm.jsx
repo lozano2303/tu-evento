@@ -510,7 +510,7 @@ const EventForm = () => {
       return;
     }
 
-    // Step 3: Validate categories and finalize event
+    // Step 3: Validate categories and redirect to event management
     if (!categories.parentCategory) {
       setFieldErrors({ parentCategory: 'Debe seleccionar una categoría principal' });
       return;
@@ -525,21 +525,8 @@ const EventForm = () => {
       }
     }
 
-    setLoading(true);
-    try {
-      // Complete event (set status to active) - category should already be assigned
-      const completeResult = await completeEvent(createdEvent.eventID || createdEvent.id);
-      if (completeResult.success) {
-        setSuccess(true);
-      } else {
-        setError(completeResult.message || 'Error al completar el evento');
-      }
-    } catch (err) {
-      setError('Error al completar el evento');
-      console.error('Error completing event:', err);
-    } finally {
-      setLoading(false);
-    }
+    // Redirect to event management instead of completing the event
+    navigate('/event-management');
   };
 
   const handleFloorPlanDesigner = () => {
@@ -581,19 +568,19 @@ const EventForm = () => {
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center mb-8">
       <div className="flex items-center space-x-4">
-        <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+        <div key="step-1" className={`flex items-center justify-center w-8 h-8 rounded-full ${
           currentStep >= 1 ? 'bg-purple-600 text-white' : 'bg-gray-600 text-gray-400'
         }`}>
           1
         </div>
-        <div className={`w-12 h-0.5 ${currentStep >= 2 ? 'bg-purple-600' : 'bg-gray-600'}`}></div>
-        <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+        <div key="step-1-2" className={`w-12 h-0.5 ${currentStep >= 2 ? 'bg-purple-600' : 'bg-gray-600'}`}></div>
+        <div key="step-2" className={`flex items-center justify-center w-8 h-8 rounded-full ${
           currentStep >= 2 ? 'bg-purple-600 text-white' : 'bg-gray-600 text-gray-400'
         }`}>
           2
         </div>
-        <div className={`w-12 h-0.5 ${currentStep >= 3 ? 'bg-purple-600' : 'bg-gray-600'}`}></div>
-        <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+        <div key="step-2-3" className={`w-12 h-0.5 ${currentStep >= 3 ? 'bg-purple-600' : 'bg-gray-600'}`}></div>
+        <div key="step-3" className={`flex items-center justify-center w-8 h-8 rounded-full ${
           currentStep >= 3 ? 'bg-purple-600 text-white' : 'bg-gray-600 text-gray-400'
         }`}>
           3
@@ -824,8 +811,8 @@ const EventForm = () => {
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     >
                       <option value="">Selecciona una ciudad</option>
-                      {cities.map(city => (
-                        <option key={city.departmentID} value={city.departmentID}>
+                      {cities.map((city, index) => (
+                        <option key={`city-${city.departmentID}-${index}`} value={city.departmentID}>
                           {city.name}
                         </option>
                       ))}
@@ -861,8 +848,8 @@ const EventForm = () => {
                     className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
                     <option value="">Selecciona una ubicación</option>
-                    {locations.map(location => (
-                      <option key={location.addressID} value={location.addressID}>
+                    {locations.map((location, index) => (
+                      <option key={`location-${location.addressID}-${index}`} value={location.addressID}>
                         {location.name}
                       </option>
                     ))}
@@ -890,7 +877,7 @@ const EventForm = () => {
                     >
                       <option value="">Selecciona una categoría</option>
                       {availableCategories.map((category, index) => (
-                        <option key={`cat-${index}`} value={(category.categoryID || category.id)?.toString() || ''}>
+                        <option key={`cat-${category.categoryID || category.id}-${index}`} value={(category.categoryID || category.id)?.toString() || ''}>
                           {category.name}
                         </option>
                       ))}
@@ -915,14 +902,14 @@ const EventForm = () => {
                         {categories.parentCategory ? 'Selecciona una subcategoría' : 'Primero selecciona una categoría principal'}
                       </option>
                       {availableSubCategories.length > 0 ? (
-                        availableSubCategories.map((subCategory) => (
-                          <option key={`sub-${subCategory.categoryID}`} value={subCategory.categoryID}>
+                        availableSubCategories.map((subCategory, index) => (
+                          <option key={`sub-${subCategory.categoryID}-${index}`} value={subCategory.categoryID}>
                             {subCategory.name}
                           </option>
                         ))
                       ) : categories.parentCategory ? (
                         // Si no hay subcategorías, mostrar opción para usar la categoría padre
-                        <option key={`parent-fallback-${categories.parentCategory}`} value={categories.parentCategory}>
+                        <option key={`parent-fallback-${categories.parentCategory}-${Date.now()}`} value={categories.parentCategory}>
                           Usar: {availableCategories.find(cat => cat.categoryID === parseInt(categories.parentCategory))?.name}
                         </option>
                       ) : null}
@@ -950,15 +937,15 @@ const EventForm = () => {
                   disabled={loading}
                   className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
                 >
-                  {loading ? 'Creando...' : currentStep === 1 || currentStep === 2 ? (
+                  {loading ? 'Procesando...' : currentStep === 1 || currentStep === 2 ? (
                     <>
                       Siguiente
                       <ChevronRight className="w-4 h-4" />
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4" />
-                      Crear Evento
+                      Siguiente
+                      <ChevronRight className="w-4 h-4" />
                     </>
                   )}
                 </button>

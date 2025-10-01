@@ -69,11 +69,9 @@ const TuEvento = () => {
         setLoading(true);
         const result = await getAllEvents();
         if (result.success) {
-          // Filter events: show active events with images and categories to all, all events to creator
+          // Filter events: show only completed events (status=1) with images and categories to all users
           const filteredEvents = result.data.filter(event => {
-            if (event.status === 1 && eventImagesMap[event.id] && eventCategoriesMap[event.id]) return true; // Active events with images and categories for all
-            if (currentUserId && event.userID?.userID === currentUserId) return true; // All events for creator
-            return false;
+            return event.status === 1 && eventImagesMap[event.id] && eventCategoriesMap[event.id];
           });
 
           setEvents(filteredEvents);

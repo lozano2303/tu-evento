@@ -1,24 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Plus, MapPin, Users, Settings, ArrowLeft } from 'lucide-react';
-import { getAllEvents } from '../../services/EventService.js';
+import { Calendar, Plus, MapPin, Users, Settings, ArrowLeft, Upload, Tag } from 'lucide-react';
+import { getAllEvents, completeEvent } from '../../services/EventService.js';
+import { getEventImages } from '../../services/EventImgService.js';
+import { getCategoriesByEvent } from '../../services/CategoryService.js';
 
 const EventManagement = () => {
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [eventImagesMap, setEventImagesMap] = useState({});
+  const [eventCategoriesMap, setEventCategoriesMap] = useState({});
 
   useEffect(() => {
-    loadEvents();
+    const userId = localStorage.getItem('userID');
+    setCurrentUserId(userId ? parseInt(userId) : null);
   }, []);
+
+  useEffect(() => {
+    if (currentUserId) {
+      loadEvents();
+    }
+  }, [currentUserId]);
 
   const loadEvents = async () => {
     try {
       setLoading(true);
       const result = await getAllEvents();
       if (result.success) {
-        setEvents(result.data);
+        // Filter only user's events with status 0 (in progress)
+        const userEvents = result.data.filter(event =>
+          currentUserId && event.userID?.userID === currentUserId && event.status === 0
+        );
+        setEvents(userEvents);
+
+        // Load images and categories for each event
+        await loadEventImages(userEvents);
+        await loadEventCategories(userEvents);
       } else {
         setError(result.message || 'Error al cargar eventos');
       }
@@ -30,12 +50,58 @@ const EventManagement = () => {
     }
   };
 
+  const loadEventImages = async (eventsList) => {
+    const newImagesMap = { ...eventImagesMap };
+    for (const event of eventsList) {
+      try {
+        const imagesResult = await getEventImages(event.id);
+        newImagesMap[event.id] = imagesResult.success && imagesResult.data && imagesResult.data.length > 0;
+      } catch (error) {
+        newImagesMap[event.id] = false;
+      }
+    }
+    setEventImagesMap(newImagesMap);
+  };
+
+  const loadEventCategories = async (eventsList) => {
+    const newCategoriesMap = { ...eventCategoriesMap };
+    for (const event of eventsList) {
+      try {
+        const categoriesResult = await getCategoriesByEvent(event.id);
+        newCategoriesMap[event.id] = categoriesResult.success && categoriesResult.data && categoriesResult.data.length > 0;
+      } catch (error) {
+        newCategoriesMap[event.id] = false;
+      }
+    }
+    setEventCategoriesMap(newCategoriesMap);
+  };
+
   const handleCreateEvent = () => {
     navigate('/create-event');
   };
 
   const handleFloorPlanDesigner = (eventId) => {
     navigate(`/FloorPlanDesigner?eventId=${eventId}`);
+  };
+
+  const handlePublishEvent = async (eventId) => {
+    try {
+      const result = await completeEvent(eventId);
+      if (result.success) {
+        alert('¡Evento publicado exitosamente!');
+        // Reload events to update the list
+        loadEvents();
+      } else {
+        alert('Error al publicar el evento: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error publishing event:', error);
+      alert('Error al publicar el evento');
+    }
+  };
+
+  const handleCompleteEvent = (eventId) => {
+    navigate(`/complete-event?id=${eventId}`);
   };
 
   if (loading) {
@@ -128,60 +194,106 @@ const EventManagement = () => {
           {/* Events List */}
           <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-700">
-              <h2 className="text-xl font-semibold">Mis Eventos</h2>
+              <h2 className="text-xl font-semibold">Eventos en Proceso</h2>
+              <p className="text-sm text-gray-400 mt-1">Completa tus eventos para publicarlos</p>
             </div>
 
             {events.length === 0 ? (
               <div className="p-8 text-center">
                 <Calendar className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No tienes eventos aún</h3>
+                <h3 className="text-xl font-semibold mb-2">No tienes eventos en proceso</h3>
                 <p className="text-gray-400 mb-4">
-                  Crea tu primer evento para comenzar a gestionar tus actividades.
+                  Todos tus eventos están publicados o crea uno nuevo para comenzar.
                 </p>
                 <button
                   onClick={handleCreateEvent}
                   className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
                 >
-                  Crear Primer Evento
+                  Crear Nuevo Evento
                 </button>
               </div>
             ) : (
               <div className="divide-y divide-gray-700">
-                {events.map(event => (
-                  <div key={event.id} className="p-6 hover:bg-gray-700/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold mb-2">{event.eventName}</h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-400">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {event.startDate ? new Date(event.startDate).toLocaleDateString() : 'Fecha no definida'}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            {event.locationID?.address?.city?.name || event.locationID?.name || 'Ubicación no definida'}
-                          </span>
+                {events.map(event => {
+                  const hasImages = eventImagesMap[event.id];
+                  const hasCategories = eventCategoriesMap[event.id];
+                  const isComplete = hasImages && hasCategories;
+
+                  return (
+                    <div key={event.id} className="p-6 hover:bg-gray-700/50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold">{event.eventName}</h3>
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              isComplete
+                                ? 'bg-green-600 text-white'
+                                : 'bg-yellow-600 text-black'
+                            }`}>
+                              {isComplete ? 'Listo para publicar' : 'En proceso'}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              {event.startDate ? new Date(event.startDate).toLocaleDateString() : 'Fecha no definida'}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              {event.locationID?.address?.city?.name || event.locationID?.name || 'Ubicación no definida'}
+                            </span>
+                          </div>
+                          <p className="text-gray-300 mb-3">{event.description}</p>
+
+                          {/* Status indicators */}
+                          <div className="flex items-center gap-4 text-sm">
+                            <div className={`flex items-center gap-2 ${hasImages ? 'text-green-400' : 'text-red-400'}`}>
+                              <Upload className="w-4 h-4" />
+                              <span>{hasImages ? 'Imágenes completadas' : 'Faltan imágenes'}</span>
+                            </div>
+                            <div className={`flex items-center gap-2 ${hasCategories ? 'text-green-400' : 'text-red-400'}`}>
+                              <Tag className="w-4 h-4" />
+                              <span>{hasCategories ? 'Categorías completadas' : 'Faltan categorías'}</span>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-gray-300 mt-2">{event.description}</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => handleFloorPlanDesigner(event.id)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                        >
-                          <Settings className="w-4 h-4" />
-                          Maquetación
-                        </button>
-                        <button
-                          onClick={() => navigate(`/event-info?id=${event.id}`)}
-                          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-                        >
-                          Ver Detalles
-                        </button>
+                        <div className="flex items-center gap-3">
+                          {!isComplete && (
+                            <button
+                              onClick={() => handleCompleteEvent(event.id)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                            >
+                              <Settings className="w-4 h-4" />
+                              Completar
+                            </button>
+                          )}
+                          <button
+                            onClick={() => navigate(`/event-info?id=${event.id}`)}
+                            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+                          >
+                            Ver Detalles
+                          </button>
+                          {isComplete && (
+                            <button
+                              onClick={() => handlePublishEvent(event.id)}
+                              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Publicar Evento
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleFloorPlanDesigner(event.id)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                          >
+                            <Settings className="w-4 h-4" />
+                            Maquetación
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
