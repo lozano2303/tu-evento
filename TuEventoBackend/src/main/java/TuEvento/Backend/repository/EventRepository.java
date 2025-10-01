@@ -20,4 +20,10 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     Optional<Event> findByEventNameAndStartDateAndFinishDateAndStatus(String eventName, LocalDate startDate,
             LocalDate finishDate, int status);
     List<Event> findAllByUserID_UserIDAndStatusNot(int userId, int status);
+    List<Event> findByEventNameContainingIgnoreCaseAndStatusNot(String name, int i);
+    List<Event> findByEventNameContainingIgnoreCase(String name);
+    List<Event> findByStartDateOrFinishDateAndStatusNot(LocalDate date, LocalDate date2, int i);
+    List<Event> findByStartDateOrFinishDate(LocalDate date, LocalDate date2);
+    List<Event> findByLocationID_LocationIDAndStatusNot(Integer locationId, int i);
+    List<Event> findByLocationID_LocationID(Integer locationId);
 }

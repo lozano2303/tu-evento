@@ -1,5 +1,6 @@
 package TuEvento.Backend.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,9 +37,17 @@ public class EventController {
     public ResponseDto<EventDto> updateEvent(@RequestBody ResponseEvent responseEvent, EventDto eventDto) {
         return eventService.updateEvent(responseEvent,eventDto);
     }
-    @DeleteMapping("/cancel")
-    public ResponseDto<EventDto> deleteEvent(@RequestBody EventDto eventDto) {
+    @DeleteMapping("/cancel/{id}")
+    public ResponseDto<EventDto> cancelEvent(@PathVariable int id) {
+        EventDto eventDto = new EventDto();
+        eventDto.setId(id);
         return eventService.CancelEvent(eventDto);
+    }
+    @PutMapping("/publish/{id}")
+    public ResponseDto<EventDto> publishEvent(@PathVariable int id) {
+        EventDto eventDto = new EventDto();
+        eventDto.setId(id);
+        return eventService.publishEvent(eventDto);
     }
     @GetMapping("/{id}")
     public ResponseDto<EventDto> getEvent(@PathVariable int id) {
@@ -54,5 +64,13 @@ public class EventController {
     @GetMapping("/getAll")
     public ResponseDto<List<EventDto>> getAllEvent() {
         return eventService.getAllEvent();
+    }
+    @GetMapping("/filter")
+    public ResponseDto<List<EventDto>> filterEvents(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "false") boolean onlyUpcoming,
+            @RequestParam(required = false) Integer locationId) {
+        return eventService.filterEvents(name, date, onlyUpcoming, locationId);
     }
 }

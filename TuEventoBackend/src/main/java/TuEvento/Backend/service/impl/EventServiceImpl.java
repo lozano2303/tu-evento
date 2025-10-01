@@ -11,9 +11,14 @@ import TuEvento.Backend.repository.EventRepository;
 import TuEvento.Backend.repository.UserRepository;
 import TuEvento.Backend.repository.LocationRepository;
 import TuEvento.Backend.service.EventService;
+
+import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -90,7 +95,7 @@ public class EventServiceImpl implements EventService {
             Event event = toEntity(eventDto);
             event.setUserID(userOpt.get());
             event.setLocationID(locationOpt.get());
-            event.setStatus(1); // Active status
+            event.setStatus(0); // Active status
             Event savedEvent = eventRepository.save(event);
 
             EventDto resultDto = toDto(savedEvent);
@@ -170,13 +175,82 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public ResponseDto<EventDto> CancelEvent(EventDto eventDto) {
         try {
-            // Implementation for cancel
-            return ResponseDto.error("Método no implementado");
+            // Buscar el evento por ID
+            Optional<Event> eventOpt = eventRepository.findById(eventDto.getId());
+            if (!eventOpt.isPresent()) {
+                return ResponseDto.error("Evento no encontrado");
+            }
+
+            Event event = eventOpt.get();
+            event.setStatus(3); // Cambiar el status a 3 (cancelado)
+
+            Event savedEvent = eventRepository.save(event);
+            EventDto resultDto = toDto(savedEvent);
+
+            return ResponseDto.ok("Evento cancelado correctamente", resultDto);
         } catch (Exception e) {
             return ResponseDto.error("Error al cancelar el evento: " + e.getMessage());
         }
     }
+    @Override
+    public ResponseDto<EventDto> publishEvent(EventDto eventDto) {
+        try {
+            // Buscar el evento por ID
+            Optional<Event> eventOpt = eventRepository.findById(eventDto.getId());
+            if (!eventOpt.isPresent()) {
+                return ResponseDto.error("Evento no encontrado");
+            }
 
+            Event event = eventOpt.get();
+            event.setStatus(1); // Cambiar el status a 3 (cancelado)
+
+            Event savedEvent = eventRepository.save(event);
+            EventDto resultDto = toDto(savedEvent);
+
+            return ResponseDto.ok("Evento publicado correctamente", resultDto);
+        } catch (Exception e) {
+            return ResponseDto.error("Error al publicar el evento: " + e.getMessage());
+        }
+    }
+    @Override
+    public ResponseDto<List<EventDto>> filterEvents(String name, LocalDate date, boolean onlyUpcoming, Integer locationId) {
+        try {
+            List<Event> events = new ArrayList<>();
+
+            if (name != null && !name.isEmpty()) {
+                if (onlyUpcoming) {
+                    events = eventRepository.findByEventNameContainingIgnoreCaseAndStatusNot(name, 0);
+                } else {
+                    events = eventRepository.findByEventNameContainingIgnoreCase(name);
+                }
+            } else if (date != null) {
+                if (onlyUpcoming) {
+                    events = eventRepository.findByStartDateOrFinishDateAndStatusNot(date, date, 0);
+                } else {
+                    events = eventRepository.findByStartDateOrFinishDate(date, date);
+                }
+            } else if (locationId != null) {
+                if (onlyUpcoming) {
+                    events = eventRepository.findByLocationID_LocationIDAndStatusNot(locationId, 0);
+                } else {
+                    events = eventRepository.findByLocationID_LocationID(locationId);
+                }
+            } else if (onlyUpcoming) {
+                events = eventRepository.findAllByStatusNot(0);
+            } else {
+                events = eventRepository.findAll();
+            }
+
+            List<EventDto> eventDtos = events.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+
+            return ResponseDto.ok("Eventos filtrados correctamente", eventDtos);
+
+        } catch (Exception e) {
+            return ResponseDto.error("Error al filtrar los eventos: " + e.getMessage());
+        }
+    }
     @Override
     public ResponseDto<EventDto> getEvent(ResponseEventSearch responseEventSearch, EventDto eventDto) {
         try {
@@ -242,4 +316,5 @@ public class EventServiceImpl implements EventService {
             return ResponseDto.error("Error al obtener los eventos del usuario: " + e.getMessage());
         }
     }
+
 }

@@ -1,5 +1,6 @@
 package TuEvento.Backend.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import TuEvento.Backend.dto.EventDto;
@@ -16,5 +17,7 @@ public interface EventService {
     ResponseDto<List<EventDto>> getAllEvent();
     ResponseDto<EventDto> getEventById(int id);
     ResponseDto<List<EventDto>> getAllEventIdUser(int userId);
+    ResponseDto<EventDto> publishEvent(EventDto eventDto);
+    ResponseDto<List<EventDto>> filterEvents(String name, LocalDate date, boolean onlyUpcoming, Integer locationId);
 
 }
