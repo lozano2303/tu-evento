@@ -23,7 +23,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     private CategoryDto toDto(Category category) {
         Integer dadID = category.getParentCategory() != null ? category.getParentCategory().getCategoryID() : null;
-        return new CategoryDto(category.getName(), category.getDescription(), dadID);
+        return new CategoryDto(category.getCategoryID(), category.getName(), category.getDescription(), dadID);
     }
 
     private Category toEntity(CategoryDto categoryDto) {

@@ -44,8 +44,8 @@ public class CategoryEventServiceImpl implements CategoryEventService {
     public ResponseDto<CategoryEventDto> assignCategoryToEvent(CategoryEventDto categoryEventDto) {
         try {
             // Validate input
-            if (categoryEventDto.getCategoryID() == null || categoryEventDto.getEventID() == null) {
-                return ResponseDto.error("Los IDs de categoría y evento son obligatorios");
+            if (categoryEventDto.getCategoryID() <= 0 || categoryEventDto.getEventID() <= 0) {
+                return ResponseDto.error("Los IDs de categoría y evento deben ser mayores a 0");
             }
 
             // Check if category exists
@@ -113,10 +113,6 @@ public class CategoryEventServiceImpl implements CategoryEventService {
 
             List<CategoryEvent> categoryEvents = categoryEventRepository.findByEvent_Id(eventId);
 
-            if (categoryEvents.isEmpty()) {
-                return ResponseDto.error("No hay categorías asignadas a este evento");
-            }
-
             List<CategoryEventDto> categoryEventDtos = categoryEvents.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -140,10 +136,6 @@ public class CategoryEventServiceImpl implements CategoryEventService {
             }
 
             List<CategoryEvent> categoryEvents = categoryEventRepository.findByCategory_CategoryID(categoryId);
-
-            if (categoryEvents.isEmpty()) {
-                return ResponseDto.error("No hay eventos asignados a esta categoría");
-            }
 
             List<CategoryEventDto> categoryEventDtos = categoryEvents.stream()
                 .map(this::toDto)

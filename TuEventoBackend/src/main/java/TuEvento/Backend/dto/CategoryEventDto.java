@@ -2,8 +2,8 @@ package TuEvento.Backend.dto;
 
 public class CategoryEventDto {
 
-    private Integer categoryID;
-    private Integer eventID;
+    private int categoryID;
+    private int eventID;
 
     public CategoryEventDto() {
     }
@@ -13,19 +13,19 @@ public class CategoryEventDto {
         this.eventID = eventID;
     }
 
-    public Integer getCategoryID() {
+    public int getCategoryID() {
         return categoryID;
     }
 
-    public void setCategoryID(Integer categoryID) {
+    public void setCategoryID(int categoryID) {
         this.categoryID = categoryID;
     }
 
-    public Integer getEventID() {
+    public int getEventID() {
         return eventID;
     }
 
-    public void setEventID(Integer eventID) {
+    public void setEventID(int eventID) {
         this.eventID = eventID;
     }
 }

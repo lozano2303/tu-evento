@@ -35,9 +35,17 @@ public class EventController {
     public ResponseDto<EventDto> updateEvent(@RequestBody ResponseEvent responseEvent, EventDto eventDto) {
         return eventService.updateEvent(responseEvent,eventDto);
     }
-    @DeleteMapping("/cancel")
-    public ResponseDto<EventDto> deleteEvent(@RequestBody EventDto eventDto) {
-        return eventService.CancelEvent(eventDto);
+    @DeleteMapping("/cancel/{eventId}")
+    public ResponseDto<EventDto> deleteEvent(@PathVariable int eventId) {
+        try {
+            EventDto eventDto = new EventDto();
+            eventDto.setId(eventId);
+            return eventService.CancelEvent(eventDto);
+        } catch (RuntimeException e) {
+            return ResponseDto.error(e.getMessage());
+        } catch (Exception e) {
+            return ResponseDto.error("Error interno del servidor");
+        }
     }
     @GetMapping("/{id}")
     public ResponseDto<EventDto> getEvent(@PathVariable int id) {
@@ -54,5 +62,10 @@ public class EventController {
     @GetMapping("/getAll")
     public ResponseDto<List<EventDto>> getAllEvent() {
         return eventService.getAllEvent();
+    }
+
+    @PutMapping("/complete/{eventId}")
+    public ResponseDto<EventDto> completeEvent(@PathVariable int eventId) {
+        return eventService.completeEvent(eventId);
     }
 }

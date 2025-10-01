@@ -7,9 +7,13 @@ import TuEvento.Backend.dto.responses.ResponseEventSearch;
 import TuEvento.Backend.model.Event;
 import TuEvento.Backend.model.User;
 import TuEvento.Backend.model.Location;
+import TuEvento.Backend.model.EventImg;
+import TuEvento.Backend.model.CategoryEvent;
 import TuEvento.Backend.repository.EventRepository;
 import TuEvento.Backend.repository.UserRepository;
 import TuEvento.Backend.repository.LocationRepository;
+import TuEvento.Backend.repository.EventImgRepository;
+import TuEvento.Backend.repository.CategoryEventRepository;
 import TuEvento.Backend.service.EventService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,6 +33,12 @@ public class EventServiceImpl implements EventService {
 
     @Autowired
     private LocationRepository locationRepository;
+
+    @Autowired
+    private EventImgRepository eventImgRepository;
+
+    @Autowired
+    private CategoryEventRepository categoryEventRepository;
 
     private EventDto toDto(Event event) {
         return new EventDto(
@@ -90,7 +100,7 @@ public class EventServiceImpl implements EventService {
             Event event = toEntity(eventDto);
             event.setUserID(userOpt.get());
             event.setLocationID(locationOpt.get());
-            event.setStatus(1); // Active status
+            event.setStatus(0); // Draft status - will be changed to 1 after completing all steps
             Event savedEvent = eventRepository.save(event);
 
             EventDto resultDto = toDto(savedEvent);
@@ -170,10 +180,24 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public ResponseDto<EventDto> CancelEvent(EventDto eventDto) {
         try {
-            // Implementation for cancel
-            return ResponseDto.error("Método no implementado");
+            // Find the event by ID
+            Optional<Event> eventOpt = eventRepository.findById(eventDto.getId());
+            if (!eventOpt.isPresent()) {
+                return ResponseDto.error("Evento no encontrado");
+            }
+
+            Event event = eventOpt.get();
+
+            // Delete associated images from S3 and database
+            // Note: This is a simplified implementation. In production, you should handle this more carefully
+            // For now, we'll just delete the event and let cascade handle images if configured
+
+            eventRepository.delete(event);
+
+            return ResponseDto.ok("Evento eliminado correctamente", null);
+
         } catch (Exception e) {
-            return ResponseDto.error("Error al cancelar el evento: " + e.getMessage());
+            return ResponseDto.error("Error al eliminar el evento: " + e.getMessage());
         }
     }
 
@@ -215,8 +239,8 @@ public class EventServiceImpl implements EventService {
     @Override
     public ResponseDto<List<EventDto>> getAllEvent() {
         try {
-            // Return only active events (status = 1)
-            List<Event> events = eventRepository.findAllByStatusNot(0);
+            // Return all events - filtering is done in frontend
+            List<Event> events = eventRepository.findAll();
             List<EventDto> eventDtos = events.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -240,6 +264,47 @@ public class EventServiceImpl implements EventService {
 
         } catch (Exception e) {
             return ResponseDto.error("Error al obtener los eventos del usuario: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public ResponseDto<EventDto> completeEvent(int eventId) {
+        try {
+            // Find the event
+            Optional<Event> eventOpt = eventRepository.findById(eventId);
+            if (!eventOpt.isPresent()) {
+                return ResponseDto.error("Evento no encontrado");
+            }
+
+            Event event = eventOpt.get();
+
+            // Check if event is already completed
+            if (event.getStatus() == 1) {
+                return ResponseDto.error("El evento ya está completado");
+            }
+
+            // Check if event has images
+            List<EventImg> images = eventImgRepository.findByEventId(eventId);
+            if (images.isEmpty()) {
+                return ResponseDto.error("El evento debe tener al menos una imagen antes de completarse");
+            }
+
+            // Check if event has categories
+            List<CategoryEvent> categories = categoryEventRepository.findByEvent_Id(eventId);
+            if (categories.isEmpty()) {
+                return ResponseDto.error("El evento debe tener al menos una categoría antes de completarse");
+            }
+
+            // Mark event as completed
+            event.setStatus(1);
+            Event savedEvent = eventRepository.save(event);
+
+            EventDto resultDto = toDto(savedEvent);
+            return ResponseDto.ok("Evento completado correctamente", resultDto);
+
+        } catch (Exception e) {
+            return ResponseDto.error("Error al completar el evento: " + e.getMessage());
         }
     }
 }

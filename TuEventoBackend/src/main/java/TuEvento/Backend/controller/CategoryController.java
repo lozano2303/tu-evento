@@ -2,10 +2,14 @@ package TuEvento.Backend.controller;
 
 import TuEvento.Backend.dto.CategoryDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
+import TuEvento.Backend.model.Category;
+import TuEvento.Backend.repository.CategoryRepository;
 import TuEvento.Backend.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 import java.util.List;
 
@@ -15,6 +19,9 @@ public class CategoryController {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @PostMapping
     public ResponseEntity<ResponseDto<CategoryDto>> insertCategory(@RequestBody CategoryDto categoryDto) {
@@ -55,9 +62,17 @@ public class CategoryController {
     }
 
     @GetMapping("/sub/{parentId}")
-    public ResponseEntity<ResponseDto<List<CategoryDto>>> getSubCategories(@PathVariable int parentId) {
-        ResponseDto<List<CategoryDto>> response = categoryService.getSubCategories(parentId);
-        return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
+    public ResponseEntity<List<CategoryDto>> getSubCategories(@PathVariable int parentId) {
+        try {
+            ResponseDto<List<CategoryDto>> response = categoryService.getSubCategories(parentId);
+            if (response.isSuccess()) {
+                return ResponseEntity.ok(response.getData());
+            } else {
+                return ResponseEntity.ok(new java.util.ArrayList<>());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.ok(new java.util.ArrayList<>());
+        }
     }
 
     @GetMapping("/search")

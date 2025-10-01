@@ -16,5 +16,6 @@ public interface EventService {
     ResponseDto<List<EventDto>> getAllEvent();
     ResponseDto<EventDto> getEventById(int id);
     ResponseDto<List<EventDto>> getAllEventIdUser(int userId);
+    ResponseDto<EventDto> completeEvent(int eventId);
 
 }

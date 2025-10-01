@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save, MapPin, Upload, X, ChevronRight, ChevronLeft, Minus } from 'lucide-react';
-import { createEvent } from '../../services/EventService.js';
+import { createEvent, getEventById, updateEvent, completeEvent } from '../../services/EventService.js';
 import { getAllLocations } from '../../services/LocationService.js';
 import { getAllCities } from '../../services/CityService.js';
 import { getDepartmentById } from '../../services/DepartmentService.js';
-import { uploadEventImage } from '../../services/EventImgService.js';
+import { uploadEventImage, getEventImages } from '../../services/EventImgService.js';
+import { getRootCategories, getSubCategories, assignCategoryToEvent, getCategoriesByEvent } from '../../services/CategoryService.js';
 
 const EventForm = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editEventId = searchParams.get('edit');
+  const stepParam = searchParams.get('step');
+  const isEditMode = !!editEventId;
+
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     eventName: '',
@@ -18,6 +24,12 @@ const EventForm = () => {
     cityID: '',
     locationID: '',
   });
+  const [categories, setCategories] = useState({
+    parentCategory: undefined,
+    subCategory: undefined,
+  });
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [availableSubCategories, setAvailableSubCategories] = useState([]);
   const [images, setImages] = useState([]);
   const [uploadingImages, setUploadingImages] = useState({}); // Estado de carga por imagen
   const [cities, setCities] = useState([]);
@@ -28,11 +40,25 @@ const EventForm = () => {
   const [success, setSuccess] = useState(false);
   const [createdEvent, setCreatedEvent] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [loadingInitialData, setLoadingInitialData] = useState(isEditMode);
 
   useEffect(() => {
     loadCities();
     loadLocations();
+    loadRootCategories();
   }, []);
+
+  useEffect(() => {
+    // Reset categories when availableCategories changes
+    setCategories({ parentCategory: undefined, subCategory: undefined });
+    setAvailableSubCategories([]);
+  }, [availableCategories]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      loadEventForEdit();
+    }
+  }, [isEditMode, editEventId]);
 
   const loadCities = async () => {
     try {
@@ -59,6 +85,129 @@ const EventForm = () => {
     } catch (err) {
       setError('Error de conexión al cargar ubicaciones');
       console.error('Error loading locations:', err);
+    }
+  };
+
+  const loadRootCategories = async () => {
+    try {
+      console.log('Loading root categories...');
+      const result = await getRootCategories();
+      console.log('API result:', result);
+      if (result.success) {
+        console.log('Raw data:', result.data);
+        // Filter out categories with invalid categoryID
+        const validCategories = result.data.filter(cat => cat.categoryID != null || cat.id != null);
+        console.log('Filtered categories:', validCategories);
+        setAvailableCategories(validCategories);
+      } else {
+        console.error('Error loading root categories:', result.message);
+      }
+    } catch (err) {
+      console.error('Error loading root categories:', err);
+    }
+  };
+
+  const loadSubCategories = async (parentId) => {
+    try {
+      const result = await getSubCategories(parentId);
+      if (result.success) {
+        // Filter out subcategories with invalid categoryID
+        const validSubCategories = result.data.filter(cat => cat.categoryID != null);
+        setAvailableSubCategories(validSubCategories);
+      } else {
+        console.error('Error loading sub categories:', result.message);
+      }
+    } catch (err) {
+      console.error('Error loading sub categories:', err);
+    }
+  };
+
+  const loadEventForEdit = async () => {
+    try {
+      setLoadingInitialData(true);
+      setError(null);
+
+      // Load event data
+      const eventResult = await getEventById(editEventId);
+      if (!eventResult.success) {
+        setError(eventResult.message || 'Error al cargar el evento');
+        return;
+      }
+
+      const event = eventResult.data;
+      setFormData({
+        eventName: event.eventName || '',
+        description: event.description || '',
+        startDate: event.startDate ? event.startDate.split('T')[0] : '',
+        finishDate: event.finishDate ? event.finishDate.split('T')[0] : '',
+        cityID: event.locationID?.address?.city?.cityID?.toString() || '',
+        locationID: event.locationID?.locationID?.toString() || '',
+      });
+
+      // Load department if city is set
+      if (event.locationID?.address?.city?.department) {
+        setDepartment(event.locationID.address.city.department.name);
+      }
+
+      // Load existing images
+      const imagesResult = await getEventImages(editEventId);
+      const hasImages = imagesResult.success && imagesResult.data.length >= 3;
+
+      if (imagesResult.success) {
+        const existingImages = imagesResult.data.map(img => img.url);
+        // Ensure we have at least 3 slots, fill with existing images
+        const imageSlots = Array(Math.max(3, existingImages.length)).fill('');
+        existingImages.forEach((url, index) => {
+          if (index < imageSlots.length) {
+            imageSlots[index] = url;
+          }
+        });
+        setImages(imageSlots);
+      }
+
+      // Load existing categories
+      const categoriesResult = await getCategoriesByEvent(editEventId);
+      const hasCategories = categoriesResult.success && categoriesResult.data.length > 0;
+
+      if (categoriesResult.success && categoriesResult.data.length > 0) {
+        // Load the first category (assuming one category per event for now)
+        const category = categoriesResult.data[0];
+        setCategories({
+          parentCategory: category.category?.parentCategory?.categoryID?.toString() || '',
+          subCategory: category.category?.categoryID?.toString() || '',
+        });
+        // Load subcategories for the parent category
+        if (category.category?.parentCategory?.categoryID) {
+          loadSubCategories(category.category.parentCategory.categoryID);
+        }
+      }
+
+      // Determine which step to show based on completion status or URL parameter
+      // Step 1: Basic info (always completed if event exists)
+      // Step 2: Images (need at least 3)
+      // Step 3: Categories (need at least 1)
+
+      if (stepParam === 'images') {
+        setCurrentStep(2); // Go to images step
+      } else if (stepParam === 'categories') {
+        setCurrentStep(3); // Go to categories step
+      } else if (!hasImages) {
+        setCurrentStep(2); // Go to images step
+      } else if (!hasCategories) {
+        setCurrentStep(3); // Go to categories step
+      } else {
+        // Event is complete, show success
+        setSuccess(true);
+      }
+
+      // Set as created event for image uploads
+      setCreatedEvent({ id: parseInt(editEventId), eventName: event.eventName });
+
+    } catch (err) {
+      setError('Error al cargar los datos del evento');
+      console.error('Error loading event for edit:', err);
+    } finally {
+      setLoadingInitialData(false);
     }
   };
 
@@ -146,6 +295,49 @@ const EventForm = () => {
         }
       } catch (err) {
         console.error('Error loading department:', err);
+      }
+    }
+
+    if (name === 'parentCategory' && value) {
+      console.log('Selected parentCategory value:', value, typeof value);
+      const numValue = parseInt(value, 10);
+      setCategories(prev => ({ ...prev, parentCategory: numValue, subCategory: undefined }));
+      loadSubCategories(numValue);
+    }
+
+    if (name === 'subCategory') {
+      const newSubCategory = value ? parseInt(value, 10) : undefined;
+      setCategories(prev => ({ ...prev, subCategory: newSubCategory }));
+
+      // If we have a created event and a subcategory, assign it immediately
+      if (createdEvent && newSubCategory) {
+        assignCategoryToEvent(newSubCategory, createdEvent.eventID || createdEvent.id)
+          .then(result => {
+            if (result.success) {
+              console.log('Categoría asignada exitosamente al evento');
+            } else {
+              console.error('Error asignando categoría:', result.message);
+              setFieldErrors(prev => ({
+                ...prev,
+                subCategory: result.message || 'Error asignando categoría'
+              }));
+            }
+          })
+          .catch(error => {
+            console.error('Error asignando categoría:', error);
+            setFieldErrors(prev => ({
+              ...prev,
+              subCategory: 'Error de conexión al asignar categoría'
+            }));
+          });
+      }
+
+      // Clear subCategory error when user selects
+      if (fieldErrors.subCategory) {
+        setFieldErrors(prev => ({
+          ...prev,
+          subCategory: ""
+        }));
       }
     }
   };
@@ -247,21 +439,42 @@ const EventForm = () => {
         startDate: formData.startDate,
         finishDate: formData.finishDate,
         locationID: { locationID: parseInt(formData.locationID) },
-        status: 1, // Assuming 1 is active status
+        status: 0, // 0 = draft, will be activated after completing all steps
       };
 
-      const result = await createEvent(eventData);
-      if (result.success) {
-        setCreatedEvent(result.data);
-        console.log('Evento creado con ID:', result.data.id);
-
-        // Initialize with 3 empty image fields when going to step 2
-        if (images.length === 0) {
-          setImages(['', '', '']);
-        }
-        setCurrentStep(2);
+      let result;
+      if (isEditMode) {
+        // Update existing event
+        const updateData = {
+          id: parseInt(editEventId),
+          eventName: formData.eventName.trim(),
+          description: formData.description.trim(),
+          startDate: formData.startDate,
+          finishDate: formData.finishDate,
+          locationID: { locationID: parseInt(formData.locationID) },
+          status: 1, // Set to active when completing
+        };
+        result = await updateEvent({}, updateData);
       } else {
-        setError(result.message || 'Error al crear el evento');
+        // Create new event
+        result = await createEvent(eventData);
+      }
+
+      if (result.success) {
+        if (isEditMode) {
+          // For edit mode, just mark as success since event is already created
+          setSuccess(true);
+        } else {
+          // For new events, proceed to next step
+          const eventData = result.data;
+          setCreatedEvent(eventData);
+          console.log('Evento creado con ID:', eventData.id);
+
+          // Redirect to complete event flow
+          navigate(`/complete-event?id=${eventData.id}`);
+        }
+      } else {
+        setError(result.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} el evento`);
       }
     } catch (err) {
       setError('Error de conexión al crear el evento');
@@ -272,7 +485,7 @@ const EventForm = () => {
   };
 
   const prevStep = () => {
-    setCurrentStep(1);
+    setCurrentStep(prev => prev - 1);
   };
 
 
@@ -286,14 +499,47 @@ const EventForm = () => {
       return;
     }
 
-    // Step 2: Validate images
-    const imageErrors = validateImages();
-    if (Object.keys(imageErrors).length > 0) {
-      setFieldErrors(imageErrors);
+    if (currentStep === 2) {
+      // Step 2: Validate images
+      const imageErrors = validateImages();
+      if (Object.keys(imageErrors).length > 0) {
+        setFieldErrors(imageErrors);
+        return;
+      }
+      setCurrentStep(3);
       return;
     }
 
-    setSuccess(true);
+    // Step 3: Validate categories and finalize event
+    if (!categories.parentCategory) {
+      setFieldErrors({ parentCategory: 'Debe seleccionar una categoría principal' });
+      return;
+    }
+    if (!categories.subCategory) {
+      // Si no hay subcategorías disponibles, usar la categoría padre
+      if (availableSubCategories.length === 0 && categories.parentCategory) {
+        categories.subCategory = categories.parentCategory;
+      } else {
+        setFieldErrors({ subCategory: 'Debe seleccionar una subcategoría' });
+        return;
+      }
+    }
+
+    setLoading(true);
+    try {
+      // Complete event (set status to active) - category should already be assigned
+      const completeResult = await completeEvent(createdEvent.eventID || createdEvent.id);
+      if (completeResult.success) {
+        setSuccess(true);
+      } else {
+        setError(completeResult.message || 'Error al completar el evento');
+      }
+    } catch (err) {
+      setError('Error al completar el evento');
+      console.error('Error completing event:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFloorPlanDesigner = () => {
@@ -309,7 +555,7 @@ const EventForm = () => {
           <div className="text-center">
             <h2 className="text-2xl font-bold text-green-400 mb-4">¡Evento Completado!</h2>
             <p className="text-gray-300 mb-6">
-              El evento "{createdEvent.eventName}" ha sido creado exitosamente con todas sus imágenes.
+              El evento "{createdEvent?.eventName || formData.eventName}" ha sido {isEditMode ? 'completado' : 'creado'} exitosamente{!isEditMode ? ' con todas sus imágenes' : ''}.
             </p>
             <div className="flex gap-4 justify-center">
               <button
@@ -345,6 +591,12 @@ const EventForm = () => {
           currentStep >= 2 ? 'bg-purple-600 text-white' : 'bg-gray-600 text-gray-400'
         }`}>
           2
+        </div>
+        <div className={`w-12 h-0.5 ${currentStep >= 3 ? 'bg-purple-600' : 'bg-gray-600'}`}></div>
+        <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+          currentStep >= 3 ? 'bg-purple-600 text-white' : 'bg-gray-600 text-gray-400'
+        }`}>
+          3
         </div>
       </div>
     </div>
@@ -448,6 +700,17 @@ const EventForm = () => {
     </div>
   );
 
+  if (loadingInitialData) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Cargando datos del evento...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
@@ -461,7 +724,7 @@ const EventForm = () => {
               <ArrowLeft className="w-5 h-5" />
               Volver
             </button>
-            <h1 className="text-2xl font-bold">Crear Evento</h1>
+            <h1 className="text-2xl font-bold">{isEditMode ? 'Completar Evento' : 'Crear Evento'}</h1>
           </div>
         </div>
       </div>
@@ -607,12 +870,71 @@ const EventForm = () => {
                   {fieldErrors.locationID && <p className="text-red-500 text-xs mt-1">{fieldErrors.locationID}</p>}
                 </div>
               </div>
-            ) : (
+            ) : currentStep === 2 ? (
               renderImageUploadSection()
+            ) : (
+              <div className="space-y-6">
+                <h3 className="text-xl font-semibold text-white mb-3">Seleccionar Categorías</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="parentCategory" className="block text-sm font-medium text-gray-300 mb-2">
+                      Categoría Principal *
+                    </label>
+                    <select
+                      id="parentCategory"
+                      name="parentCategory"
+                      value={categories.parentCategory || ''}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">Selecciona una categoría</option>
+                      {availableCategories.map((category, index) => (
+                        <option key={`cat-${index}`} value={(category.categoryID || category.id)?.toString() || ''}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldErrors.parentCategory && <p className="text-red-500 text-xs mt-1">{fieldErrors.parentCategory}</p>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="subCategory" className="block text-sm font-medium text-gray-300 mb-2">
+                      Subcategoría *
+                    </label>
+                    <select
+                      id="subCategory"
+                      name="subCategory"
+                      value={categories.subCategory}
+                      onChange={handleInputChange}
+                      required
+                      disabled={!categories.parentCategory}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {categories.parentCategory ? 'Selecciona una subcategoría' : 'Primero selecciona una categoría principal'}
+                      </option>
+                      {availableSubCategories.length > 0 ? (
+                        availableSubCategories.map((subCategory) => (
+                          <option key={`sub-${subCategory.categoryID}`} value={subCategory.categoryID}>
+                            {subCategory.name}
+                          </option>
+                        ))
+                      ) : categories.parentCategory ? (
+                        // Si no hay subcategorías, mostrar opción para usar la categoría padre
+                        <option key={`parent-fallback-${categories.parentCategory}`} value={categories.parentCategory}>
+                          Usar: {availableCategories.find(cat => cat.categoryID === parseInt(categories.parentCategory))?.name}
+                        </option>
+                      ) : null}
+                    </select>
+                    {fieldErrors.subCategory && <p className="text-red-500 text-xs mt-1">{fieldErrors.subCategory}</p>}
+                  </div>
+                </div>
+              </div>
             )}
 
             <div className="mt-8 flex justify-between">
-              {currentStep === 2 && (
+              {(currentStep === 2 || currentStep === 3) && (
                 <button
                   type="button"
                   onClick={prevStep}
@@ -628,7 +950,7 @@ const EventForm = () => {
                   disabled={loading}
                   className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
                 >
-                  {loading ? 'Creando...' : currentStep === 1 ? (
+                  {loading ? 'Creando...' : currentStep === 1 || currentStep === 2 ? (
                     <>
                       Siguiente
                       <ChevronRight className="w-4 h-4" />

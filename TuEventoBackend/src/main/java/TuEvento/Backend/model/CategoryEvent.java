@@ -3,17 +3,19 @@ package TuEvento.Backend.model;
 import jakarta.persistence.*;
 
 @Entity(name = "category_event")
-@IdClass(CategoryEventId.class)
 public class CategoryEvent {
 
-    @Id
+    @EmbeddedId
+    private CategoryEventId id;
+
     @ManyToOne
-    @JoinColumn(name = "categoryID", referencedColumnName = "categoryID")
+    @MapsId("categoryID")
+    @JoinColumn(name = "categoryID")
     private Category category;
 
-    @Id
     @ManyToOne
-    @JoinColumn(name = "eventID", referencedColumnName = "eventID")
+    @MapsId("eventID")
+    @JoinColumn(name = "eventID")
     private Event event;
 
     public CategoryEvent() {}
@@ -21,6 +23,15 @@ public class CategoryEvent {
     public CategoryEvent(Category category, Event event) {
         this.category = category;
         this.event = event;
+        this.id = new CategoryEventId(category.getCategoryID(), event.getId());
+    }
+
+    public CategoryEventId getId() {
+        return id;
+    }
+
+    public void setId(CategoryEventId id) {
+        this.id = id;
     }
 
     public Category getCategory() {

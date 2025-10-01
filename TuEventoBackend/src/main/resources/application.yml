@@ -9,6 +9,6 @@ cloud:
       auto: false
 application:
   bucket: 
-    name:
+    name: tu-evento-storege2
 server:
    port: 8080

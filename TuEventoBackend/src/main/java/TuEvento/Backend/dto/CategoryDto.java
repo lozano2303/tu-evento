@@ -2,6 +2,8 @@ package TuEvento.Backend.dto;
 
 public class CategoryDto {
 
+    @com.fasterxml.jackson.annotation.JsonProperty("categoryID")
+    private Integer categoryID;
     private String name;
     private String description;
     private Integer dadID;
@@ -9,7 +11,8 @@ public class CategoryDto {
     public CategoryDto() {
     }
 
-    public CategoryDto(String name, String description, Integer dadID) {
+    public CategoryDto(Integer categoryID, String name, String description, Integer dadID) {
+        this.categoryID = categoryID;
         this.name = name;
         this.description = description;
         this.dadID = dadID;
@@ -37,5 +40,21 @@ public class CategoryDto {
 
     public void setDadID(Integer dadID) {
         this.dadID = dadID;
+    }
+
+    public Integer getCategoryID() {
+        return categoryID;
+    }
+
+    public void setCategoryID(Integer categoryID) {
+        this.categoryID = categoryID;
+    }
+
+    public Integer getId() {
+        return categoryID;
+    }
+
+    public void setId(Integer id) {
+        this.categoryID = id;
     }
 }
