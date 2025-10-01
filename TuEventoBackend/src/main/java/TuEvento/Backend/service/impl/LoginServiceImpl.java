@@ -79,6 +79,10 @@ public class LoginServiceImpl implements LoginService {
                 return ResponseDto.error("Cuenta no activada. Revisa tu correo para activar la cuenta.");
             }
 
+            if (!login.getUserID().isStatus()) {
+                return ResponseDto.error("Cuenta desactivada. No puedes iniciar sesión.");
+            }
+
             if (!passwordEncoder.matches(loginDto.getPassword(), login.getPassword())) {
                 return ResponseDto.error("Contraseña incorrecta");
             }
@@ -140,6 +144,14 @@ public class LoginServiceImpl implements LoginService {
         // Buscar usuario existente
         Login userEntity = loginRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
+
+        if (!userEntity.getUserID().isActivated()) {
+            return ResponseDto.error("Cuenta no activada. Revisa tu correo para activar la cuenta.");
+        }
+
+        if (!userEntity.getUserID().isStatus()) {
+            return ResponseDto.error("Cuenta desactivada. No puedes iniciar sesión.");
+        }
 
         // Generar token
         String token = jwtService.generateToken(userEntity);

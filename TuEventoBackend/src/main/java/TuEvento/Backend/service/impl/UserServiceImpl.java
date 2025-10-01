@@ -229,11 +229,8 @@ public class UserServiceImpl implements UserService {
 
         Address address = null;
         if (newAddressId != null) {
-            Optional<Address> addressOpt = addressRepository.findById(newAddressId);
-            if (addressOpt.isEmpty()) {
-                return ResponseDto.error("Dirección no encontrada");
-            }
-            address = addressOpt.get();
+            address = new Address();
+            address.setAddressID(newAddressId);
         }
 
         try {
