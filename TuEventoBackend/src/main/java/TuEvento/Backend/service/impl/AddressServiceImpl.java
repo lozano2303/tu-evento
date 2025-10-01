@@ -85,7 +85,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public ResponseDto<AddressDto> insertAddress(AddressDto addressDto) {
+    public ResponseDto<Integer> insertAddress(AddressDto addressDto) {
         try {
             // === VALIDACIONES DE ENTRADA ===
 
@@ -131,8 +131,7 @@ public class AddressServiceImpl implements AddressService {
 
             addressRepository.save(address);
 
-            return ResponseDto.ok("Dirección creada exitosamente",
-                    new AddressDto(addressDto.getCityID(), address.getStreet(), address.getPostalCode()));
+            return ResponseDto.ok("Dirección creada exitosamente", address.getAddressID());
 
         } catch (DataAccessException e) {
             System.err.println("Error de base de datos en creación de dirección: " + e.getMessage());

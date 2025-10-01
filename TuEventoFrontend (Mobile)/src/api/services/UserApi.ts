@@ -87,6 +87,57 @@ export const updateUserPhone = async (userData: IUserUpdatePhone): Promise<IUser
   }
 };
 
+export const createAddress = async (addressData: { cityID: number; street: string; postalCode: string }): Promise<any> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("No token found");
+    }
+    const response = await fetch(`${SEND_ADRESS_ENDPOINT}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(addressData),
+    });
+    const responseData = await response.json();
+    if (!response.ok || responseData.success === false) {
+      throw new Error(responseData.message || "Error al crear la dirección");
+    }
+    console.log('Dirección creada:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error en createAddress:', error);
+    throw error;
+  }
+};
+
+export const updateUserAddress = async (userId: number, newAddressId: number): Promise<IUserProfileResponse> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("No token found");
+    }
+    const response = await fetch(`${USER_PROFILE_ENDPOINT}/${userId}/address?newAddressId=${newAddressId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+    const responseData = await response.json();
+    if (!response.ok || responseData.success === false) {
+      throw new Error(responseData.message || "Error al actualizar la dirección");
+    }
+    console.log('Dirección actualizada:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error en updateUserAddress:', error);
+    throw error;
+  }
+};
+
 export const updateUserBirthDate = async (userId: number, newBirthDate: string): Promise<IUserProfileResponse> => {
   try {
     const token = await getToken();

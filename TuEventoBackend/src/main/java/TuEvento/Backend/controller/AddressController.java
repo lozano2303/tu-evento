@@ -18,8 +18,8 @@ public class AddressController {
 
     // Crear dirección
     @PostMapping
-    public ResponseEntity<ResponseDto<AddressDto>> insertAddress(@RequestBody AddressDto addressDto) {
-        ResponseDto<AddressDto> response = addressService.insertAddress(addressDto);
+    public ResponseEntity<ResponseDto<Integer>> insertAddress(@RequestBody AddressDto addressDto) {
+        ResponseDto<Integer> response = addressService.insertAddress(addressDto);
         return ResponseEntity.status(response.isSuccess() ? 201 : 400).body(response);
     }
 

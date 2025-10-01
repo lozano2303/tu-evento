@@ -6,7 +6,7 @@ import TuEvento.Backend.dto.responses.ResponseDto;
 import java.util.List;
 
 public interface AddressService {
-    ResponseDto<AddressDto> insertAddress(AddressDto addressDto);
+    ResponseDto<Integer> insertAddress(AddressDto addressDto);
     ResponseDto<String> updateAddress(int addressID, AddressDto addressDto);
     ResponseDto<String> deleteAddress(int addressID);
     ResponseDto<List<AddressDto>> getAllAddresses();

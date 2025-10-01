@@ -3,7 +3,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getUserIdFromToken, removeToken } from '../../api/services/Token';
-import { getUserProfile, updateUserPhone, updateUserBirthDate, getAllDepartments, getCitiesByDepartment, deactivateUserAccount } from '../../api/services/UserApi';
+import { getUserProfile, updateUserPhone, updateUserBirthDate, getAllDepartments, getCitiesByDepartment, deactivateUserAccount, createAddress, updateUserAddress } from '../../api/services/UserApi';
 import { IUserProfile, IDepartment, ICity } from '../../api/types/IUser';
 import Input from "../../components/common/Input";
 import Button from '../../components/common/Button';
@@ -28,7 +28,7 @@ export default function ProfileScreen() {
   const [departments, setDepartments] = useState<IDepartment[]>([]);
   const [cities, setCities] = useState<ICity[]>([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
-  const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
+  const [selectedCityId, setSelectedCityId] = useState<number | null>(null);
   const [address, setAddress] = useState('');
   const [postalCode, setPostalCode] = useState('');
 
@@ -139,11 +139,39 @@ export default function ProfileScreen() {
     </View>
   );
 
-  const handleSaveAddress = () => {
-    // Aquí iría tu lógica para guardar la dirección
-    console.log('Guardando dirección:', { selectedDepartmentId, selectedCityId, address, postalCode });
-    setShowAddressModal(false);
-    Alert.alert('Éxito', 'Dirección actualizada correctamente');
+  const handleSaveAddress = async () => {
+    if (!userId || !selectedCityId) {
+      Alert.alert('Error', 'Por favor selecciona una ciudad');
+      return;
+    }
+
+    try {
+      // Crear la dirección
+      const addressResponse = await createAddress({
+        cityID: selectedCityId,
+        street: address,
+        postalCode: postalCode,
+      });
+
+      if (addressResponse.success && addressResponse.data) {
+        const newAddressId = addressResponse.data;
+
+        // Actualizar la dirección del usuario
+        await updateUserAddress(userId, newAddressId);
+
+        // Recargar el perfil para mostrar la nueva dirección
+        const profileResponse = await getUserProfile(userId);
+        setProfile(profileResponse.data);
+
+        setShowAddressModal(false);
+        Alert.alert('Éxito', 'Dirección actualizada correctamente');
+      } else {
+        Alert.alert('Error', addressResponse.message || 'Error al crear la dirección');
+      }
+    } catch (error: any) {
+      console.error('Error guardando dirección:', error);
+      Alert.alert('Error', error.message || 'Error al guardar la dirección');
+    }
   };
 
   const handleSave = async () => {
@@ -310,7 +338,7 @@ export default function ProfileScreen() {
                     {selectedDepartmentId || selectedCityId || address || postalCode ? (
                       <>
                         <Text className="text-white text-base font-semibold mb-1">
-                          {selectedCityId || 'Ciudad'}
+                          {selectedCityId ? cities[selectedCityId - 1]?.name : 'Ciudad'}
                         </Text>
                         <Text className="text-gray-400 text-sm">
                           {address || 'Dirección'}
@@ -377,19 +405,22 @@ export default function ProfileScreen() {
             <Text style={{ fontSize: 14, marginBottom: 6, color: '#555' }}>Ciudad</Text>
             <View style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12 }}>
               <Picker
-                selectedValue={selectedCityId}
+                selectedValue={selectedCityId?.toString()}
                 onValueChange={(itemValue) => {
-                  setSelectedCityId(itemValue);
-                  const selectedCity = cities.find(c => c.name === itemValue);
-                  if (selectedCity) {
-                    setSelectedDepartmentId(selectedCity.departmentID);
+                  const numValue = itemValue ? parseInt(itemValue, 10) : null;
+                  setSelectedCityId(numValue);
+                  if (numValue) {
+                    const selectedCity = cities[numValue - 1];
+                    if (selectedCity) {
+                      setSelectedDepartmentId(selectedCity.departmentID);
+                    }
                   }
                 }}
                 style={{ height: 50, color: '#333' }}
               >
                 <Picker.Item label="Seleccionar ciudad" value={null} />
                 {cities.map((city, index) => (
-                  <Picker.Item key={index} label={city.name} value={city.name} />
+                  <Picker.Item key={index} label={city.name} value={(index + 1).toString()} />
                 ))}
               </Picker>
             </View>
