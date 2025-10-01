@@ -37,11 +37,22 @@ public class EventController {
     public ResponseDto<EventDto> updateEvent(@RequestBody ResponseEvent responseEvent, EventDto eventDto) {
         return eventService.updateEvent(responseEvent,eventDto);
     }
-    @DeleteMapping("/cancel/{id}")
-    public ResponseDto<EventDto> cancelEvent(@PathVariable int id) {
-        EventDto eventDto = new EventDto();
-        eventDto.setId(id);
-        return eventService.CancelEvent(eventDto);
+    @DeleteMapping("/cancel/{eventId}")
+    public ResponseDto<EventDto> deleteEvent(@PathVariable int eventId, HttpServletRequest request) {
+        try {
+            Integer userId = (Integer) request.getAttribute("userID");
+            if (userId == null) {
+                return ResponseDto.error("Usuario no autenticado");
+            }
+
+            EventDto eventDto = new EventDto();
+            eventDto.setId(eventId);
+            return eventService.CancelEvent(eventDto, userId);
+        } catch (RuntimeException e) {
+            return ResponseDto.error(e.getMessage());
+        } catch (Exception e) {
+            return ResponseDto.error("Error interno del servidor");
+        }
     }
     @PutMapping("/publish/{id}")
     public ResponseDto<EventDto> publishEvent(@PathVariable int id) {
@@ -72,5 +83,9 @@ public class EventController {
             @RequestParam(defaultValue = "false") boolean onlyUpcoming,
             @RequestParam(required = false) Integer locationId) {
         return eventService.filterEvents(name, date, onlyUpcoming, locationId);
+    }
+    @PutMapping("/complete/{eventId}")
+    public ResponseDto<EventDto> completeEvent(@PathVariable int eventId) {
+        return eventService.completeEvent(eventId);
     }
 }

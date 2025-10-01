@@ -33,7 +33,7 @@ public class CategoryEventController {
     @GetMapping("/event/{eventId}")
     public ResponseEntity<ResponseDto<List<CategoryEventDto>>> getCategoriesByEvent(@PathVariable int eventId) {
         ResponseDto<List<CategoryEventDto>> response = categoryEventService.getCategoriesByEvent(eventId);
-        return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
     @GetMapping("/category/{categoryId}")

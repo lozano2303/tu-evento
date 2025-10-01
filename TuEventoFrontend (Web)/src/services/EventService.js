@@ -83,18 +83,46 @@ export const updateEvent = async (eventData) => {
 export const cancelEvent = async (eventId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_BASE_URL}/v1/events/cancel`, {
+    const response = await fetch(`${API_BASE_URL}/v1/event/cancel/${eventId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ id: eventId }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    }
+
     const data = await response.json();
     return data;
   } catch (error) {
     console.error('Error cancelando evento:', error);
+    throw error;
+  }
+};
+
+export const completeEvent = async (eventId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/v1/event/complete/${eventId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error completando evento:', error);
     throw error;
   }
 };

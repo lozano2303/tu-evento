@@ -4,14 +4,31 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class CategoryEventId implements Serializable {
-    private int category;
-    private int event;
+    private int categoryID;
+    private int eventID;
 
     public CategoryEventId() {}
 
-    public CategoryEventId(int category, int event) {
-        this.category = category;
-        this.event = event;
+    public CategoryEventId(int categoryID, int eventID) {
+        this.categoryID = categoryID;
+        this.eventID = eventID;
+    }
+
+    // Getters and setters
+    public int getCategoryID() {
+        return categoryID;
+    }
+
+    public void setCategoryID(int categoryID) {
+        this.categoryID = categoryID;
+    }
+
+    public int getEventID() {
+        return eventID;
+    }
+
+    public void setEventID(int eventID) {
+        this.eventID = eventID;
     }
 
     @Override
@@ -19,11 +36,11 @@ public class CategoryEventId implements Serializable {
         if (this == o) return true;
         if (!(o instanceof CategoryEventId)) return false;
         CategoryEventId that = (CategoryEventId) o;
-        return category == that.category && event == that.event;
+        return categoryID == that.categoryID && eventID == that.eventID;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(category, event);
+        return Objects.hash(categoryID, eventID);
     }
 }

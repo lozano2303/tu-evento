@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search, ChevronDown } from 'lucide-react';
-import { getAllEvents } from '../../services/EventService.js';
+import { getAllEvents, cancelEvent } from '../../services/EventService.js';
+import { getEventImages } from '../../services/EventImgService.js';
+import { getCategoriesByEvent } from '../../services/CategoryService.js';
 
 const TuEvento = () => {
   const navigate = useNavigate();
@@ -19,6 +21,10 @@ const TuEvento = () => {
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [heroImage, setHeroImage] = useState("https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1400&h=400&fit=crop");
+  const [eventImagesMap, setEventImagesMap] = useState({});
+  const [eventCategoriesMap, setEventCategoriesMap] = useState({});
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   // Refs para los dropdowns
   const cityRef = useRef(null);
@@ -49,6 +55,13 @@ const TuEvento = () => {
     };
   }, []);
 
+
+  // Set current user ID
+  useEffect(() => {
+    const userId = localStorage.getItem('userID');
+    setCurrentUserId(userId ? parseInt(userId) : null);
+  }, []);
+
   // Cargar eventos del backend
   useEffect(() => {
     const loadEvents = async () => {
@@ -56,8 +69,21 @@ const TuEvento = () => {
         setLoading(true);
         const result = await getAllEvents();
         if (result.success) {
-          setEvents(result.data);
-          setFilteredEvents(result.data);
+          // Filter events: show active events with images and categories to all, all events to creator
+          const filteredEvents = result.data.filter(event => {
+            if (event.status === 1 && eventImagesMap[event.id] && eventCategoriesMap[event.id]) return true; // Active events with images and categories for all
+            if (currentUserId && event.userID?.userID === currentUserId) return true; // All events for creator
+            return false;
+          });
+
+          setEvents(filteredEvents);
+          setFilteredEvents(filteredEvents);
+
+          // Load hero image from events
+          await loadHeroImage(filteredEvents);
+          // Load event images and categories for cards
+          await loadEventImages(filteredEvents);
+          await loadEventCategories(filteredEvents);
         } else {
           setError(result.message || 'Error al cargar eventos');
         }
@@ -69,8 +95,67 @@ const TuEvento = () => {
       }
     };
 
-    loadEvents();
-  }, []);
+    if (currentUserId !== null) { // Wait for currentUserId to be set
+      loadEvents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId]);
+
+  const loadHeroImage = async (eventsList) => {
+    try {
+      // Try to find the first available image from any event
+      for (const event of eventsList) {
+        try {
+          const imagesResult = await getEventImages(event.id);
+          if (imagesResult.success && imagesResult.data && imagesResult.data.length > 0) {
+            // Use the first image from this event
+            setHeroImage(imagesResult.data[0].url);
+            return; // Stop after finding the first image
+          }
+        } catch (error) {
+          console.log(`No images for event ${event.id}`);
+        }
+      }
+
+      // If no images found, keep default
+    } catch (error) {
+      console.error('Error loading hero image:', error);
+    }
+  };
+
+  const loadEventImages = async (eventsList) => {
+    const newImagesMap = { ...eventImagesMap };
+    for (const event of eventsList) {
+      if (!newImagesMap[event.id]) {
+        try {
+          const imagesResult = await getEventImages(event.id);
+          if (imagesResult.success && imagesResult.data && imagesResult.data.length > 0) {
+            newImagesMap[event.id] = imagesResult.data[0].url;
+          }
+        } catch (error) {
+          console.log(`No images for event ${event.id}`);
+        }
+      }
+    }
+    setEventImagesMap(newImagesMap);
+  };
+
+  const loadEventCategories = async (eventsList) => {
+    const newCategoriesMap = { ...eventCategoriesMap };
+    for (const event of eventsList) {
+      if (!newCategoriesMap[event.id]) {
+        try {
+          const categoriesResult = await getCategoriesByEvent(event.id);
+          if (categoriesResult.success && categoriesResult.data && categoriesResult.data.length > 0) {
+            newCategoriesMap[event.id] = categoriesResult.data.length;
+          }
+        } catch (error) {
+          console.log(`No categories for event ${event.id}`);
+        }
+      }
+    }
+    setEventCategoriesMap(newCategoriesMap);
+  };
 
   const handleFilter = () => {
     let filtered = events.filter(event => {
@@ -82,6 +167,26 @@ const TuEvento = () => {
       return true;
     });
     setFilteredEvents(filtered);
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este evento?')) {
+      try {
+        const result = await cancelEvent(eventId);
+        if (result.success) {
+          // Remove from events list
+          const updatedEvents = events.filter(event => event.id !== eventId);
+          setEvents(updatedEvents);
+          setFilteredEvents(updatedEvents);
+          alert('Evento eliminado exitosamente');
+        } else {
+          alert('Error al eliminar el evento: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        alert('Error al eliminar el evento');
+      }
+    }
   };
 
   const filters = ['Ciudad', 'Día', 'Orden', 'Categorías', 'Próximos'];
@@ -96,7 +201,7 @@ const TuEvento = () => {
 
   const orderOptions = ['Mayor a menor', 'Menor a mayor', 'Más recientes', 'Más antiguos'];
 
-  const eventCategories = ['Todas', 'Música', 'Deportes', 'Teatro', 'Conferencias', 'Fiestas', 'Deportes', 'Culturales'];
+  const eventCategories = ['Todas', 'Música', 'Deportes', 'Teatro', 'Conferencias', 'Fiestas', 'Culturales'];
 
   const categories = [
     { name: "Música", image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=140&fit=crop" },
@@ -269,7 +374,7 @@ const TuEvento = () => {
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: 'url("https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1400&h=400&fit=crop")'
+            backgroundImage: `url("${heroImage}")`
           }}
         />
         <div
@@ -311,23 +416,59 @@ const TuEvento = () => {
             {error && <p className="text-red-500">{error}</p>}
             {!loading && !error && (
               <div className="grid md:grid-cols-3 gap-6">
-                {filteredEvents.map(event => (
-                  <div key={event.id} className="relative rounded-lg overflow-hidden">
-                    <img
-                      src={event.image || "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop"}
-                      alt={event.name}
-                      className="w-full h-48 object-cover"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/60">
-                      <h3 className="text-white text-sm mb-2">{event.name}</h3>
-                      <p className="text-gray-300 text-xs mb-2">{event.location?.city}</p>
-                      <button
-                        className="text-white px-4 py-1 text-sm rounded font-medium"
-                        style={{ backgroundColor: '#8b5cf6' }}
-                        onClick={() => navigate(`/event-info?id=${event.id}`)}
-                      >
-                        Ver detalles
-                      </button>
+                {filteredEvents.map((event, index) => (
+                  <div key={`event-${event.id}-${index}`} className="relative rounded-lg overflow-hidden">
+                    <div className="relative">
+                      {eventImagesMap[event.id] ? (
+                        <img
+                          src={eventImagesMap[event.id]}
+                          alt={event.name}
+                          className="w-full h-48 object-contain"
+                        />
+                      ) : (
+                        <div className="w-full h-48 bg-purple-600 flex items-center justify-center">
+                          <span className="text-white text-lg font-bold">Sin Imagen</span>
+                        </div>
+                      )}
+
+                      {/* Status badge for creator's events that may need editing */}
+                      {currentUserId === event.userID?.userID && event.status === 0 && (
+                        <div className="absolute top-2 right-2 bg-yellow-500 text-black px-2 py-1 text-xs font-bold rounded">
+                          {!eventImagesMap[event.id] ? 'FALTA IMÁGENES' :
+                           !eventCategoriesMap[event.id] ? 'FALTA CATEGORÍAS' :
+                           'EN PROCESO'}
+                        </div>
+                      )}
+
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/70">
+                        <h3 className="text-white text-sm mb-2">{event.name}</h3>
+                        <p className="text-gray-300 text-xs mb-2">{event.location?.city}</p>
+                        <div className="flex gap-2">
+                          <button
+                            className="text-white px-4 py-1 text-sm rounded font-medium"
+                            style={{ backgroundColor: '#8b5cf6' }}
+                            onClick={() => navigate(`/event-info?id=${event.id}`)}
+                          >
+                            Ver detalles
+                          </button>
+                          {currentUserId && event.userID?.userID === currentUserId && event.status === 0 && (
+                            <button
+                              className="text-white px-4 py-1 text-sm rounded font-medium bg-blue-600 hover:bg-blue-700"
+                              onClick={() => navigate(`/complete-event?id=${event.id}`)}
+                            >
+                              Completar
+                            </button>
+                          )}
+                          {currentUserId && event.userID?.userID === currentUserId && (
+                            <button
+                              className="text-white px-4 py-1 text-sm rounded font-medium bg-red-600 hover:bg-red-700"
+                              onClick={() => handleDeleteEvent(event.id)}
+                            >
+                              Eliminar
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

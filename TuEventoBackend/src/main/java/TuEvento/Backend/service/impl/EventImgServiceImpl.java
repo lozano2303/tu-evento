@@ -76,10 +76,9 @@ public class EventImgServiceImpl implements EventImgService {
 
     @Override
     public List<EventImgResponseDto> getEventImgsByEventId(int eventId) {
+        System.out.println("getEventImgsByEventId called for eventId: " + eventId);
         List<EventImg> images = eventImgRepository.findAllByEventIdOrderByOrderAsc(eventId);
-        if (images.isEmpty()) {
-            throw new RuntimeException("El evento no tiene imágenes asociadas");
-        }
+        System.out.println("Found " + images.size() + " images for eventId: " + eventId);
         return images.stream()
                 .map(img -> {
                     String cleanUrl = img.getUrl().replace("File uploaded : ", "");
