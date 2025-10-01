@@ -394,6 +394,41 @@ const PropertiesPanel = ({ selectedElement, selectedIds, elements, onUpdate, onD
           </>
         )}
 
+        {selectedElement.type === 'chair' && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Silla Individual</label>
+              <div className="text-sm text-gray-600">
+                Tipo: {selectedElement.type}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fila</label>
+              <input
+                type="text"
+                value={selectedElement.row || ''}
+                onChange={(e) => onUpdate(selectedElement.id, { row: e.target.value.toUpperCase() })}
+                className="w-full p-2 border border-gray-300 rounded text-sm"
+                maxLength="1"
+                placeholder="Ej: A"
+                onKeyDown={(e) => e.stopPropagation()}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Número de Asiento</label>
+              <input
+                type="number"
+                value={selectedElement.seatNumber || ''}
+                onChange={(e) => onUpdate(selectedElement.id, { seatNumber: parseInt(e.target.value) || 0 })}
+                className="w-full p-2 border border-gray-300 rounded text-sm"
+                min="1"
+                placeholder="Ej: 1"
+                onKeyDown={(e) => e.stopPropagation()}
+              />
+            </div>
+          </>
+        )}
+
         {selectedElement.type === 'seatPosition' && (
           <>
             <div>
@@ -698,6 +733,14 @@ const FloorPlanDesignerInner = () => {
   }, [elements]);
 
   const handleUpdate = useCallback((id, updates) => {
+    // Update chair label when row or seatNumber changes
+    const element = elements.find(e => e.id === id);
+    if (element && element.type === 'chair' && (updates.row !== undefined || updates.seatNumber !== undefined)) {
+      const newRow = updates.row !== undefined ? updates.row : element.row;
+      const newSeatNumber = updates.seatNumber !== undefined ? updates.seatNumber : element.seatNumber;
+      updates.meta = { ...element.meta, label: `${newRow}${newSeatNumber}` };
+    }
+
     // Si es una posición de asiento, actualizar el elemento padre
     if (id && id.includes('-')) {
       const [seatRowId, seatIndex] = id.split('-');
@@ -796,6 +839,8 @@ const FloorPlanDesignerInner = () => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (editingLabelId) return;
+
       const toolShortcuts = {
         's': 'select',
         'w': 'wall',

@@ -44,6 +44,7 @@ const DrawingCanvas = ({
   const [isSelecting, setIsSelecting] = useState(false)
   const [selectionStart, setSelectionStart] = useState(null)
   const [selectionEnd, setSelectionEnd] = useState(null)
+  const [guides, setGuides] = useState({ vertical: null, horizontal: null })
 
   const {
     dragState,
@@ -85,7 +86,7 @@ const DrawingCanvas = ({
     const x = offset.x + (clientX - svgRect.left) * scaleX
     const y = offset.y + (clientY - svgRect.top) * scaleY
 
-    return { x: Math.round(x), y: Math.round(y) }
+    return { x, y }
   }
 
 
@@ -421,13 +422,14 @@ const DrawingCanvas = ({
       setIsDrawing(true)
       setCurrentElement(newEl)
     } else if (activeTool === "wall") {
+      const snappedPos = snapToWallEnds(pos, elements);
       const newEl = {
         id: Date.now(),
         type: "wall",
-        x1: pos.x,
-        y1: pos.y,
-        x2: pos.x,
-        y2: pos.y,
+        x1: snappedPos.x,
+        y1: snappedPos.y,
+        x2: snappedPos.x,
+        y2: snappedPos.y,
         stroke: "#475569",
         strokeWidth: 3,
         thickness: 15,
@@ -489,8 +491,12 @@ const DrawingCanvas = ({
         updated.height = Math.max(updated.height, 100)
       }
     } else if (activeTool === "wall") {
-      updated.x2 = pos.x
-      updated.y2 = pos.y
+      const snappedPos = snapToWallEnds(pos, elements);
+      const verticalGuide = findVerticalGuide(pos, elements);
+      const horizontalGuide = findHorizontalGuide(pos, elements);
+      setGuides({ vertical: verticalGuide, horizontal: horizontalGuide });
+      updated.x2 = snappedPos.x
+      updated.y2 = snappedPos.y
     }
 
     setCurrentElement(updated)
@@ -591,10 +597,17 @@ const DrawingCanvas = ({
       }
 
       if (isValidElement) {
-        let elementToCreate = { ...currentElement }
+         let elementToCreate = { ...currentElement }
 
-        // Generate seat positions for seatRow (will be converted to individual chairs in parent)
-        if (activeTool === 'seatRow' && currentElement.width > 0) {
+         // Snap wall end to nearby wall ends
+         if (activeTool === 'wall') {
+           const snappedEnd = snapToWallEnds({x: elementToCreate.x2, y: elementToCreate.y2}, elements);
+           elementToCreate.x2 = snappedEnd.x;
+           elementToCreate.y2 = snappedEnd.y;
+         }
+
+         // Generate seat positions for seatRow (will be converted to individual chairs in parent)
+         if (activeTool === 'seatRow' && currentElement.width > 0) {
           const seatSpacing = 60 // Distance between seats
           const numSeats = Math.max(1, Math.floor(currentElement.width / seatSpacing))
           const startX = currentElement.x
@@ -616,9 +629,10 @@ const DrawingCanvas = ({
         onCreate && onCreate(elementToCreate)
       }
 
-      setIsDrawing(false)
-      setCurrentElement(null)
-      setStartPoint(null)
+       setIsDrawing(false)
+       setCurrentElement(null)
+       setStartPoint(null)
+       setGuides({ vertical: null, horizontal: null })
     }
   }
 
@@ -675,6 +689,47 @@ const DrawingCanvas = ({
       default: return '#000'
     }
   }
+
+  const snapToWallEnds = (pos, elements, snapDistance = 100) => {
+    let closest = null;
+    let minDist = snapDistance;
+    for (const el of elements) {
+      if (el.type === 'wall') {
+        const ends = [[el.x1, el.y1], [el.x2, el.y2]];
+        for (const [ex, ey] of ends) {
+          const dx = pos.x - ex;
+          const dy = pos.y - ey;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < minDist) {
+            minDist = dist;
+            closest = { x: ex, y: ey };
+          }
+        }
+      }
+    }
+    return closest || pos;
+  };
+
+  const findVerticalGuide = (pos, elements) => {
+    for (const el of elements) {
+      if (el.type === 'wall') {
+        if (Math.abs(pos.x - el.x1) < 20) return el.x1;
+        if (Math.abs(pos.x - el.x2) < 20) return el.x2;
+      }
+    }
+    return null;
+  };
+
+  const findHorizontalGuide = (pos, elements) => {
+    for (const el of elements) {
+      if (el.type === 'wall') {
+        if (Math.abs(pos.y - el.y1) < 20) return el.y1;
+        if (Math.abs(pos.y - el.y2) < 20) return el.y2;
+      }
+    }
+    return null;
+  };
+
 
   const getCursor = () => {
     if (isPanning) return 'grabbing'
@@ -1007,6 +1062,33 @@ const DrawingCanvas = ({
             onDelete={() => {}}
           />
         )}
+
+        {/* Alignment guides */}
+        {guides.vertical && (
+          <line
+            x1={guides.vertical}
+            y1={offset.y - 1000}
+            x2={guides.vertical}
+            y2={offset.y + viewHeight / zoom + 1000}
+            stroke="#3b82f6"
+            strokeWidth="1"
+            strokeDasharray="5,5"
+            pointerEvents="none"
+          />
+        )}
+        {guides.horizontal && (
+          <line
+            x1={offset.x - 1000}
+            y1={guides.horizontal}
+            x2={offset.x + viewWidth / zoom + 1000}
+            y2={guides.horizontal}
+            stroke="#3b82f6"
+            strokeWidth="1"
+            strokeDasharray="5,5"
+            pointerEvents="none"
+          />
+        )}
+
       </svg>
 
       {/* Tooltip para asientos */}

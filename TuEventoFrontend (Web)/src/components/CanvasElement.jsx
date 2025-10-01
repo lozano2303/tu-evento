@@ -18,8 +18,8 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
   const baseProps = {
     onClick: handleClick,
     style: {
-      cursor: isSelected ? "move" : "pointer",
-      pointerEvents: isSeatSelectionMode && (element.type === 'section' || element.type === 'zone') ? 'none' : 'auto',
+      cursor: isSeatSelectionMode ? (isSelected ? "move" : "pointer") : "default",
+      pointerEvents: isSeatSelectionMode ? 'auto' : 'none',
     },
     opacity: isSelected ? 0.9 : 1,
     strokeWidth: isSelected ? 3 : element.strokeWidth || 2,
@@ -294,6 +294,15 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
       case "chair": {
         return (
           <g data-element-id={element.id} transform={transform} {...baseProps}>
+            <rect
+              x={element.x - ELEMENT_CONSTANTS.CHAIR_SIZE / 2}
+              y={element.y - ELEMENT_CONSTANTS.CHAIR_SIZE / 2}
+              width={ELEMENT_CONSTANTS.CHAIR_SIZE}
+              height={ELEMENT_CONSTANTS.CHAIR_SIZE}
+              fill="transparent"
+              stroke="none"
+              pointerEvents="auto"
+            />
             <image
               href="/src/assets/images/silla-de-oficina.png"
               x={element.x - ELEMENT_CONSTANTS.CHAIR_SIZE / 2}
@@ -311,7 +320,6 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
         const dx = element.x2 - element.x1;
         const dy = element.y2 - element.y1;
         const length = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
         const midX = element.x1 + dx / 2;
         const midY = element.y1 + dy / 2;
@@ -319,17 +327,17 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
         return (
           <g
             data-element-id={element.id}
-            transform={`rotate(${angle}, ${element.x1}, ${element.y1}) ${transform}`}
+            transform={transform}
             {...baseProps}
           >
-            <rect
-              x={element.x1}
-              y={element.y1 - ELEMENT_CONSTANTS.WALL_THICKNESS / 2}
-              width={length}
-              height={ELEMENT_CONSTANTS.WALL_THICKNESS}
-              fill="#6b7280"
-              stroke="#4b5563"
-              strokeWidth={1}
+            <line
+              x1={element.x1}
+              y1={element.y1}
+              x2={element.x2}
+              y2={element.y2}
+              stroke="#6b7280"
+              strokeWidth={ELEMENT_CONSTANTS.WALL_THICKNESS}
+              strokeLinecap="square"
             />
             {renderLabelElement(midX, midY - 10)}
             {isSelected && (
