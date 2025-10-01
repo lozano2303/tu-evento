@@ -26,4 +26,5 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     List<Event> findByStartDateOrFinishDate(LocalDate date, LocalDate date2);
     List<Event> findByLocationID_LocationIDAndStatusNot(Integer locationId, int i);
     List<Event> findByLocationID_LocationID(Integer locationId);
+    List<Event> findAllByUserID_UserID(int userId);
 }

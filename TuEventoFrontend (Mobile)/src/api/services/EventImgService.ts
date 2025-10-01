@@ -1,5 +1,5 @@
 // Servicio para manejar llamadas API relacionadas con imágenes de eventos
-const API_BASE_URL = 'http://192.168.0.36:8080/api';
+const API_BASE_URL = 'http://10.3.233.221:8080/api/v1';
 
 export const EventImgService = {
   // Obtener todos los eventos (sin token para acceso público)
@@ -27,7 +27,7 @@ export const EventImgService = {
   // Obtener imágenes de un evento por ID
   async getEventImages(eventId: number) {
     try {
-      const url = `${API_BASE_URL}/v1/event-img/${eventId}`;
+      const url = `${API_BASE_URL}/event-img/${eventId}`;
       console.log('Making request to:', url);
       const response = await fetch(url);
       console.log('Response status:', response.status);

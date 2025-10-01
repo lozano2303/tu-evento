@@ -290,7 +290,7 @@ public class EventServiceImpl implements EventService {
     public ResponseDto<List<EventDto>> getAllEvent() {
         try {
             // Return only active events (status = 1)
-            List<Event> events = eventRepository.findAllByStatusNot(0);
+            List<Event> events = eventRepository.findAllByStatusNot(3);
             List<EventDto> eventDtos = events.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -305,7 +305,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public ResponseDto<List<EventDto>> getAllEventIdUser(int userId) {
         try {
-            List<Event> events = eventRepository.findAllByUserID_UserIDAndStatusNot(userId, 0);
+            List<Event> events = eventRepository.findAllByUserID_UserID(userId);
             List<EventDto> eventDtos = events.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
