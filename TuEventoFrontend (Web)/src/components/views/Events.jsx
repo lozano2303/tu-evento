@@ -4,12 +4,14 @@ import { ChevronLeft, ChevronRight, Search, ChevronDown } from 'lucide-react';
 import { getAllEvents, cancelEvent } from '../../services/EventService.js';
 import { getEventImages } from '../../services/EventImgService.js';
 import { getCategoriesByEvent } from '../../services/CategoryService.js';
+import { searchEvents } from '../../services/searchEvents.js';
 
 const TuEvento = () => {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('Ciudad');
   const [selectedCity, setSelectedCity] = useState('Bogotá');
   const [selectedDay, setSelectedDay] = useState('Lunes');
+  const [selectedDate, setSelectedDate] = useState('');
   const [selectedOrder, setSelectedOrder] = useState('Mayor a menor');
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,7 +56,7 @@ const TuEvento = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
+  
 
   // Set current user ID
   useEffect(() => {
@@ -136,6 +138,36 @@ const TuEvento = () => {
       }
     }
     setEventImagesMap(newImagesMap);
+  };
+  const handleServerFilter = async () => {
+    try {
+      setLoading(true);
+      console.log('EventsList', selectedDate);
+      const result = await searchEvents(
+        searchTerm || null,      
+        selectedDate || null,   // 👈 pasa la fecha seleccionada
+        true,                    
+        selectedCity !== "Bogotá" ? selectedCity : null
+      );
+
+      if (result.success) {
+        const eventsList = result.data;
+
+        // 🔹 Primero guarda los eventos
+        setEvents(eventsList);
+        setFilteredEvents(eventsList);
+        // 🔹 Luego carga imágenes y categorías
+        await loadEventImages(eventsList);
+        await loadEventCategories(eventsList);
+      } else {
+        setError(result.message || 'Error en la búsqueda');
+      }
+    } catch (err) {
+      console.error("Error en searchEvents:", err);
+      setError("No se pudieron cargar los eventos filtrados");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadEventCategories = async (eventsList) => {
@@ -223,7 +255,12 @@ const TuEvento = () => {
                   type="text"
                   placeholder="Buscar eventos..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange= {(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleServerFilter();
+                      }
+                    }}
                   className="bg-transparent text-white placeholder-purple-200 outline-none w-48"
                 />
               </div>
@@ -247,6 +284,7 @@ const TuEvento = () => {
                       onClick={() => {
                         setSelectedCity(city);
                         setShowCityDropdown(false);
+                        handleServerFilter();
                       }}
                       className="w-full text-left px-4 py-2 text-white hover:bg-purple-700 transition-colors"
                     >
@@ -258,32 +296,21 @@ const TuEvento = () => {
             </div>
 
             {/* Día */}
-            <div className="relative" ref={dayRef}>
-              <button
-                onClick={() => setShowDayDropdown(!showDayDropdown)}
-                className="flex items-center bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 hover:border-purple-400 transition-colors text-white"
-              >
-                <span className="mr-2">📅</span>
-                <span>{selectedDay}</span>
-                <ChevronDown className="w-4 h-4 ml-2" />
-              </button>
-              {showDayDropdown && (
-                <div className="absolute top-full mt-2 bg-purple-900 border border-purple-600 rounded-lg shadow-xl z-50 w-40">
-                  {daysOfWeek.map((day) => (
-                    <button
-                      key={day}
-                      onClick={() => {
-                        setSelectedDay(day);
-                        setShowDayDropdown(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-white hover:bg-purple-700 transition-colors"
-                    >
-                      {day}
-                    </button>
-                  ))}
-                </div>
-              )}
+            {/* Fecha */}
+            <div className="relative">
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  // opcional: ejecutar búsqueda automática al elegir fecha
+                  handleServerFilter();
+                }}
+                className="bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 
+                          hover:border-purple-400 transition-colors text-white outline-none"
+              />
             </div>
+
 
             {/* Orden */}
             <div className="relative" ref={orderRef}>
@@ -356,7 +383,7 @@ const TuEvento = () => {
 
             {/* Filtrar */}
             <button
-              onClick={handleFilter}
+              onClick={handleServerFilter}
               className="flex items-center bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 hover:border-purple-400 transition-colors text-white"
             >
               <span className="mr-2">🔍</span>
@@ -421,7 +448,7 @@ const TuEvento = () => {
                         <img
                           src={eventImagesMap[event.id]}
                           alt={event.name}
-                          className="w-full h-48 object-contain"
+                          className="w-full h-48 object-cover"
                         />
                       ) : (
                         <div className="w-full h-48 bg-purple-600 flex items-center justify-center">
