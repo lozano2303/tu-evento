@@ -1,7 +1,7 @@
 cloud:
   aws:
     credentials:
-      access-key: 
+      access-key:
       secret-key: 
     region:
       static: us-east-2
@@ -9,6 +9,6 @@ cloud:
       auto: false
 application:
   bucket:
-    name: tu-evento-storege2
+    name:
 server:
   port: 9090

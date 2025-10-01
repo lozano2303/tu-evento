@@ -92,11 +92,6 @@ export const assignCategoryToEvent = async (categoryId, eventId) => {
 
 export const getCategoriesByEvent = async (eventId) => {
   try {
-    // Temporalmente devolver lista vacía para evitar errores 404
-    // TODO: Revertir cuando se arregle el endpoint del backend
-    return { success: true, data: [], message: 'Sin categorías asignadas' };
-
-    /*
     const token = localStorage.getItem('token');
     const headers = {
       'Content-Type': 'application/json',
@@ -110,7 +105,6 @@ export const getCategoriesByEvent = async (eventId) => {
     });
     const data = await response.json();
     return { success: data.success, data: data.data || [], message: data.message };
-    */
   } catch (error) {
     console.error('Error obteniendo categorías del evento:', error);
     throw error;
