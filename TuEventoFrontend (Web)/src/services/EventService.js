@@ -21,6 +21,27 @@ export const getAllEvents = async () => {
   }
 };
 
+export const getEventsByUser = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const response = await fetch(`${API_BASE_URL}/v1/event/getAllbyUser`, {
+      method: 'GET',
+      headers,
+    });
+    const data = await response.json();
+    return { success: data.success, data: data.data || [], message: data.message };
+  } catch (error) {
+    console.error('Error obteniendo eventos del usuario:', error);
+    throw error;
+  }
+};
+
 export const getEventById = async (eventId) => {
   try {
     const token = localStorage.getItem('token');

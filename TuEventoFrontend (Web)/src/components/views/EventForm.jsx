@@ -307,28 +307,40 @@ const EventForm = () => {
 
     if (name === 'subCategory') {
       const newSubCategory = value ? parseInt(value, 10) : undefined;
+      const previousSubCategory = categories.subCategory;
+
       setCategories(prev => ({ ...prev, subCategory: newSubCategory }));
 
-      // If we have a created event and a subcategory, assign it immediately
-      if (createdEvent && newSubCategory) {
+      // Only assign category if it's different from the previous one
+      if (createdEvent && newSubCategory && newSubCategory !== previousSubCategory) {
         assignCategoryToEvent(newSubCategory, createdEvent.eventID || createdEvent.id)
           .then(result => {
             if (result.success) {
               console.log('Categoría asignada exitosamente al evento');
             } else {
-              console.error('Error asignando categoría:', result.message);
-              setFieldErrors(prev => ({
-                ...prev,
-                subCategory: result.message || 'Error asignando categoría'
-              }));
+              // If category is already assigned, just log it but don't show error
+              if (result.message && result.message.includes('ya está asignada')) {
+                console.log('Categoría ya estaba asignada al evento');
+              } else {
+                console.error('Error asignando categoría:', result.message);
+                setFieldErrors(prev => ({
+                  ...prev,
+                  subCategory: result.message || 'Error asignando categoría'
+                }));
+              }
             }
           })
           .catch(error => {
-            console.error('Error asignando categoría:', error);
-            setFieldErrors(prev => ({
-              ...prev,
-              subCategory: 'Error de conexión al asignar categoría'
-            }));
+            // Handle network errors gracefully
+            if (error.response && error.response.status === 400 && error.response.data && error.response.data.message && error.response.data.message.includes('ya está asignada')) {
+              console.log('Categoría ya estaba asignada al evento');
+            } else {
+              console.error('Error asignando categoría:', error);
+              setFieldErrors(prev => ({
+                ...prev,
+                subCategory: 'Error de conexión al asignar categoría'
+              }));
+            }
           });
       }
 
@@ -468,7 +480,6 @@ const EventForm = () => {
           // For new events, proceed to next step
           const eventData = result.data;
           setCreatedEvent(eventData);
-          console.log('Evento creado con ID:', eventData.id);
 
           // Redirect to complete event flow
           navigate(`/complete-event?id=${eventData.id}`);
@@ -510,7 +521,7 @@ const EventForm = () => {
       return;
     }
 
-    // Step 3: Validate categories and redirect to event management
+    // Step 3: Validate categories and create event if not exists
     if (!categories.parentCategory) {
       setFieldErrors({ parentCategory: 'Debe seleccionar una categoría principal' });
       return;
@@ -525,8 +536,53 @@ const EventForm = () => {
       }
     }
 
-    // Redirect to event management instead of completing the event
-    navigate('/event-management');
+    // Create event if not already created
+    if (!createdEvent) {
+      setLoading(true);
+      try {
+        const userID = localStorage.getItem('userID');
+
+        if (!userID) {
+          setError('Usuario no autenticado. Por favor inicia sesión.');
+          setLoading(false);
+          return;
+        }
+
+        const eventData = {
+          userID: { userID: parseInt(userID) },
+          eventName: formData.eventName.trim(),
+          description: formData.description.trim(),
+          startDate: formData.startDate,
+          finishDate: formData.finishDate,
+          locationID: { locationID: parseInt(formData.locationID) },
+          status: 0, // 0 = draft, will be activated after completing all steps
+        };
+
+        const result = await createEvent(eventData);
+
+        if (result.success) {
+          const newEventData = result.data;
+          setCreatedEvent(newEventData);
+
+          // Note: Category is already assigned during subcategory selection in handleInputChange
+          // No need to assign again here to avoid duplicate assignment errors
+
+          // Redirect to event management
+          navigate('/event-management');
+        } else {
+          setError(result.message || 'Error al crear el evento');
+        }
+      } catch (err) {
+        setError('Error de conexión al crear el evento');
+        console.error('Error creating event:', err);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Event already exists - category should already be assigned from previous steps
+      // No need to assign again to avoid duplicate assignment errors
+      navigate('/event-management');
+    }
   };
 
   const handleFloorPlanDesigner = () => {
@@ -937,15 +993,15 @@ const EventForm = () => {
                   disabled={loading}
                   className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
                 >
-                  {loading ? 'Procesando...' : currentStep === 1 || currentStep === 2 ? (
+                  {loading ? 'Creando...' : currentStep === 1 || currentStep === 2 ? (
                     <>
                       Siguiente
                       <ChevronRight className="w-4 h-4" />
                     </>
                   ) : (
                     <>
-                      Siguiente
-                      <ChevronRight className="w-4 h-4" />
+                      <Save className="w-4 h-4" />
+                      Crear Evento
                     </>
                   )}
                 </button>

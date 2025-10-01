@@ -1,44 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Plus, MapPin, Users, Settings, ArrowLeft, Upload, Tag } from 'lucide-react';
-import { getAllEvents, completeEvent } from '../../services/EventService.js';
+import { getEventsByUser, completeEvent } from '../../services/EventService.js';
 import { getEventImages } from '../../services/EventImgService.js';
 import { getCategoriesByEvent } from '../../services/CategoryService.js';
+import { API_BASE_URL } from '../../services/apiconstant.js';
 
 const EventManagement = () => {
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentUserId, setCurrentUserId] = useState(null);
   const [eventImagesMap, setEventImagesMap] = useState({});
   const [eventCategoriesMap, setEventCategoriesMap] = useState({});
 
   useEffect(() => {
-    const userId = localStorage.getItem('userID');
-    setCurrentUserId(userId ? parseInt(userId) : null);
+    loadEvents();
   }, []);
-
-  useEffect(() => {
-    if (currentUserId) {
-      loadEvents();
-    }
-  }, [currentUserId]);
 
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const result = await getAllEvents();
+
+      // Check if user is authenticated
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Usuario no autenticado. Redirigiendo al login...');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+        setLoading(false);
+        return;
+      }
+
+      // Use getEventsByUser to get all events for the authenticated user
+      const result = await getEventsByUser();
+
       if (result.success) {
-        // Filter only user's events with status 0 (in progress)
-        const userEvents = result.data.filter(event =>
-          currentUserId && event.userID?.userID === currentUserId && event.status === 0
-        );
-        setEvents(userEvents);
+        // Filter events by status 0 (in progress/draft)
+        const draftEvents = result.data.filter(event => event.status === 0);
+        setEvents(draftEvents);
 
         // Load images and categories for each event
-        await loadEventImages(userEvents);
-        await loadEventCategories(userEvents);
+        await loadEventImages(draftEvents);
+        await loadEventCategories(draftEvents);
       } else {
         setError(result.message || 'Error al cargar eventos');
       }
