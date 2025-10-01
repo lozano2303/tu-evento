@@ -177,8 +177,9 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    @Transactional
-    public ResponseDto<EventDto> CancelEvent(EventDto eventDto) {
+    @Transactional(rollbackOn = Exception.class)
+    public ResponseDto<EventDto> CancelEvent(EventDto eventDto, int userId) {
+        System.out.println("CancelEvent called for eventId: " + eventDto.getId() + " by userId: " + userId);
         try {
             // Find the event by ID
             Optional<Event> eventOpt = eventRepository.findById(eventDto.getId());
@@ -188,11 +189,31 @@ public class EventServiceImpl implements EventService {
 
             Event event = eventOpt.get();
 
-            // Delete associated images from S3 and database
-            // Note: This is a simplified implementation. In production, you should handle this more carefully
-            // For now, we'll just delete the event and let cascade handle images if configured
+            // Check if the authenticated user is the owner of the event
+            if (event.getUserID().getUserID() != userId) {
+                return ResponseDto.error("No tienes permisos para eliminar este evento");
+            }
 
-            eventRepository.delete(event);
+            // Delete associated images first
+            int imagesCount = eventImgRepository.findAllByEventIdOrderByOrderAsc(eventDto.getId()).size();
+            System.out.println("Found " + imagesCount + " images for event " + eventDto.getId());
+            if (imagesCount > 0) {
+                eventImgRepository.deleteByEventId(eventDto.getId());
+                System.out.println("Deleted " + imagesCount + " images for event " + eventDto.getId());
+            }
+
+            // Delete associated category relationships
+            List<CategoryEvent> categoriesToDelete = categoryEventRepository.findByEvent_Id(eventDto.getId());
+            System.out.println("Found " + categoriesToDelete.size() + " category relationships for event " + eventDto.getId());
+            if (!categoriesToDelete.isEmpty()) {
+                categoryEventRepository.deleteAll(categoriesToDelete);
+                categoryEventRepository.flush();
+                System.out.println("Deleted " + categoriesToDelete.size() + " category relationships for event " + eventDto.getId());
+            }
+
+            // Finally delete the event
+            eventRepository.deleteById(eventDto.getId());
+            System.out.println("Event " + eventDto.getId() + " deleted successfully");
 
             return ResponseDto.ok("Evento eliminado correctamente", null);
 

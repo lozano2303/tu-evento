@@ -2,6 +2,7 @@ package TuEvento.Backend.model;
 
 import java.time.LocalDate;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,6 +10,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity(name="event")
 public class Event {
@@ -22,6 +26,12 @@ public class Event {
     @ManyToOne
     @JoinColumn(name="locationID",nullable=false)
     private Location locationID;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<EventImg> images;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<CategoryEvent> categories;
     @Column(name="eventName", length = 100, nullable = false)
     private String eventName;
     @Column(name="description", length = 500, nullable = false)
@@ -32,7 +42,10 @@ public class Event {
     private LocalDate finishDate;
     @Column(name="status", nullable = false)
     private int status;
-    public Event() {}
+    public Event() {
+        this.images = new ArrayList<>();
+        this.categories = new ArrayList<>();
+    }
     public Event(int id,User userID, Location locationID, String eventName, String description, LocalDate startDate, LocalDate finishDate, int status) {
         this.id = id;
         this.userID = userID;
@@ -42,6 +55,24 @@ public class Event {
         this.startDate = startDate;
         this.finishDate = finishDate;
         this.status = status;
+        this.images = new ArrayList<>();
+        this.categories = new ArrayList<>();
+    }
+
+    public List<EventImg> getImages() {
+        return images;
+    }
+
+    public void setImages(List<EventImg> images) {
+        this.images = images;
+    }
+
+    public List<CategoryEvent> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<CategoryEvent> categories) {
+        this.categories = categories;
     }
     public int getId() {
         return id;

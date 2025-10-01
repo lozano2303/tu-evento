@@ -36,11 +36,16 @@ public class EventController {
         return eventService.updateEvent(responseEvent,eventDto);
     }
     @DeleteMapping("/cancel/{eventId}")
-    public ResponseDto<EventDto> deleteEvent(@PathVariable int eventId) {
+    public ResponseDto<EventDto> deleteEvent(@PathVariable int eventId, HttpServletRequest request) {
         try {
+            Integer userId = (Integer) request.getAttribute("userID");
+            if (userId == null) {
+                return ResponseDto.error("Usuario no autenticado");
+            }
+
             EventDto eventDto = new EventDto();
             eventDto.setId(eventId);
-            return eventService.CancelEvent(eventDto);
+            return eventService.CancelEvent(eventDto, userId);
         } catch (RuntimeException e) {
             return ResponseDto.error(e.getMessage());
         } catch (Exception e) {
