@@ -34,9 +34,9 @@ public class SendNotification {
     private JavaMailSender mailSender;
 
     // Método programado para ejecutarse diariamente y enviar notificaciones dos días antes del evento
-    @Scheduled(cron = "0 0 9 * * ?") // Ejecuta todos los días a las 9 AM
+    @Scheduled(cron = "0 26 15 * * ?") // Todos los días a las 3:26 PM
     public void sendNotificationsTwoDaysBeforeEvent() {
-        LocalDate twoDaysFromNow = LocalDate.now().plusDays(2);
+        LocalDate twoDaysFromNow = LocalDate.now().plusDays(2); 
 
         // Obtener todas las notificaciones
         List<Notification> notifications = notificationRepository.findAll();

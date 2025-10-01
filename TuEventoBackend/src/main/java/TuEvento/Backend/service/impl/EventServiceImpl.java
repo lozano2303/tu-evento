@@ -339,11 +339,6 @@ public class EventServiceImpl implements EventService {
 
             Event event = eventOpt.get();
 
-            // Check if event is already completed
-            if (event.getStatus() == 0) {
-                return ResponseDto.error("El evento ya está completado");
-            }
-
             // Check if event has images
             List<EventImg> images = eventImgRepository.findByEventId(eventId);
             if (images.isEmpty()) {
@@ -357,7 +352,7 @@ public class EventServiceImpl implements EventService {
             }
 
             // Mark event as completed
-            event.setStatus(1);
+            event.setStatus(0);
             Event savedEvent = eventRepository.save(event);
 
             EventDto resultDto = toDto(savedEvent);
