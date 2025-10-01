@@ -34,7 +34,9 @@ public class EventRatingServiceImpl implements EventRatingService {
             er.getEventId().getId(),
             er.getRating(),
             er.getComment(),
-            er.getCreatedAt()
+            er.getCreatedAt(),
+            er.getUpdatedAt(),
+            er.getUserId().getFullName()
         );
     }
 
@@ -97,6 +99,7 @@ public class EventRatingServiceImpl implements EventRatingService {
             er.setRating(eventRatingDto.getRating());
             er.setComment(eventRatingDto.getComment());
             er.setCreatedAt(LocalDateTime.now());
+            er.setUpdatedAt(LocalDateTime.now());
 
             eventRatingRepository.save(er);
 
@@ -114,6 +117,7 @@ public class EventRatingServiceImpl implements EventRatingService {
                 EventRating er = eventRating.get();
                 er.setRating(eventRatingDto.getRating());
                 er.setComment(eventRatingDto.getComment());
+                er.setUpdatedAt(LocalDateTime.now());
                 eventRatingRepository.save(er);
                 return new ResponseDto<>(true, "Calificación del evento actualizada exitosamente", toDto(er));
             } else {

@@ -46,3 +46,13 @@ export interface ICity {
   name: string;
 }
 
+export interface IEventRating {
+  ratingID: number;
+  userId: number;
+  eventId: number;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  userName: string;
+}
+

@@ -9,17 +9,21 @@ public class EventRatingDto {
     private int rating;
     private String comment;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String userName;
 
     public EventRatingDto() {
     }
 
-    public EventRatingDto(int ratingID, int userId, int eventId, int rating, String comment, LocalDateTime createdAt) {
+    public EventRatingDto(int ratingID, int userId, int eventId, int rating, String comment, LocalDateTime createdAt, LocalDateTime updatedAt, String userName) {
         this.ratingID = ratingID;
         this.userId = userId;
         this.eventId = eventId;
         this.rating = rating;
         this.comment = comment;
         this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.userName = userName;
     }
 
     public int getRatingID() {
@@ -57,5 +61,17 @@ public class EventRatingDto {
     }
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+    public String getUserName() {
+        return userName;
+    }
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }

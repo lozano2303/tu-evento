@@ -1,4 +1,4 @@
-import { USER_ENDPOINT, USER_PROFILE_ENDPOINT ,UPDATE_PHONE_ENDPOINT , GET_ALL_DEPARTMENTS_ENDPOINT , GET_CITIES_BY_DEPARTMENT_ENDPOINT , SEND_ADRESS_ENDPOINT } from "../../constants/Endpoint";
+import { USER_ENDPOINT, USER_PROFILE_ENDPOINT ,UPDATE_PHONE_ENDPOINT , GET_ALL_DEPARTMENTS_ENDPOINT , GET_CITIES_BY_DEPARTMENT_ENDPOINT , SEND_ADRESS_ENDPOINT, EVENT_RATING_ENDPOINT } from "../../constants/Endpoint";
 import { IRequestRegister, IUserProfileResponse , IUserUpdatePhone , IAdress } from "../types/IUser";
 import { getToken } from "./Token";
 
@@ -262,6 +262,109 @@ export const getCitiesByDepartment = async(): Promise<any> => {
   }
   catch (error) {
     console.error('Error en getCitiesByDepartment:', error);
+    throw error;
+  }
+};
+
+// Event Ratings
+export const getEventRatingsByEvent = async (eventId: number): Promise<any> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("No token found");
+    }
+    const response = await fetch(`${EVENT_RATING_ENDPOINT}/getByEvent/${eventId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+    const responseData = await response.json();
+    if (!response.ok || responseData.success === false) {
+      throw new Error(responseData.message || "Error al obtener las calificaciones");
+    }
+    console.log('Calificaciones obtenidas:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error en getEventRatingsByEvent:', error);
+    throw error;
+  }
+};
+
+export const insertEventRating = async (userId: number, eventId: number, ratingData: { rating: number; comment: string }): Promise<any> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("No token found");
+    }
+    const response = await fetch(`${EVENT_RATING_ENDPOINT}/insert/${userId}/${eventId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(ratingData),
+    });
+    const responseData = await response.json();
+    if (!response.ok || responseData.success === false) {
+      throw new Error(responseData.message || "Error al insertar la calificación");
+    }
+    console.log('Calificación insertada:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error en insertEventRating:', error);
+    throw error;
+  }
+};
+
+export const updateEventRating = async (ratingData: { ratingID: number; rating: number; comment: string }): Promise<any> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("No token found");
+    }
+    const response = await fetch(`${EVENT_RATING_ENDPOINT}/update`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(ratingData),
+    });
+    const responseData = await response.json();
+    if (!response.ok || responseData.success === false) {
+      throw new Error(responseData.message || "Error al actualizar la calificación");
+    }
+    console.log('Calificación actualizada:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error en updateEventRating:', error);
+    throw error;
+  }
+};
+
+export const deleteEventRating = async (ratingID: number): Promise<any> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("No token found");
+    }
+    const response = await fetch(`${EVENT_RATING_ENDPOINT}/delete?id=${ratingID}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+    const responseData = await response.json();
+    if (!response.ok || responseData.success === false) {
+      throw new Error(responseData.message || "Error al eliminar la calificación");
+    }
+    console.log('Calificación eliminada:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error en deleteEventRating:', error);
     throw error;
   }
 };

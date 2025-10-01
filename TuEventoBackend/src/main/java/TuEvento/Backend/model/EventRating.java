@@ -29,6 +29,8 @@ public class EventRating {
     private String comment;
     @Column(name = "createdAt",nullable = false)
     private LocalDateTime createdAt;
+    @Column(name = "updatedAt")
+    private LocalDateTime updatedAt;
     public EventRating() {
     }
     public EventRating(int ratingID, User userId, Event eventId, int rating, String comment, LocalDateTime createdAt) {
@@ -86,6 +88,14 @@ public class EventRating {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
-    
-   
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+
 }
