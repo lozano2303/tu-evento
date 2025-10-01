@@ -2,7 +2,11 @@ import React from 'react';
 import { View, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const SearchHeader = () => {
+interface SearchHeaderProps {
+  onSearch?: (text: string) => void; // ✅ añadimos prop opcional
+}
+
+const SearchHeader: React.FC<SearchHeaderProps> = ({ onSearch }) => {
   return (
     <View className="mx-4 mb-6">
       {/* Search Container */}
@@ -19,6 +23,7 @@ const SearchHeader = () => {
             placeholderTextColor="#ffffff80"
             className="flex-1 text-white text-base font-medium"
             style={{ fontSize: 16 }}
+            onChangeText={onSearch} // ✅ llama al padre
           />
         </View>
       </View>
