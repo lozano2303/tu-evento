@@ -3,7 +3,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getUserIdFromToken, removeToken } from '../../api/services/Token';
-import { getUserProfile, updateUserPhone, updateUserBirthDate, getAllDepartments, getCitiesByDepartment } from '../../api/services/UserApi';
+import { getUserProfile, updateUserPhone, updateUserBirthDate, getAllDepartments, getCitiesByDepartment, deactivateUserAccount } from '../../api/services/UserApi';
 import { IUserProfile, IDepartment, ICity } from '../../api/types/IUser';
 import Input from "../../components/common/Input";
 import Button from '../../components/common/Button';
@@ -212,18 +212,25 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleDeactivateAccount = () => {
+  const handleDeactivateAccount = async () => {
+    if (!userId) return;
+
     Alert.alert(
       'Desactivar Cuenta',
       '¿Estás seguro que deseas desactivar tu cuenta? Esta acción es reversible.',
       [
         { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Desactivar', 
+        {
+          text: 'Desactivar',
           style: 'destructive',
-          onPress: () => {
-            // Aquí iría la lógica de desactivación
-            console.log('Cuenta desactivada');
+          onPress: async () => {
+            try {
+              await deactivateUserAccount(userId);
+              Alert.alert('Éxito', 'Cuenta desactivada correctamente');
+              // Perhaps navigate to login or something
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Error al desactivar la cuenta');
+            }
           }
         }
       ]
@@ -328,8 +335,17 @@ export default function ProfileScreen() {
             <View className="pt-4 space-y-3">
               <Button label="Guardar Cambios" onPress={handleSave} />
               <TouchableOpacity
+                onPress={handleDeactivateAccount}
+                className="bg-orange-600/20 border border-orange-600/50 py-3 rounded-lg"
+                style={{ borderRadius: 25 }}
+              >
+                <Text className="text-orange-400 text-center font-semibold text-base">
+                  Desactivar Cuenta
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={handleLogout}
-                className="bg-red-600 py-3 rounded-lg mt-4"
+                className="bg-red-600 py-3 rounded-lg"
                 style={{ borderRadius: 25 }}
               >
                 <Text className="text-white text-center font-semibold text-base">

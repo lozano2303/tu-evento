@@ -146,14 +146,14 @@ export const updateUserBirthDate = async (userId: number, newBirthDate: string):
   }
 }; 
 
-// No funciona en el backend por el momento
+
 export const deactivateUserAccount = async (userId: number): Promise<IUserProfileResponse> => {
   try {
     const token = await getToken();
     if (!token) {
       throw new Error("No token found");
     }
-    const response = await fetch(`${USER_PROFILE_ENDPOINT}/${userId}/deactive`, {
+    const response = await fetch(`${USER_PROFILE_ENDPOINT}/${userId}/deactivate`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
