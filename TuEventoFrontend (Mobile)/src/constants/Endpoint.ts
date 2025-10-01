@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://192.168.0.26:8080/api/v1"; //  API base URL
+const API_BASE_URL = "http://192.168.0.36:8080/api/v1"; //  API base URL
 
 export const USER_ENDPOINT = `${API_BASE_URL}/register`; // User registration endpoint
 
@@ -27,5 +27,7 @@ export const SEND_ADRESS_ENDPOINT = `${API_BASE_URL}/addresses`; // Send address
 export const GET_ALL_EVENTS_ENDPOINT = `${API_BASE_URL}/event/getAll`; // Get all events endpoi
 
 export const GET_EVENT_BY_ID_ENDPOINT = `${API_BASE_URL}/event`; // Get event by ID endpoint
+
+export const GET_EVENT_IMAGES_ENDPOINT = `${API_BASE_URL}/event-img`; // Get event images endpoint
 
 export const BUY_TICKET_ENDPOINT = `${API_BASE_URL}/tickets/cancel`; // Cancel ticket endpoint

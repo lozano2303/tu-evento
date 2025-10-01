@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { IEvent } from '../../api/types/IEvent';
+import { IEventWithImage } from '../../api/types/IEventWithImage';
 
 interface PopularEventCardProps {
-  event: IEvent;
+  event: IEventWithImage;
   onPress?: () => void;
 }
 
@@ -37,37 +37,34 @@ const PopularEventCard: React.FC<PopularEventCardProps> = ({ event, onPress }) =
 
   return (
     <View className="flex-1 relative rounded-lg overflow-hidden mb-4 mx-1 bg-gray-800">
-      {/* Imagen predeterminada */}
+      {/* Imagen del evento */}
       <Image
-        source={{ 
-          uri: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=200&fit=crop&auto=format' 
+        source={{
+          uri: event.imageUrl || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=200&fit=crop&auto=format'
         }}
         className="w-full h-32"
         resizeMode="cover"
       />
-      
+
       {/* Contenido del evento */}
       <View className="p-3">
         {/* Nombre del evento */}
         <Text className="text-white text-sm font-bold mb-2 leading-5">
           {event.eventName}
         </Text>
-        
+
         {/* Descripción */}
         <Text className="text-gray-300 text-xs mb-2 leading-4">
           {truncateDescription(event.description)}
         </Text>
-        
+
         {/* Información adicional */}
         <View className="mb-3">
-          <Text className="text-gray-400 text-xs">
-            📍 {event.locationID.address.city.name}
-          </Text>
           <Text className="text-gray-400 text-xs">
             📅 {formatDate(event.startDate)}
           </Text>
         </View>
-        
+
         {/* Botón de detalles */}
         <TouchableOpacity
           className="px-3 py-2 rounded-md"

@@ -11,7 +11,6 @@ import NewPasswordScreen from '../screens/auth/NewPasswordScreen';
 import EvenList from '../screens/home/EvenListScreen';
 import ReaderQr from '../screens/home/readerQr';
 import ProfileScreen from '../screens/home/ProfileScreen';
-import EventImagesView from '../test/EventImagesView';
 import EventDetail from '../components/events/EventDetail';
 
 const Stack = createNativeStackNavigator();
@@ -64,15 +63,6 @@ function MainTabs() {
           ),
         }}
       />
-      <Tab.Screen
-        name="Test Imágenes"
-        component={EventImagesView}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="images-outline" size={size} color={color} />
-          ),
-        }}
-      />
     </Tab.Navigator>
   );
 }
@@ -87,7 +77,6 @@ export default function AppNavigator() {
         <Stack.Screen name="CodeVerificationScreenRegister" component={CodeVerificationScreenRegister} />
         <Stack.Screen name="CodeVerifcationForgotPassword" component={CodeVerifcationForgotPassword} />
         <Stack.Screen name="NewPasswordScreen" component={NewPasswordScreen} />
-        <Stack.Screen name="TestImages" component={EventImagesView} />
         <Stack.Screen name="MainTabs" component={MainTabs} />
       </Stack.Navigator>
     </NavigationContainer>

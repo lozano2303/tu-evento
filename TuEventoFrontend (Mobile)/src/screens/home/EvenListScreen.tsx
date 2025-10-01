@@ -2,18 +2,18 @@ import { View, Text, Image, TouchableOpacity, FlatList, Alert } from "react-nati
 import { useState, useEffect } from 'react';
 import SearchHeader from '../../components/common/SearchHeader';
 import PopularEventCard from '../../components/events/PopularEventCard';
-import { getAllEvents } from '../../api/services/EventApi';
-import { IEvent } from '../../api/types/IEvent';
+import { getAllEventsWithImage } from '../../api/services/EventWithImageApi';
+import { IEventWithImage } from '../../api/types/IEventWithImage';
 
 export default function EvenList() {
-  const [events, setEvents] = useState<IEvent[]>([]);
+  const [events, setEvents] = useState<IEventWithImage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const loadEvents = async () => {
       try {
         setLoading(true);
-        const result = await getAllEvents();
+        const result = await getAllEventsWithImage();
         if (result.success) {
           setEvents(result.data);
         } else {
@@ -30,7 +30,7 @@ export default function EvenList() {
     loadEvents();
   }, []);
 
-  const renderEvent = ({ item }: { item: IEvent }) => (
+  const renderEvent = ({ item }: { item: IEventWithImage }) => (
     <PopularEventCard event={item} />
   );
 

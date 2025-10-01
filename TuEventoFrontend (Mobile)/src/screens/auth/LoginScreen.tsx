@@ -19,9 +19,6 @@ export default function LoginScreen() {
     navigation.navigate("ForgotPasswordScreen" as never);
   };
 
-  const handleGoToTestImages = () => {
-    navigation.navigate("TestImages" as never);
-  };
 
   const handleLogin = async () => {
     try {
@@ -102,14 +99,6 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Botón para acceder a la vista de test */}
-        <View className="mt-4">
-          <TouchableOpacity onPress={handleGoToTestImages}>
-            <Text style={{ color: '#FFD700', textAlign: 'center', fontSize: 16, fontWeight: 'bold' }}>
-              🖼️ Ir a Test de Imágenes
-            </Text>
-          </TouchableOpacity>
-        </View>
 
         {/* Línea divisoria */}
         <Text className="text-white text-sm text-center my-6">

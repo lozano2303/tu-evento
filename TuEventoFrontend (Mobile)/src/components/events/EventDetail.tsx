@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  ScrollView, 
-  TouchableOpacity, 
-  Alert, 
-  Dimensions, 
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Dimensions,
   FlatList,
-  ActivityIndicator 
+  ActivityIndicator
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { getEventById } from '../../api/services/EventApi';
+import { EventImgService } from '../../api/services/EventImgService';
 import { IEvent } from '../../api/types/IEvent';
 
 const { width } = Dimensions.get('window');
@@ -23,16 +24,18 @@ const EventDetail: React.FC = () => {
   const { eventId } = route.params as { eventId: number };
 
   const [event, setEvent] = useState<IEvent | null>(null);
+  const [images, setImages] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const carouselRef = useRef<FlatList>(null);
 
-  // Imágenes para el carrusel (repetir 3 veces la misma imagen)
-  const carouselImages = [
-    'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop&auto=format',
-    'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=300&fit=crop&auto=format',
-    'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=300&fit=crop&auto=format'
-  ];
+  const viewabilityConfig = { viewAreaCoveragePercentThreshold: 50 };
+
+  const onViewableItemsChanged = ({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      setCurrentImageIndex(viewableItems[0].index || 0);
+    }
+  };
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -40,8 +43,14 @@ const EventDetail: React.FC = () => {
         setLoading(true);
         const eventData = await getEventById(eventId);
         setEvent(eventData);
+
+        // Cargar imágenes del evento
+        const imagesData = await EventImgService.getEventImages(eventId);
+        const sortedImages = imagesData.sort((a: any, b: any) => a.order - b.order);
+        const defaultImage = { url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=300&fit=crop&auto=format', order: 0 };
+        setImages(sortedImages.length > 0 ? sortedImages : [defaultImage]);
       } catch (err) {
-        Alert.alert('Error', 'No se pudo cargar el evento');
+        Alert.alert('Error', 'No se pudo cargar el evento o las imágenes');
         console.error('Error loading event:', err);
       } finally {
         setLoading(false);
@@ -78,32 +87,16 @@ const EventDetail: React.FC = () => {
     setCurrentImageIndex(pageNum);
   };
 
-  const renderCarouselItem = ({ item, index }: { item: string; index: number }) => (
+  const renderCarouselItem = ({ item, index }: { item: any; index: number }) => (
     <View style={{ width: CARD_WIDTH, height: 250 }}>
       <Image
-        source={{ uri: item }}
+        source={{ uri: item.url }}
         className="w-full h-full rounded-xl"
         resizeMode="cover"
       />
     </View>
   );
 
-  const renderDots = () => (
-    <View className="flex-row justify-center mt-4 mb-6">
-      {carouselImages.map((_, index) => (
-        <TouchableOpacity
-          key={index}
-          onPress={() => {
-            carouselRef.current?.scrollToIndex({ index, animated: true });
-            setCurrentImageIndex(index);
-          }}
-          className={`w-2 h-2 rounded-full mx-1 ${
-            currentImageIndex === index ? 'bg-purple-500' : 'bg-gray-500'
-          }`}
-        />
-      ))}
-    </View>
-  );
 
   if (loading) {
     return (
@@ -144,20 +137,34 @@ const EventDetail: React.FC = () => {
       <View className="px-4 mb-2">
         <FlatList
           ref={carouselRef}
-          data={carouselImages}
+          data={images}
           renderItem={renderCarouselItem}
+          keyExtractor={(item, index) => index.toString()}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
+          viewabilityConfig={viewabilityConfig}
+          onViewableItemsChanged={onViewableItemsChanged}
           snapToAlignment="center"
           decelerationRate="fast"
         />
       </View>
 
       {/* Indicadores de página */}
-      {renderDots()}
+      <View className="flex-row justify-center mt-4 mb-6">
+        {images.map((_, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => {
+              carouselRef.current?.scrollToIndex({ index, animated: true });
+              setCurrentImageIndex(index);
+            }}
+            className={`w-2 h-2 rounded-full mx-1 ${
+              currentImageIndex === index ? 'bg-purple-500' : 'bg-gray-500'
+            }`}
+          />
+        ))}
+      </View>
 
       {/* Contenido principal */}
       <View className="px-6 pb-8">
