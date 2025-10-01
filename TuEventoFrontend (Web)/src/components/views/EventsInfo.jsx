@@ -84,35 +84,42 @@ const ReservaEvento = () => {
     return true;
   }, [navigate]);
 
-  const handleSubmitRating = async () => {
-    if (!rating || !mensaje.trim()) {
-      alert('Por favor, selecciona una calificación y escribe un comentario.');
-      return;
-    }
-    if (!checkSession()) return;
+const handleSubmitRating = async () => {
+  if (!rating || !mensaje.trim()) {
+    alert('Por favor, selecciona una calificación y escribe un comentario.');
+    return;
+  }
+  if (!checkSession()) return;
 
-    setSubmittingRating(true);
-    try {
-      const result = await insertEventRating({
-        eventId: parseInt(eventId),
+  setSubmittingRating(true);
+  try {
+    const userId = localStorage.getItem("userID"); // 👈 lo sacas del localStorage
+
+    const result = await insertEventRating(
+      parseInt(userId),            // userId
+      parseInt(eventId),           // eventId
+      {
         rating: rating,
         comment: mensaje.trim()
-      });
-      if (result.success) {
-        setMensaje('');
-        setRating(0);
-        loadEventRatings(); 
-        alert('Comentario enviado exitosamente.');
-      } else {
-        alert(result.message || 'Error al enviar el comentario.');
       }
-    } catch (error) {
-      console.error('Error submitting rating:', error);
-      alert('Error al enviar el comentario.');
-    } finally {
-      setSubmittingRating(false);
+    );
+
+    if (result.success) {
+      setMensaje('');
+      setRating(0);
+      loadEventRatings();
+      alert('Comentario enviado exitosamente.');
+    } else {
+      alert(result.message || 'Error al enviar el comentario.');
     }
-  };
+  } catch (error) {
+    console.error('Error submitting rating:', error);
+    alert('Error al enviar el comentario.');
+  } finally {
+    setSubmittingRating(false);
+  }
+};
+
 
   const handleDeleteRating = async (ratingId, userId) => {
     if (!checkSession()) return;
