@@ -1,12 +1,113 @@
-import React, { useState } from "react";
-import { CheckCircle, Mail, ArrowRight } from "lucide-react";
-import { verifyActivationCode } from "../../services/Login.js";
+import React, { useState, useEffect } from "react";
+import { CheckCircle, Mail, ArrowRight, RefreshCw, AlertCircle } from "lucide-react";
+import { verifyActivationCode, resendActivationCode, resendActivationCodeByEmail } from "../../services/Login.js";
 
-export default function CodeVerification({ userID, onVerificationSuccess, onBackToLogin }) {
+export default function CodeVerification({ userID: propUserID, onVerificationSuccess, onBackToLogin }) {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  const [userID, setUserID] = useState(propUserID || null);
+  const [noUserID, setNoUserID] = useState(false);
+  const [activationEmail, setActivationEmail] = useState("");
+
+  useEffect(() => {
+    // Si no hay userID en props, intentar recuperarlo del localStorage
+    if (!propUserID) {
+      const storedUserID = localStorage.getItem('pendingActivationUserID');
+      if (storedUserID) {
+        setUserID(parseInt(storedUserID));
+      } else {
+        setNoUserID(true);
+      }
+    } else {
+      // Guardar el userID en localStorage por si se refresca la página
+      localStorage.setItem('pendingActivationUserID', propUserID.toString());
+    }
+  }, [propUserID]);
+
+  // Si no hay userID disponible, mostrar pantalla para reenviar código
+  if (noUserID) {
+    return (
+      <div className="min-h-screen flex flex-col md:flex-row">
+        {/* Columna izquierda - Ilustración con gradiente púrpura */}
+        <div className="w-full md:w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-purple-800 flex items-center justify-center p-4 md:p-8">
+          <div className="text-center space-y-6 max-w-sm">
+            <Mail className="w-16 h-16 text-white mx-auto" />
+            <div className="text-white">
+              <h2 className="text-2xl font-bold mb-2">Reenviar Código</h2>
+              <p className="text-sm opacity-90">Ingresa tu email para recibir un nuevo código de activación.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full md:w-1/2 bg-gray-900 flex items-center justify-center p-4 md:p-8">
+          <div className="w-full max-w-sm space-y-6">
+            <div className="text-center space-y-2">
+              <h1 className="text-xl md:text-2xl font-bold text-white mb-1">Activar Cuenta</h1>
+              <p className="text-gray-400 text-xs md:text-sm">Ingresa tu email para reenviar el código de activación</p>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setResendLoading(true);
+              setResendMessage("");
+              try {
+                const result = await resendActivationCodeByEmail(activationEmail);
+                if (result.success) {
+                  setResendMessage("Código de activación enviado exitosamente. Revisa tu correo.");
+                } else {
+                  setResendMessage("Error al enviar el código. Intenta nuevamente.");
+                }
+              } catch (err) {
+                setResendMessage("Error de conexión. Intenta nuevamente.");
+              } finally {
+                setResendLoading(false);
+              }
+            }} className="space-y-4">
+              <div>
+                <input
+                  type="email"
+                  value={activationEmail}
+                  onChange={(e) => setActivationEmail(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm"
+                  placeholder="Correo electrónico"
+                  required
+                />
+              </div>
+
+              {resendMessage && <p className="text-purple-400 text-sm">{resendMessage}</p>}
+
+              <button
+                type="submit"
+                disabled={resendLoading}
+                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+              >
+                {resendLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Mail className="w-4 h-4" />
+                )}
+                <span>{resendLoading ? "Enviando..." : "Enviar Código"}</span>
+              </button>
+            </form>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={onBackToLogin}
+                className="text-purple-400 hover:text-purple-300"
+              >
+                Volver al inicio de sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,7 +118,15 @@ export default function CodeVerification({ userID, onVerificationSuccess, onBack
       if (result.success) {
         setShowSuccessNotification(true);
       } else {
-        setError(result.message || "Código inválido");
+        const errorMessage = result.message || "Código inválido";
+        setError(errorMessage);
+
+        // Si el código expiró o es inválido, sugerir reenviar
+        if (errorMessage.toLowerCase().includes('expir') ||
+            errorMessage.toLowerCase().includes('inválido') ||
+            errorMessage.toLowerCase().includes('invalid')) {
+          setResendMessage("¿Código expirado? Haz clic en 'Reenviar código' para recibir uno nuevo.");
+        }
       }
     } catch (err) {
       setError("Error de conexión");
@@ -28,7 +137,27 @@ export default function CodeVerification({ userID, onVerificationSuccess, onBack
 
   const handleContinueToLogin = () => {
     setShowSuccessNotification(false);
+    // Limpiar el userID del localStorage cuando la verificación es exitosa
+    localStorage.removeItem('pendingActivationUserID');
     onVerificationSuccess();
+  };
+
+  const handleResendCode = async () => {
+    setResendLoading(true);
+    setResendMessage("");
+    setError("");
+    try {
+      const result = await resendActivationCode(userID);
+      if (result.success) {
+        setResendMessage("Código reenviado exitosamente. Revisa tu correo.");
+      } else {
+        setError("Error al reenviar el código");
+      }
+    } catch (err) {
+      setError("Error de conexión al reenviar código");
+    } finally {
+      setResendLoading(false);
+    }
   };
 
   return (
@@ -65,6 +194,8 @@ export default function CodeVerification({ userID, onVerificationSuccess, onBack
 
             {error && <p className="text-red-500 text-sm">{error}</p>}
 
+            {resendMessage && <p className="text-green-500 text-sm">{resendMessage}</p>}
+
             <button
               type="submit"
               disabled={loading}
@@ -72,6 +203,22 @@ export default function CodeVerification({ userID, onVerificationSuccess, onBack
             >
               {loading ? "Verificando..." : "VERIFICAR"}
             </button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={resendLoading}
+                className="text-purple-400 hover:text-purple-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center space-x-1 mx-auto"
+              >
+                {resendLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Mail className="w-4 h-4" />
+                )}
+                <span>{resendLoading ? "Enviando..." : "Reenviar código"}</span>
+              </button>
+            </div>
           </form>
 
           <div className="text-center">

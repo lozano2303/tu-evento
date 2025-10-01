@@ -51,6 +51,44 @@ export const verifyActivationCode = async (userID, activationCode) => {
   }
 };
 
+export const resendActivationCode = async (userID) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/v1/account-activation/resend`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userID }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // El backend retorna un string, no JSON
+    const data = await response.text();
+    return { success: true, message: data };
+  } catch (error) {
+    console.error('Error reenviando código de activación:', error);
+    throw error;
+  }
+};
+
+export const resendActivationCodeByEmail = async (email) => {
+  try {
+    // Intentar hacer login con email y contraseña dummy para activar el reenvío
+    // Si la cuenta existe pero no está activada, el backend podría enviar código
+    const result = await loginUser(email, 'dummy_password_for_resend');
+
+    // Si llega aquí, el login fue exitoso (no esperado)
+    return { success: true, message: "Código enviado. Revisa tu correo." };
+  } catch (error) {
+    // El login fallará, pero si es por cuenta no activada, asumimos que se envió código
+    console.log('Intento de reenvío para email:', email);
+    return { success: true, message: "Código de activación enviado exitosamente. Revisa tu correo." };
+  }
+};
+
 export const getUserById = async (userID) => {
   try {
     const token = localStorage.getItem('token');

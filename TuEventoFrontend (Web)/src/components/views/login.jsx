@@ -14,6 +14,8 @@ export default function Login() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [showLoginSuccessNotification, setShowLoginSuccessNotification] = useState(false);
+  const [showActivateAccount, setShowActivateAccount] = useState(false);
+  const [activationEmail, setActivationEmail] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -200,17 +202,50 @@ export default function Login() {
           localStorage.setItem('token', result.data.token);
           localStorage.setItem('userID', result.data.userID);
           localStorage.setItem('role', result.data.role);
+
+          // Verificar si la cuenta está activada
+          const userResult = await getUserById(result.data.userID);
+          if (userResult.success && !userResult.data.activated) {
+            // Cuenta no activada, redirigir a verificación
+            setUserID(result.data.userID);
+            localStorage.setItem('pendingActivationUserID', result.data.userID.toString());
+            setView('verification');
+            return;
+          }
+
           setShowLoginSuccessNotification(true);
         } else {
-          setError(result.message || "Error en login");
+          // Verificar si el error es por cuenta no activada
+          const errorMessage = result.message || "";
+          if (errorMessage.toLowerCase().includes('no activada') ||
+              errorMessage.toLowerCase().includes('not activated') ||
+              errorMessage.toLowerCase().includes('activar') ||
+              errorMessage.toLowerCase().includes('revisa tu correo')) {
+            setShowActivateAccount(true);
+            setError("Tu cuenta no está activada. Activa tu cuenta para continuar.");
+          } else {
+            setError(errorMessage || "Error en login");
+          }
         }
       } else {
         const result = await registerUser(formData.name, formData.email, formData.password);
         if (result.success) {
           setShowSuccessNotification(true);
-          setUserID(result.data); 
+          setUserID(result.data);
+        } else {
+          // Verificar si el error es porque el email ya existe pero no está activado
+          const errorMessage = result.message || "";
+          if (errorMessage.toLowerCase().includes('ya existe') ||
+              errorMessage.toLowerCase().includes('already exists') ||
+              errorMessage.toLowerCase().includes('duplicado') ||
+              errorMessage.toLowerCase().includes('duplicate')) {
+            // Si el email ya existe, intentar obtener el userID y redirigir a verificación
+            // Por simplicidad, mostrar mensaje indicando que use el botón de activar cuenta
+            setError("Esta cuenta ya existe pero no está activada. Usa 'Activar Cuenta' para completar el proceso.");
+            setShowActivateAccount(true);
           } else {
-          setError(result.message || "Error en registro");
+            setError(errorMessage || "Error en registro");
+          }
         }
       }
     } catch (err) {
@@ -402,6 +437,23 @@ export default function Login() {
             >
               {loading ? "Cargando..." : (view === 'login' ? "INICIAR" : "REGISTRAR")}
             </button>
+
+            {/* Botón de activar cuenta (solo visible cuando la cuenta no está activada) */}
+            {showActivateAccount && view === 'login' && (
+              <button
+                type="button"
+                onClick={() => {
+                  // Cambiar directamente a verificación de código
+                  setView('verification');
+                  setShowActivateAccount(false);
+                  setError("");
+                  // El CodeVerification se encargará de manejar si no hay userID
+                }}
+                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm"
+              >
+                ACTIVAR CUENTA
+              </button>
+            )}
 
             {/* Texto de contraseña olvidada */}
             <div className="text-center">

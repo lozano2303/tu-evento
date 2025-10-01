@@ -1,0 +1,41 @@
+@startuml Deployment Diagram - TuEvento
+
+title Diagrama de Despliegue - TuEvento
+
+node "Cliente Web" as WebClient {
+    artifact "React App" as ReactApp
+}
+
+node "Cliente Móvil" as MobileClient {
+    artifact "Expo App" as ExpoApp
+}
+
+node "Servidor Backend" as BackendServer {
+    artifact "Spring Boot API" as SpringBoot
+}
+
+database "Base de Datos" as Database {
+    artifact "PostgreSQL" as Postgres
+}
+
+cloud "AWS S3" as S3 {
+    artifact "Almacenamiento de Archivos" as Storage
+}
+
+node "Servicio Email" as EmailService {
+    artifact "SMTP Gmail" as SMTP
+}
+
+actor "Usuario" as User
+
+User --> WebClient : Usa navegador
+User --> MobileClient : Usa app móvil
+
+WebClient --> BackendServer : HTTP/HTTPS
+MobileClient --> BackendServer : HTTP/HTTPS
+
+BackendServer --> Database : JDBC
+BackendServer --> S3 : API REST
+BackendServer --> EmailService : SMTP
+
+@enduml
