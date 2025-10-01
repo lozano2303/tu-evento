@@ -113,6 +113,14 @@ export default function Navbar() {
                       <p className="text-gray-400 text-sm">Rol: {userData.role}</p>
                     </div>
                     <div className="space-y-2">
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsModalOpen(false)}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <User className="w-4 h-4" />
+                        <span>Mi Perfil</span>
+                      </Link>
                       <button
                         onClick={() => {
                           setIsModalOpen(false);

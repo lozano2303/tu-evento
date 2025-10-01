@@ -17,6 +17,7 @@ import CompleteEvent from "./components/views/CompleteEvent.jsx";
 import OrganizerPetitionForm from "./components/views/OrganizerPetitionForm.jsx";
 import AboutUs from "./components/views/AboutUs.jsx";
 import EventImagesView from "./test/EventImagesView.jsx";
+import UserProfile from "./components/views/UserProfile.jsx";
 
 const App = () => {
   return (
@@ -74,6 +75,7 @@ const App = () => {
           </MainLayout>
         }
       />
+      <Route path="/profile" element={<UserProfile />} />
       <Route path="/test" element={<EventImagesView />} />
     </Routes>
   );
