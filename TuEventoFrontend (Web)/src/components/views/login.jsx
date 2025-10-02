@@ -236,19 +236,7 @@ export default function Login() {
           setShowSuccessNotification(true);
           setUserID(result.data);
         } else {
-          // Verificar si el error es porque el email ya existe pero no está activado
-          const errorMessage = result.message || "";
-          if (errorMessage.toLowerCase().includes('ya existe') ||
-              errorMessage.toLowerCase().includes('already exists') ||
-              errorMessage.toLowerCase().includes('duplicado') ||
-              errorMessage.toLowerCase().includes('duplicate')) {
-            // Si el email ya existe, intentar obtener el userID y redirigir a verificación
-            // Por simplicidad, mostrar mensaje indicando que use el botón de activar cuenta
-            setError("Esta cuenta ya existe pero no está activada. Usa 'Activar Cuenta' para completar el proceso.");
-            setShowActivateAccount(true);
-          } else {
-            setError(errorMessage || "Error en registro");
-          }
+          setError(result.message || "Error en registro");
         }
       }
     } catch (err) {

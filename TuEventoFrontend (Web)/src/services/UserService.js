@@ -107,3 +107,21 @@ export const deleteUserAccount = async (userId) => {
     throw error;
   }
 };
+
+export const getAllUsers = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/v1/users`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error obteniendo todos los usuarios:', error);
+    throw error;
+  }
+};

@@ -26,6 +26,18 @@ export const registerUser = async (fullName, email, password) => {
       },
       body: JSON.stringify({ fullName, email, password }),
     });
+
+    if (!response.ok) {
+      // If not ok, try to get the error message from the response
+      try {
+        const errorData = await response.json();
+        return errorData;
+      } catch {
+        // If can't parse JSON, return a generic error
+        return { success: false, message: `Error ${response.status}: ${response.statusText}` };
+      }
+    }
+
     const data = await response.json();
     return data;
   } catch (error) {

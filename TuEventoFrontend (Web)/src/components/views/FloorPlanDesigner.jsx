@@ -58,9 +58,6 @@ const TopNavbar = ({ onExport, onImport, onUploadEvent, onLoadLayout, onGoHome, 
           Importar
         </label>
 
-        <button title="Cargar Layout" onClick={onLoadLayout} className="flex items-center px-3 py-2 rounded hover:bg-gray-700">
-          <Upload size={16} className="mr-2" /> Cargar Layout
-        </button>
 
         <button title="Guardar Layout" onClick={onUploadEvent} className="flex items-center px-3 py-2 rounded hover:bg-gray-700">
           <Upload size={16} className="mr-2" /> Guardar Layout
