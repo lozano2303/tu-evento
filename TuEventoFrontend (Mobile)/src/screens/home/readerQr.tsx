@@ -52,7 +52,7 @@ export default function QrScannerScreen() {
       {/* Overlay transparente */}
       <View style={styles.overlay}>
         <Text style={styles.text}>
-          {scanned ? `Si el pago esta completado oplime el boton para confirmar` : "Asegurate de ubicar bien la camara"}
+          {scanned ? `Si el pago está completado, oprime el botón para confirmar` : "Asegúrate de ubicar bien la cámara"}
         </Text>
         {scanned && (
           <View style={{ marginTop: 20, width: "80%" }}>
