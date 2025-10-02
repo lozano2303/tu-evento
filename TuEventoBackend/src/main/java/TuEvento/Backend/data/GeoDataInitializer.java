@@ -2,10 +2,17 @@ package TuEvento.Backend.data;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
-import TuEvento.Backend.model.*;
+import TuEvento.Backend.model.Department;
+import TuEvento.Backend.model.City;
 import TuEvento.Backend.repository.*;
 import java.util.Optional; // Necesario para la búsqueda eficiente
+
+// Apache POI imports for Excel reading
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import java.io.IOException;
 
 @Component
 public class GeoDataInitializer implements CommandLineRunner {
@@ -16,120 +23,107 @@ public class GeoDataInitializer implements CommandLineRunner {
     @Autowired
     private CityRepository cityRepository;
 
-    @Autowired
-    private AddressRepository addressRepository;
-
-    @Autowired
-    private LocationRepository locationRepository;
     
-    // --- Métodos Auxiliares para Búsqueda/Creación Eficiente ---
-    
-    // Asume que AddressRepository tiene: Optional<Address> findByStreetAndCity(String street, City city);
-    private Address findOrCreateAddress(String street, String postalCode, City city) {
-        return addressRepository.findByStreetAndCity(street, city)
-                .orElseGet(() -> {
-                    Address newAddr = new Address();
-                    newAddr.setStreet(street);
-                    newAddr.setPostalCode(postalCode);
-                    newAddr.setCity(city);
-                    return addressRepository.save(newAddr);
-                });
-    }
-
-    // Asume que LocationRepository tiene: boolean existsByNameAndAddress(String name, Address address);
-    private void createLocationIfNotExists(String name, Address address) {
-        if (!locationRepository.existsByNameAndAddress(name, address)) {
-            Location newLocation = new Location();
-            newLocation.setName(name);
-            newLocation.setAddress(address);
-            locationRepository.save(newLocation);
-        }
-    }
 
     // --- Método Principal de Ejecución ---
 
     @Override
     public void run(String... args) throws Exception {
-        
-        // **BÚSQUEDA OPTIMIZADA: Department (findByNameIgnoreCase)**
-        final Department cundinamarca = departmentRepository.findByNameIgnoreCase("Cundinamarca")
-                .orElseGet(() -> {
-                    Department newDept = new Department();
-                    newDept.setName("Cundinamarca");
-                    return departmentRepository.save(newDept);
-                });
+        // Verificar si ya hay datos para evitar duplicados
+        if (departmentRepository.count() > 0 || cityRepository.count() > 0) {
+            System.out.println("Datos geo ya existen. Saltando inicialización.");
+            return;
+        }
 
-        // **BÚSQUEDA OPTIMIZADA: City (findByNameIgnoreCaseAndDepartment)**
-        final City bogota = cityRepository.findByNameIgnoreCaseAndDepartment("Bogotá", cundinamarca)
-                .orElseGet(() -> {
-                    City newCity = new City();
-                    newCity.setName("Bogotá");
-                    newCity.setDepartment(cundinamarca);
-                    return cityRepository.save(newCity);
-                });
+        // Cargar datos desde Excel
+        loadDepartmentsFromExcel();
+        loadCitiesFromExcel();
+    }
 
-        // Ubicación 1 en Bogotá
-        final Address addressBogota = findOrCreateAddress("Calle 123", "110111", bogota);
-        createLocationIfNotExists("Teatro Nacional", addressBogota);
+    private void loadDepartmentsFromExcel() throws IOException {
+        // Cargar el archivo Excel (.xls)
+        Workbook workbook = new HSSFWorkbook(new ClassPathResource("data/Departments and citys.xls").getInputStream());
 
-        // Ubicación 2 en Bogotá
-        final Address addressBogota2 = findOrCreateAddress("Carrera 7", "110113", bogota);
-        createLocationIfNotExists("Museo Nacional", addressBogota2);
+        // Obtener la hoja "Departamentos"
+        Sheet sheet = workbook.getSheet("Departamentos");
+        if (sheet == null) {
+            System.err.println("Hoja 'Departamentos' no encontrada en el Excel");
+            return;
+        }
 
-        // Soacha
-        final City soacha = cityRepository.findByNameIgnoreCaseAndDepartment("Soacha", cundinamarca)
-                .orElseGet(() -> {
-                    City newCity = new City();
-                    newCity.setName("Soacha");
-                    newCity.setDepartment(cundinamarca);
-                    return cityRepository.save(newCity);
-                });
+        // Iterar filas desde 8 hasta 40 (índices 7-39)
+        for (int rowIndex = 7; rowIndex <= 39; rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            if (row != null) {
+                Cell cell = row.getCell(1); // Columna B (índice 1)
+                if (cell != null && cell.getCellType() == CellType.STRING) {
+                    String departmentName = cell.getStringCellValue().trim();
+                    if (!departmentName.isEmpty()) {
+                        // Verificar si ya existe
+                        if (departmentRepository.findByNameIgnoreCase(departmentName).isEmpty()) {
+                            Department department = new Department();
+                            department.setName(departmentName);
+                            departmentRepository.save(department);
+                            System.out.println("Departamento insertado: " + departmentName);
+                        } else {
+                            System.out.println("Departamento ya existe: " + departmentName);
+                        }
+                    }
+                }
+            }
+        }
 
-        // Ubicaciones en Soacha
-        final Address addressSoacha = findOrCreateAddress("Avenida 123", "110112", soacha);
-        createLocationIfNotExists("Centro Cultural Soacha", addressSoacha);
+        workbook.close();
+    }
 
-        final Address addressSoacha2 = findOrCreateAddress("Calle 45", "110113", soacha);
-        createLocationIfNotExists("Biblioteca Soacha", addressSoacha2);
+    private void loadCitiesFromExcel() throws IOException {
+        // Cargar el archivo Excel (.xls)
+        Workbook workbook = new HSSFWorkbook(new ClassPathResource("data/Departments and citys.xls").getInputStream());
 
-        // Antioquia
-        final Department antioquia = departmentRepository.findByNameIgnoreCase("Antioquia")
-                .orElseGet(() -> {
-                    Department newDept = new Department();
-                    newDept.setName("Antioquia");
-                    return departmentRepository.save(newDept);
-                });
+        // Obtener la hoja "municipios"
+        Sheet sheet = workbook.getSheet("municipios");
+        if (sheet == null) {
+            System.err.println("Hoja 'municipios' no encontrada en el Excel");
+            return;
+        }
 
-        // Medellín
-        final City medellin = cityRepository.findByNameIgnoreCaseAndDepartment("Medellín", antioquia)
-                .orElseGet(() -> {
-                    City newCity = new City();
-                    newCity.setName("Medellín");
-                    newCity.setDepartment(antioquia);
-                    return cityRepository.save(newCity);
-                });
+        // Iterar filas desde 7 hasta 1127 (índices 6-1126)
+        for (int rowIndex = 6; rowIndex <= 1126; rowIndex++) {
+            Row row = sheet.getRow(rowIndex);
+            if (row != null) {
+                Cell departmentCell = row.getCell(1); // Columna B: nombre del departamento
+                Cell cityCell = row.getCell(3); // Columna D: nombre de la ciudad
 
-        // Ubicaciones en Medellín
-        final Address addressMedellin = findOrCreateAddress("Carrera 45", "050001", medellin);
-        createLocationIfNotExists("Estadio Atanasio Girardot", addressMedellin);
+                if (departmentCell != null && departmentCell.getCellType() == CellType.STRING &&
+                    cityCell != null && cityCell.getCellType() == CellType.STRING) {
 
-        final Address addressMedellin2 = findOrCreateAddress("Avenida 80", "050004", medellin);
-        createLocationIfNotExists("Centro de Convenciones", addressMedellin2);
+                    String departmentName = departmentCell.getStringCellValue().trim();
+                    String cityName = cityCell.getStringCellValue().trim();
 
-        // Envigado
-        final City envigado = cityRepository.findByNameIgnoreCaseAndDepartment("Envigado", antioquia)
-                .orElseGet(() -> {
-                    City newCity = new City();
-                    newCity.setName("Envigado");
-                    newCity.setDepartment(antioquia);
-                    return cityRepository.save(newCity);
-                });
+                    if (!departmentName.isEmpty() && !cityName.isEmpty()) {
+                        // Buscar el departamento
+                        Optional<Department> departmentOpt = departmentRepository.findByNameIgnoreCase(departmentName);
+                        if (departmentOpt.isPresent()) {
+                            Department department = departmentOpt.get();
 
-        // Ubicaciones en Envigado
-        final Address addressEnvigado = findOrCreateAddress("Calle 67", "050003", envigado);
-        createLocationIfNotExists("Parque Envigado", addressEnvigado);
+                            // Verificar si la ciudad ya existe
+                            if (cityRepository.findByNameIgnoreCaseAndDepartment(cityName, department).isEmpty()) {
+                                City city = new City();
+                                city.setName(cityName);
+                                city.setDepartment(department);
+                                cityRepository.save(city);
+                                System.out.println("Ciudad insertada: " + cityName + " en " + departmentName);
+                            } else {
+                                System.out.println("Ciudad ya existe: " + cityName + " en " + departmentName);
+                            }
+                        } else {
+                            System.err.println("Departamento no encontrado: " + departmentName + " para ciudad " + cityName);
+                        }
+                    }
+                }
+            }
+        }
 
-        final Address addressEnvigado2 = findOrCreateAddress("Carrera 43A", "050005", envigado);
-        createLocationIfNotExists("Centro Comercial Envigado", addressEnvigado2);
+        workbook.close();
     }
 }
