@@ -7,7 +7,7 @@ import { getEventLayoutByEventId } from '../../services/EventLayoutService.js';
 import { getTicketsByEvent, createTicketWithSeats } from '../../services/TicketService.js';
 import { getSeatsBySection, updateSeatStatus, createSeat, releaseExpiredReservations } from '../../services/SeatService.js';
 import { getAllSections, createSection } from '../../services/SectionService.js';
-import { insertEventRating, getEventRatingByEvent, deleteEventRating } from '../../services/EventRatingService.js';
+import { insertEventRating, getEventRatingByEvent, deleteEventRating, updateEventRating } from '../../services/EventRatingService.js';
 import { getUserById } from '../../services/UserService.js';
 import { getEventImages } from '../../services/EventImgService.js';
 import { getCategoriesByEvent } from '../../services/CategoryService.js';
@@ -45,6 +45,10 @@ const ReservaEvento = () => {
   const [userInfo, setUserInfo] = useState({});
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [deletingRating, setDeletingRating] = useState(null);
+  const [editingRating, setEditingRating] = useState(null);
+  const [editRatingValue, setEditRatingValue] = useState(5);
+  const [editCommentValue, setEditCommentValue] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
   const [updateKey, setUpdateKey] = useState(0);
   const [eventImages, setEventImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -125,6 +129,37 @@ const handleSubmitRating = async () => {
 };
 
 
+  const handleEditRating = (rating) => {
+    setEditingRating(rating);
+    setEditRatingValue(rating.rating);
+    setEditCommentValue(rating.comment);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEditRating = async () => {
+    if (!editingRating) return;
+
+    try {
+      const result = await updateEventRating({
+        ratingID: editingRating.ratingID,
+        rating: editRatingValue,
+        comment: editCommentValue,
+      });
+
+      if (result.success) {
+        setShowEditModal(false);
+        setEditingRating(null);
+        loadEventRatings();
+        alert('Comentario actualizado exitosamente.');
+      } else {
+        alert(result.message || 'Error al actualizar el comentario.');
+      }
+    } catch (error) {
+      console.error('Error updating rating:', error);
+      alert('Error al actualizar el comentario.');
+    }
+  };
+
   const handleDeleteRating = async (ratingId, userId) => {
     if (!checkSession()) return;
     if (!confirm('¿Estás seguro de que quieres eliminar este comentario?')) return;
@@ -133,7 +168,7 @@ const handleSubmitRating = async () => {
     try {
       const result = await deleteEventRating(ratingId);
       if (result.success) {
-        loadEventRatings(); 
+        loadEventRatings();
         alert('Comentario eliminado exitosamente.');
       } else {
         alert(result.message || 'Error al eliminar el comentario.');
@@ -1201,18 +1236,27 @@ const handleSubmitRating = async () => {
                               </div>
                             </div>
                             {canDelete && (
-                              <button
-                                onClick={() => handleDeleteRating(rating.ratingID, rating.userId)}
-                                disabled={deletingRating === rating.ratingID}
-                                className="text-red-500 hover:text-red-700 disabled:opacity-50 p-1"
-                                title="Eliminar comentario"
-                              >
-                                {deletingRating === rating.ratingID ? (
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
-                                ) : (
-                                  <Trash2 className="w-4 h-4" />
-                                )}
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditRating(rating)}
+                                  className="text-blue-500 hover:text-blue-700 p-1"
+                                  title="Editar comentario"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteRating(rating.ratingID, rating.userId)}
+                                  disabled={deletingRating === rating.ratingID}
+                                  className="text-red-500 hover:text-red-700 disabled:opacity-50 p-1"
+                                  title="Eliminar comentario"
+                                >
+                                  {deletingRating === rating.ratingID ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
+                                  ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                  )}
+                                </button>
+                              </div>
                             )}
                           </div>
                           <p className="text-gray-400 text-xs leading-relaxed">
@@ -1268,6 +1312,74 @@ const handleSubmitRating = async () => {
 
         </div>
       </div>
+
+      {/* Modal para editar comentario */}
+      {showEditModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600">✏️</span>
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">Editar comentario</h2>
+              </div>
+
+              <div className="mb-6">
+                {/* Sistema de estrellas */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Calificación
+                  </label>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-6 h-6 cursor-pointer transition-colors ${
+                          star <= editRatingValue ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'
+                        }`}
+                        onClick={() => setEditRatingValue(star)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Área de comentario */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Comentario
+                  </label>
+                  <textarea
+                    value={editCommentValue}
+                    onChange={(e) => setEditCommentValue(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-900 placeholder-gray-400 resize-none"
+                    rows="4"
+                    placeholder="Escribe tu comentario..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingRating(null);
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveEditRating}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
+                >
+                  Guardar cambios
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de confirmación de compra */}
       {showPurchaseModal && (
