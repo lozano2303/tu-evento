@@ -288,34 +288,24 @@ const handleSubmitRating = async () => {
         return;
       }
 
-      if (!checkSession()) return;
-
       try {
         setLoading(true);
         const result = await getEventById(eventId);
         if (result.success) {
           setEvent(result.data);
         } else {
-          if (result.message?.includes('token') || result.message?.includes('sesión')) {
-            checkSession();
-          } else {
-            setError(result.message || 'Error al cargar el evento');
-          }
+          setError(result.message || 'Error al cargar el evento');
         }
       } catch (err) {
-        if (err.message?.includes('401') || err.message?.includes('token')) {
-          checkSession();
-        } else {
-          setError('Error de conexión al cargar el evento');
-          console.error('Error loading event:', err);
-        }
+        setError('Error de conexión al cargar el evento');
+        console.error('Error loading event:', err);
       } finally {
         setLoading(false);
       }
     };
 
     loadEvent();
-  }, [eventId, checkSession]);
+  }, [eventId]);
 
   useEffect(() => {
     if (event) {
@@ -1058,6 +1048,7 @@ const handleSubmitRating = async () => {
 
             {/* Horarios y precios disponibles */}
             <div>
+              <h3 className="text-white text-lg font-semibold mb-4">Horarios y Precios</h3>
               <div className="space-y-3">
                 {loadingTickets ? (
                   <div className="text-center py-4">
@@ -1083,11 +1074,20 @@ const handleSubmitRating = async () => {
                 {/* Botón para ver mapa del evento */}
                 <div className="mt-6 text-center">
                   <button
-                    onClick={handleShowMap}
+                    onClick={() => {
+                      if (checkSession()) {
+                        handleShowMap();
+                      }
+                    }}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
                   >
                     Ver mapa de evento
                   </button>
+                  {!localStorage.getItem('token') && (
+                    <p className="text-gray-400 text-xs mt-2">
+                      Inicia sesión para reservar asientos
+                    </p>
+                  )}
                 </div>
 
               </div>
@@ -1099,53 +1099,67 @@ const handleSubmitRating = async () => {
           <div className="mb-12">
             
             {/* Formulario para escribir comentario */}
-            <div className="mb-8">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">U</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-white text-sm mb-2">Título del mensaje:</p>
-                  <p className="text-white text-sm mb-3">Puntuación:</p>
-                  
-                  {/* Sistema de estrellas */}
-                  <div className="flex items-center gap-1 mb-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`w-5 h-5 cursor-pointer transition-colors ${
-                          star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'
-                        }`}
-                        onClick={() => handleStarClick(star)}
-                      />
-                    ))}
+            {localStorage.getItem('token') ? (
+              <div className="mb-8">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm">U</span>
                   </div>
-                  
-                  <p className="text-white text-sm mb-3">Escribe tu mensaje:</p>
-                  
-                  {/* Área de texto */}
-                  <textarea
-                    value={mensaje}
-                    onChange={(e) => setMensaje(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white placeholder-gray-400 resize-none"
-                    rows="4"
-                    placeholder="Escribe tu comentario aquí..."
-                  />
-                  
-                  {/* Botón de enviar */}
-                  <div className="flex justify-center mt-4">
-                    <button
-                      onClick={handleSubmitRating}
-                      disabled={submittingRating}
-                      className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                    >
-                      {submittingRating ? 'Enviando...' : 'Enviar'}
-                      <Send className="w-4 h-4" />
-                    </button>
+                  <div className="flex-1">
+                    <p className="text-white text-sm mb-2">Título del mensaje:</p>
+                    <p className="text-white text-sm mb-3">Puntuación:</p>
+
+                    {/* Sistema de estrellas */}
+                    <div className="flex items-center gap-1 mb-4">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-5 h-5 cursor-pointer transition-colors ${
+                            star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'
+                          }`}
+                          onClick={() => handleStarClick(star)}
+                        />
+                      ))}
+                    </div>
+
+                    <p className="text-white text-sm mb-3">Escribe tu mensaje:</p>
+
+                    {/* Área de texto */}
+                    <textarea
+                      value={mensaje}
+                      onChange={(e) => setMensaje(e.target.value)}
+                      className="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white placeholder-gray-400 resize-none"
+                      rows="4"
+                      placeholder="Escribe tu comentario aquí..."
+                    />
+
+                    {/* Botón de enviar */}
+                    <div className="flex justify-center mt-4">
+                      <button
+                        onClick={handleSubmitRating}
+                        disabled={submittingRating}
+                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                      >
+                        {submittingRating ? 'Enviando...' : 'Enviar'}
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="mb-8 text-center">
+                <div className="bg-gray-800 p-6 rounded-lg">
+                  <p className="text-gray-300 mb-4">Para dejar comentarios y calificaciones, necesitas iniciar sesión.</p>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
+                  >
+                    Iniciar Sesión
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Comentarios existentes */}
             <div className="space-y-6">

@@ -90,11 +90,9 @@ const TuEvento = () => {
       }
     };
 
-    if (currentUserId !== null) { // Wait for currentUserId to be set
-      loadEvents();
-    }
+    loadEvents(); // Load events for all users, including anonymous
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUserId]);
+  }, []);
 
   // Filter events when maps are loaded
   useEffect(() => {
