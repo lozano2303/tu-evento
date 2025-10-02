@@ -3,6 +3,7 @@ package TuEvento.Backend.service;
 import java.util.List;
 import TuEvento.Backend.dto.CategoryEventDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
+import TuEvento.Backend.model.Category;
 
 public interface CategoryEventService {
     ResponseDto<CategoryEventDto> assignCategoryToEvent(CategoryEventDto categoryEventDto);

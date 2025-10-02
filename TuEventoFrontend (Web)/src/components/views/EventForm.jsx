@@ -312,7 +312,7 @@ const EventForm = () => {
       setCategories(prev => ({ ...prev, subCategory: newSubCategory }));
 
       // Only assign category if it's different from the previous one
-      if (createdEvent && newSubCategory && newSubCategory !== previousSubCategory) {
+      if (createdEvent && newSubCategory && newSubCategory !== previousSubCategory && newSubCategory > 0) {
         assignCategoryToEvent(newSubCategory, createdEvent.eventID || createdEvent.id)
           .then(result => {
             if (result.success) {

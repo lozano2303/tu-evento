@@ -1,6 +1,7 @@
 package TuEvento.Backend.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import TuEvento.Backend.model.CategoryEvent;
 import TuEvento.Backend.model.CategoryEventId;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.List;
 public interface CategoryEventRepository extends JpaRepository<CategoryEvent, CategoryEventId> {
 
     // Find all categories for a specific event
+    @EntityGraph(attributePaths = {"category", "category.parentCategory"})
     List<CategoryEvent> findByEvent_Id(int eventId);
 
     // Find all events for a specific category

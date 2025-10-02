@@ -33,9 +33,13 @@ public class CategoryEventServiceImpl implements CategoryEventService {
     private EventRepository eventRepository;
 
     private CategoryEventDto toDto(CategoryEvent categoryEvent) {
+        String parentName = categoryEvent.getCategory().getParentCategory() != null ?
+            categoryEvent.getCategory().getParentCategory().getName() : null;
         return new CategoryEventDto(
             categoryEvent.getCategory().getCategoryID(),
-            categoryEvent.getEvent().getId()
+            categoryEvent.getEvent().getId(),
+            categoryEvent.getCategory().getName(),
+            parentName
         );
     }
 
@@ -63,7 +67,7 @@ public class CategoryEventServiceImpl implements CategoryEventService {
             // Check if relationship already exists
             if (categoryEventRepository.existsByCategory_CategoryIDAndEvent_Id(
                     categoryEventDto.getCategoryID(), categoryEventDto.getEventID())) {
-                return ResponseDto.error("Esta categoría ya está asignada a este evento");
+                return ResponseDto.ok("Esta categoría ya está asignada a este evento", categoryEventDto);
             }
 
             // Create and save the relationship

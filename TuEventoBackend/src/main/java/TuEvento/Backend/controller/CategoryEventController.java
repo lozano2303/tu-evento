@@ -3,6 +3,7 @@ package TuEvento.Backend.controller;
 import TuEvento.Backend.dto.CategoryEventDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.service.CategoryEventService;
+import TuEvento.Backend.model.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

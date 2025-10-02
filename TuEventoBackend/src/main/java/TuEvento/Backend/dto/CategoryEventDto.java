@@ -4,13 +4,17 @@ public class CategoryEventDto {
 
     private int categoryID;
     private int eventID;
+    private String name;
+    private String parentName;
 
     public CategoryEventDto() {
     }
 
-    public CategoryEventDto(Integer categoryID, Integer eventID) {
+    public CategoryEventDto(Integer categoryID, Integer eventID, String name, String parentName) {
         this.categoryID = categoryID;
         this.eventID = eventID;
+        this.name = name;
+        this.parentName = parentName;
     }
 
     public int getCategoryID() {
@@ -27,5 +31,21 @@ public class CategoryEventDto {
 
     public void setEventID(int eventID) {
         this.eventID = eventID;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getParentName() {
+        return parentName;
+    }
+
+    public void setParentName(String parentName) {
+        this.parentName = parentName;
     }
 }

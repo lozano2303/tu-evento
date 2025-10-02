@@ -10,6 +10,7 @@ import { getAllSections, createSection } from '../../services/SectionService.js'
 import { insertEventRating, getEventRatingByEvent, deleteEventRating } from '../../services/EventRatingService.js';
 import { getUserById } from '../../services/UserService.js';
 import { getEventImages } from '../../services/EventImgService.js';
+import { getCategoriesByEvent } from '../../services/CategoryService.js';
 
 const ReservaEvento = () => {
   const [searchParams] = useSearchParams();
@@ -50,6 +51,8 @@ const ReservaEvento = () => {
   const [loadingImages, setLoadingImages] = useState(false);
   const [autoplay, setAutoplay] = useState(true);
   const [expandedDescription, setExpandedDescription] = useState(false);
+  const [eventCategories, setEventCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
   const MAX_SEATS_PER_PURCHASE = 10;
 
@@ -320,6 +323,7 @@ const handleSubmitRating = async () => {
       loadSections();
       loadEventRatings();
       loadEventImages();
+      loadEventCategories();
     }
   }, [event]);
 
@@ -528,6 +532,25 @@ const handleSubmitRating = async () => {
       setEventImages([]);
     } finally {
       setLoadingImages(false);
+    }
+  };
+
+  const loadEventCategories = async () => {
+    if (!eventId) return;
+
+    try {
+      setLoadingCategories(true);
+      const result = await getCategoriesByEvent(eventId);
+      if (result.success) {
+        setEventCategories(result.data || []);
+      } else {
+        setEventCategories([]);
+      }
+    } catch (error) {
+      console.error('Error loading event categories:', error);
+      setEventCategories([]);
+    } finally {
+      setLoadingCategories(false);
     }
   };
 
@@ -1020,6 +1043,16 @@ const handleSubmitRating = async () => {
                 <div><strong>Ubicación:</strong> {event.locationID?.name || 'No definida'}</div>
                 <div><strong>Ciudad:</strong> {event.locationID?.address?.city?.name || 'No definida'}</div>
                 <div><strong>Departamento:</strong> {event.locationID?.address?.city?.department?.name || 'No definido'}</div>
+                {eventCategories.length > 0 && (
+                  <div><strong>Categoría:</strong> {(() => {
+                    const cat = eventCategories[0]; // Mostrar solo la primera categoría
+                    if (cat.parentName) {
+                      return `${cat.parentName} - ${cat.name}`;
+                    } else {
+                      return cat.name;
+                    }
+                  })()}</div>
+                )}
               </div>
             </div>
 

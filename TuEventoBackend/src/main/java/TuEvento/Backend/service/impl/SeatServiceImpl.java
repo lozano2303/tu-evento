@@ -182,11 +182,13 @@ public class SeatServiceImpl implements SeatService {
 
     @Override
     public ResponseDto<List<SeatDto>> getSeatsBySection(int sectionId) {
-        List<Seat> seats = seatRepository.findBySectionID_SectionID(sectionId);
-
-        if (seats.isEmpty()) {
-            return ResponseDto.error("No hay asientos para esta sección");
+        // Check if section exists
+        Optional<Section> sectionOpt = sectionRepository.findById(sectionId);
+        if (!sectionOpt.isPresent()) {
+            return ResponseDto.error("Sección no encontrada");
         }
+
+        List<Seat> seats = seatRepository.findBySectionID_SectionID(sectionId);
 
         List<SeatDto> seatsDto = seats.stream()
                 .map(seat -> new SeatDto(
