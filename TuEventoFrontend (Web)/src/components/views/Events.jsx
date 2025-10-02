@@ -373,25 +373,6 @@ const TuEvento = () => {
                               >
                                 Ver detalles
                               </button>
-                              {currentUserId &&
-                                event.userID?.userID === currentUserId &&
-                                event.status === 0 && (
-                                  <button
-                                    className="text-white px-4 py-1 text-sm rounded font-medium bg-blue-600 hover:bg-blue-700"
-                                    onClick={() => navigate(`/complete-event?id=${event.id}`)}
-                                  >
-                                    Completar
-                                  </button>
-                                )}
-                              {currentUserId &&
-                                event.userID?.userID === currentUserId && (
-                                  <button
-                                    className="text-white px-4 py-1 text-sm rounded font-medium bg-red-600 hover:bg-red-700"
-                                    onClick={() => handleDeleteEvent(event.id)}
-                                  >
-                                    Eliminar
-                                  </button>
-                                )}
                             </div>
                           </div>
                         </div>
