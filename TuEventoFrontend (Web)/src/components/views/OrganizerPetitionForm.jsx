@@ -152,14 +152,14 @@ const OrganizerPetitionForm = () => {
               </div>
               <h2 className="text-2xl font-bold mb-2">Solicitud de Organizador</h2>
               <p className="text-gray-300">
-                Sube un documento de identidad para ser aprobado como organizador de eventos.
+                Sube un documento para ser aprobado como organizador de eventos.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-3">
-                  Documento de Identidad <span className="text-red-400">*</span>
+                  Documento <span className="text-red-400">*</span>
                 </label>
                 <div
                   className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -216,9 +216,6 @@ const OrganizerPetitionForm = () => {
                           Seleccionar Archivo
                         </label>
                       </div>
-                      <div className="text-left text-xs text-gray-400">
-                        <p>Formatos: PDF, JPG, PNG (máx. 5MB)</p>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -228,26 +225,13 @@ const OrganizerPetitionForm = () => {
                 <h3 className="text-blue-300 font-medium mb-3">Documentos requeridos:</h3>
                 <div className="space-y-2">
                   <div>
-                    <h4 className="text-blue-200 font-medium text-sm">Obligatorios:</h4>
-                    <ul className="text-blue-200 text-sm space-y-1 ml-4">
-                      <li>• Cédula de ciudadanía</li>
-                      <li>• Pasaporte válido</li>
-                      <li>• Documento de identidad</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="text-blue-200 font-medium text-sm">Opcionales:</h4>
-                    <ul className="text-blue-200 text-sm space-y-1 ml-4">
-                      <li>• Certificado de antecedentes</li>
-                      <li>• Certificados de cursos</li>
-                      <li>• Referencias laborales</li>
-                    </ul>
+                    <h4 className="text-blue-200 font-medium text-sm">Obligatorio:</h4>
+                    <p className="text-blue-200 text-sm">Sube tu documento root para que un administrador lo apruebe</p>
                   </div>
 
                   <div className="border-t border-blue-600 pt-2">
                     <p className="text-blue-200 text-sm">
-                      Formatos: PDF, JPG, PNG (máx. 5MB)
+                      Formato: PDF
                     </p>
                   </div>
                 </div>
