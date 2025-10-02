@@ -23,6 +23,7 @@ import jakarta.transaction.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -223,45 +224,47 @@ public class EventServiceImpl implements EventService {
             return ResponseDto.error("Error al publicar el evento: " + e.getMessage());
         }
     }
-    @Override
-    public ResponseDto<List<EventDto>> filterEvents(String name, LocalDate date, boolean onlyUpcoming, Integer locationId) {
-        try {
-            List<Event> events = new ArrayList<>();
+@Override
+public ResponseDto<List<EventDto>> filterEvents(String name, LocalDate date, boolean onlyUpcoming, Integer locationId) {
+    try {
+        List<Event> events = new ArrayList<>();
+        List<Integer> excludedStatuses = Arrays.asList(0, 3);
 
-            if (name != null && !name.isEmpty()) {
-                if (onlyUpcoming) {
-                    events = eventRepository.findByEventNameContainingIgnoreCaseAndStatusNot(name, 0);
-                } else {
-                    events = eventRepository.findByEventNameContainingIgnoreCase(name);
-                }
-            } else if (date != null) {
-                if (onlyUpcoming) {
-                    events = eventRepository.findByStartDateOrFinishDateAndStatusNot(date, date, 0);
-                } else {
-                    events = eventRepository.findByStartDateOrFinishDate(date, date);
-                }
-            } else if (locationId != null) {
-                if (onlyUpcoming) {
-                    events = eventRepository.findByLocationID_LocationIDAndStatusNot(locationId, 0);
-                } else {
-                    events = eventRepository.findByLocationID_LocationID(locationId);
-                }
-            } else if (onlyUpcoming) {
-                events = eventRepository.findAllByStatusNot(0);
+        if (name != null && !name.isEmpty()) {
+            if (onlyUpcoming) {
+                events = eventRepository.findByEventNameContainingIgnoreCaseAndStatusNotIn(name, excludedStatuses);
             } else {
-                events = eventRepository.findAll();
+                events = eventRepository.findByEventNameContainingIgnoreCase(name);
             }
-
-            List<EventDto> eventDtos = events.stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
-
-            return ResponseDto.ok("Eventos filtrados correctamente", eventDtos);
-
-        } catch (Exception e) {
-            return ResponseDto.error("Error al filtrar los eventos: " + e.getMessage());
+        } else if (date != null) {
+            if (onlyUpcoming) {
+                events = eventRepository.findByStartDateOrFinishDateAndStatusNotIn(date, date, excludedStatuses);
+            } else {
+                events = eventRepository.findByStartDateOrFinishDate(date, date);
+            }
+        } else if (locationId != null) {
+            if (onlyUpcoming) {
+                events = eventRepository.findByLocationID_LocationIDAndStatusNotIn(locationId, excludedStatuses);
+            } else {
+                events = eventRepository.findByLocationID_LocationID(locationId);
+            }
+        } else if (onlyUpcoming) {
+            events = eventRepository.findAllByStatusNotIn(excludedStatuses);
+        } else {
+            events = eventRepository.findAll();
         }
+
+        List<EventDto> eventDtos = events.stream()
+            .map(this::toDto)
+            .collect(Collectors.toList());
+
+        return ResponseDto.ok("Eventos filtrados correctamente", eventDtos);
+
+    } catch (Exception e) {
+        return ResponseDto.error("Error al filtrar los eventos: " + e.getMessage());
     }
+}
+
     @Override
     public ResponseDto<EventDto> getEvent(ResponseEventSearch responseEventSearch, EventDto eventDto) {
         try {

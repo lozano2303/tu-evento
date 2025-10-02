@@ -227,11 +227,6 @@ const TuEvento = () => {
     'Santa Marta', 'Pereira', 'Manizales', 'Villavicencio', 'Cúcuta'
   ];
 
-  const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-
-  const orderOptions = ['Mayor a menor', 'Menor a mayor', 'Más recientes', 'Más antiguos'];
-
-  const eventCategories = ['Todas', 'Música', 'Deportes', 'Teatro', 'Conferencias', 'Fiestas', 'Culturales'];
 
   const categories = [
     { name: "Música", image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=140&fit=crop" },
@@ -266,36 +261,7 @@ const TuEvento = () => {
               </div>
             </div>
 
-            {/* Ciudad */}
-            <div className="relative" ref={cityRef}>
-              <button
-                onClick={() => setShowCityDropdown(!showCityDropdown)}
-                className="flex items-center bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 hover:border-purple-400 transition-colors text-white"
-              >
-                <span className="mr-2">🏙️</span>
-                <span>{selectedCity}</span>
-                <ChevronDown className="w-4 h-4 ml-2" />
-              </button>
-              {showCityDropdown && (
-                <div className="absolute top-full mt-2 bg-purple-900 border border-purple-600 rounded-lg shadow-xl z-50 w-48 max-h-48 overflow-y-auto">
-                  {colombianCities.map((city) => (
-                    <button
-                      key={city}
-                      onClick={() => {
-                        setSelectedCity(city);
-                        setShowCityDropdown(false);
-                        handleServerFilter();
-                      }}
-                      className="w-full text-left px-4 py-2 text-white hover:bg-purple-700 transition-colors"
-                    >
-                      {city}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Día */}
             {/* Fecha */}
             <div className="relative">
               <input
@@ -311,75 +277,8 @@ const TuEvento = () => {
               />
             </div>
 
-
-            {/* Orden */}
-            <div className="relative" ref={orderRef}>
-              <button
-                onClick={() => setShowOrderDropdown(!showOrderDropdown)}
-                className="flex items-center bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 hover:border-purple-400 transition-colors text-white"
-              >
-                <span className="mr-2">🔄</span>
-                <span>{selectedOrder}</span>
-                <ChevronDown className="w-4 h-4 ml-2" />
-              </button>
-              {showOrderDropdown && (
-                <div className="absolute top-full mt-2 bg-purple-900 border border-purple-600 rounded-lg shadow-xl z-50 w-44">
-                  {orderOptions.map((order) => (
-                    <button
-                      key={order}
-                      onClick={() => {
-                        setSelectedOrder(order);
-                        setShowOrderDropdown(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-white hover:bg-purple-700 transition-colors"
-                    >
-                      {order}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Categorías */}
-            <div className="relative" ref={categoryRef}>
-              <button
-                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                className="flex items-center bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 hover:border-purple-400 transition-colors text-white"
-              >
-                <span className="mr-2">🏷️</span>
-                <span>{selectedCategory}</span>
-                <ChevronDown className="w-4 h-4 ml-2" />
-              </button>
-              {showCategoryDropdown && (
-                <div className="absolute top-full mt-2 bg-purple-900 border border-purple-600 rounded-lg shadow-xl z-50 w-44">
-                  {eventCategories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => {
-                        setSelectedCategory(category);
-                        setShowCategoryDropdown(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-white hover:bg-purple-700 transition-colors"
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Próximos */}
-            <button
-              onClick={() => setActiveFilter('Próximos')}
-              className={`flex items-center bg-purple-800/50 rounded-full px-4 py-2 border transition-colors text-white ${
-                activeFilter === 'Próximos'
-                  ? 'border-purple-400 bg-purple-500/30'
-                  : 'border-purple-600 hover:border-purple-400'
-              }`}
-            >
-              <span className="mr-2">⏰</span>
-              <span>Próximos</span>
-            </button>
+           
+            
 
             {/* Filtrar */}
             <button
@@ -414,92 +313,102 @@ const TuEvento = () => {
       <div style={{ backgroundColor: 'rgba(16, 1, 30, 0.92)' }} className="px-">
         <div className="max-w-7xl mx-auto py-12">
 
-          {/* Clasificación + Usuario */}
-          <div className="grid md:grid-cols-2 gap-16 mb-16">
-            <div>
-              <h2 className="text-white text-lg font-medium mb-4">Clasificación de edades</h2>
-              <ul className="text-sm text-gray-200 space-y-2">
-                <li>Mayores de edad</li>
-                <li>Para todas las familias</li>
-              </ul>
-            </div>
-            <div>
-              <h2 className="text-white text-lg font-medium mb-4">Información del usuario</h2>
-              <ul className="text-sm text-gray-200 space-y-2">
-                <li>Historial de eventos asistidos</li>
-                <li>Favoritos</li>
-                <li>Eventos pagos</li>
-              </ul>
-            </div>
-          </div>
 
          
           {/* POPULARES */}
           <div className="mb-16">
-            <h2 className="text-white text-lg font-medium mb-8">EVENTOS</h2>
+            <h2 className="text-white text-3xl font-bold mb-12 text-center">EVENTOS</h2>
+
             {loading && <p className="text-white">Cargando eventos...</p>}
             {error && <p className="text-red-500">{error}</p>}
+
             {!loading && !error && (
-              <div className="grid md:grid-cols-3 gap-6">
-                {filteredEvents.map((event, index) => (
-                  <div key={`event-${event.id}-${index}`} className="relative rounded-lg overflow-hidden">
-                    <div className="relative">
-                      {eventImagesMap[event.id] ? (
-                        <img
-                          src={eventImagesMap[event.id]}
-                          alt={event.name}
-                          className="w-full h-48 object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-48 bg-purple-600 flex items-center justify-center">
-                          <span className="text-white text-lg font-bold">Sin Imagen</span>
-                        </div>
-                      )}
-
-                      {/* Status badge for creator's events that may need editing */}
-                      {currentUserId === event.userID?.userID && event.status === 0 && (
-                        <div className="absolute top-2 right-2 bg-yellow-500 text-black px-2 py-1 text-xs font-bold rounded">
-                          {!eventImagesMap[event.id] ? 'FALTA IMÁGENES' :
-                           !eventCategoriesMap[event.id] ? 'FALTA CATEGORÍAS' :
-                           'EN PROCESO'}
-                        </div>
-                      )}
-
-                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/70">
-                        <h3 className="text-white text-sm mb-2">{event.name}</h3>
-                        <p className="text-gray-300 text-xs mb-2">{event.location?.city}</p>
-                        <div className="flex gap-2">
-                          <button
-                            className="text-white px-4 py-1 text-sm rounded font-medium"
-                            style={{ backgroundColor: '#8b5cf6' }}
-                            onClick={() => navigate(`/event-info?id=${event.id}`)}
-                          >
-                            Ver detalles
-                          </button>
-                          {currentUserId && event.userID?.userID === currentUserId && event.status === 0 && (
-                            <button
-                              className="text-white px-4 py-1 text-sm rounded font-medium bg-blue-600 hover:bg-blue-700"
-                              onClick={() => navigate(`/complete-event?id=${event.id}`)}
-                            >
-                              Completar
-                            </button>
+              <>
+                {filteredEvents.length > 0 ? (
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {filteredEvents.map((event, index) => (
+                      <div
+                        key={`event-${event.id}-${index}`}
+                        className="relative rounded-lg overflow-hidden"
+                      >
+                        <div className="relative">
+                          {eventImagesMap[event.id] ? (
+                            <img
+                              src={eventImagesMap[event.id]}
+                              alt={event.name}
+                              className="w-full h-48 object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-48 bg-purple-600 flex items-center justify-center">
+                              <span className="text-white text-lg font-bold">Sin Imagen</span>
+                            </div>
                           )}
-                          {currentUserId && event.userID?.userID === currentUserId && (
-                            <button
-                              className="text-white px-4 py-1 text-sm rounded font-medium bg-red-600 hover:bg-red-700"
-                              onClick={() => handleDeleteEvent(event.id)}
-                            >
-                              Eliminar
-                            </button>
+
+                          {/* Status badge para eventos del creador */}
+                          {currentUserId === event.userID?.userID && event.status === 0 && (
+                            <div className="absolute top-2 right-2 bg-yellow-500 text-black px-2 py-1 text-xs font-bold rounded">
+                              {!eventImagesMap[event.id]
+                                ? "FALTA IMÁGENES"
+                                : !eventCategoriesMap[event.id]
+                                ? "FALTA CATEGORÍAS"
+                                : "EN PROCESO"}
+                            </div>
                           )}
+
+                          <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/70">
+                            <h3 className="text-white text-sm mb-2">{event.name}</h3>
+                            <p className="text-gray-300 text-xs mb-2">
+                              {event.location?.city}
+                            </p>
+                            <div className="flex gap-2">
+                              <button
+                                className="text-white px-4 py-1 text-sm rounded font-medium"
+                                style={{ backgroundColor: "#8b5cf6" }}
+                                onClick={() => navigate(`/event-info?id=${event.id}`)}
+                              >
+                                Ver detalles
+                              </button>
+                              {currentUserId &&
+                                event.userID?.userID === currentUserId &&
+                                event.status === 0 && (
+                                  <button
+                                    className="text-white px-4 py-1 text-sm rounded font-medium bg-blue-600 hover:bg-blue-700"
+                                    onClick={() => navigate(`/complete-event?id=${event.id}`)}
+                                  >
+                                    Completar
+                                  </button>
+                                )}
+                              {currentUserId &&
+                                event.userID?.userID === currentUserId && (
+                                  <button
+                                    className="text-white px-4 py-1 text-sm rounded font-medium bg-red-600 hover:bg-red-700"
+                                    onClick={() => handleDeleteEvent(event.id)}
+                                  >
+                                    Eliminar
+                                  </button>
+                                )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                ) : (
+                    <div className="flex justify-center mt-10">
+                      <div className="bg-purple-800/30 border border-purple-600 rounded-xl p-6 shadow-lg max-w-md text-center">
+                        <p className="text-purple-200 text-lg font-medium flex items-center justify-center gap-2">
+                          No se encontraron eventos con los filtros aplicados.
+                        </p>
+                        <p className="text-gray-400 text-sm mt-2">
+                          Intenta cambiar la búsqueda o ajustar los filtros.
+                        </p>
+                      </div>
+                    </div>
+                )}
+              </>
             )}
           </div>
+
           
           {/* COMENTARIOS DE LA COMUNIDAD */}
           <div className="mb-16">
