@@ -50,4 +50,13 @@ public class CityController {
         ResponseDto<CityDto> response = cityService.getCityById(cityID);
         return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
     }
+
+    // Obtener ciudades por departamento
+    @GetMapping("/department/{departmentId}")
+    public ResponseEntity<ResponseDto<List<CityDto>>> getCitiesByDepartment(@PathVariable int departmentId) {
+        System.out.println("CityController: Recibida solicitud para ciudades de departamento: " + departmentId);
+        ResponseDto<List<CityDto>> response = cityService.getCitiesByDepartment(departmentId);
+        System.out.println("CityController: Respuesta para departamento " + departmentId + ": success=" + response.isSuccess() + ", data size=" + (response.getData() != null ? response.getData().size() : 0));
+        return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
+    }
 }

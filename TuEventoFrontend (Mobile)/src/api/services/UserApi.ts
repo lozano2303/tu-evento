@@ -54,6 +54,10 @@ export const getUserProfile = async (userId: number): Promise<IUserProfileRespon
       throw new Error(responseData.message || "Error al obtener el perfil");
     }
 
+    // Asegurar que address sea number
+    if (responseData.data && responseData.data.address) {
+      responseData.data.address = parseInt(responseData.data.address, 10) || null;
+    }
     console.log('Perfil obtenido:', responseData);
     return responseData;
   } catch (error) {
@@ -261,6 +265,13 @@ export const getAllDepartments = async (): Promise<any> => {
     if (!response.ok) {
       throw new Error(responseData.message || "Error al obtener los departamentos");
     }
+    // Mapear para incluir id
+    if (responseData.data) {
+      responseData.data = responseData.data.map((dept: any) => ({
+        id: dept.departmentID ?? 0,
+        name: dept.name
+      }));
+    }
     console.log('Departamentos obtenidos:', responseData);
     return responseData;
   } catch (error) {
@@ -282,11 +293,55 @@ export const getCitiesByDepartment = async(): Promise<any> => {
     if (!response.ok) {
       throw new Error(responseData.message || "Error al obtener las ciudades");
     }
+    // Mapear para incluir id
+    if (responseData.data) {
+      responseData.data = responseData.data.map((city: any) => ({
+        id: city.cityID ?? 0,
+        departmentID: city.departmentID,
+        name: city.name
+      }));
+    }
     console.log('Ciudades obtenidas:', responseData);
     return responseData;
   }
   catch (error) {
     console.error('Error en getCitiesByDepartment:', error);
+    throw error;
+  }
+};
+
+// Traer ciudades por departamento
+export const getCitiesByDepartmentId = async (departmentId: number): Promise<any> => {
+  console.log('Iniciando consulta de ciudades para departamento:', departmentId);
+  try {
+    const url = `${GET_CITIES_BY_DEPARTMENT_ENDPOINT}/department/${departmentId}`;
+    console.log('URL de consulta:', url);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    console.log('Respuesta del servidor:', response.status, response.statusText);
+    const responseData = await response.json();
+    console.log('Datos de respuesta:', responseData);
+    if (!response.ok) {
+      throw new Error(responseData.message || "Error al obtener las ciudades");
+    }
+    // Mapear para incluir id
+    if (responseData.data) {
+      responseData.data = responseData.data.map((city: any) => ({
+        id: city.cityID,
+        departmentID: city.departmentID,
+        name: city.name
+      }));
+      console.log('Ciudades mapeadas:', responseData.data.length);
+    }
+    console.log('Ciudades obtenidas por departamento:', responseData);
+    return responseData;
+  }
+  catch (error) {
+    console.error('Error en getCitiesByDepartmentId:', error);
     throw error;
   }
 };

@@ -42,6 +42,7 @@ export interface IDepartment {
 }
 
 export interface ICity {
+  id: number;
   departmentID: number;
   name: string;
 }

@@ -11,4 +11,5 @@ public interface CityService {
     ResponseDto<String> deleteCity(int cityID);
     ResponseDto<List<CityDto>> getAllCities();
     ResponseDto<CityDto> getCityById(int cityID);
+    ResponseDto<List<CityDto>> getCitiesByDepartment(int departmentId);
 }

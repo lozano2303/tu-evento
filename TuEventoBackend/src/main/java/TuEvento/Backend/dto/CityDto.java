@@ -2,7 +2,7 @@ package TuEvento.Backend.dto;
 
 public class CityDto {
 
-    private int cityID;
+    private Integer cityID;
     private int departmentID;
     private String name;
 

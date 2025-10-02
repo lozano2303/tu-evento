@@ -185,4 +185,23 @@ public class CityServiceImpl implements CityService {
 
         return ResponseDto.ok("Ciudad encontrada", cityDto);
     }
+
+    @Override
+    public ResponseDto<List<CityDto>> getCitiesByDepartment(int departmentId) {
+        System.out.println("CityServiceImpl: Buscando ciudades para departamento: " + departmentId);
+        List<City> cities = cityRepository.findByDepartmentDepartmentID(departmentId);
+        System.out.println("CityServiceImpl: Ciudades encontradas en BD: " + cities.size());
+
+        if (cities.isEmpty()) {
+            System.out.println("CityServiceImpl: No hay ciudades para departamento " + departmentId);
+            return ResponseDto.error("No hay ciudades registradas para este departamento");
+        }
+
+        List<CityDto> citiesDto = cities.stream()
+            .map(city -> new CityDto(city.getCityID(), city.getDepartment().getDepartmentID(), city.getName()))
+            .collect(Collectors.toList());
+
+        System.out.println("CityServiceImpl: Ciudades mapeadas: " + citiesDto.size());
+        return ResponseDto.ok("Ciudades encontradas", citiesDto);
+    }
 }

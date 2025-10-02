@@ -14,4 +14,7 @@ public interface CityRepository extends JpaRepository<City, Integer> {
 
     // Busca una Ciudad por nombre (ignorando mayúsculas/minúsculas)
     List<City> findByNameIgnoreCase(String name);
+
+    // Busca ciudades por departmentID
+    List<City> findByDepartmentDepartmentID(int departmentId);
 }

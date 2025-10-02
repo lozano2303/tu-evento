@@ -3,7 +3,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getUserIdFromToken, removeToken } from '../../api/services/Token';
-import { getUserProfile, updateUserPhone, updateUserBirthDate, getAllDepartments, getCitiesByDepartment, deactivateUserAccount, createAddress, updateUserAddress, getAddressById } from '../../api/services/UserApi';
+import { getUserProfile, updateUserPhone, updateUserBirthDate, getAllDepartments, getCitiesByDepartment, deactivateUserAccount, createAddress, updateUserAddress, getAddressById, getCitiesByDepartmentId } from '../../api/services/UserApi';
 import { IUserProfile, IDepartment, ICity } from '../../api/types/IUser';
 import Input from "../../components/common/Input";
 import Button from '../../components/common/Button';
@@ -67,7 +67,7 @@ export default function ProfileScreen() {
 
         const cityResponse = await getCitiesByDepartment();
         setCities(cityResponse.data || []);
-        setFilteredCities(cityResponse.data || []);
+        setFilteredCities([]);
       } catch (error) {
         console.error('Error loading departments and cities:', error);
       }
@@ -82,13 +82,25 @@ export default function ProfileScreen() {
         try {
           const addressResponse = await getAddressById(profile.address);
           const addressData = addressResponse.data;
-          if (addressData) {
+          if (addressData && addressData.cityID) {
             const cityID = parseInt(addressData.cityID, 10);
-            setSelectedCityId(cityID);
-            setSelectedDepartmentId(cities[cityID - 1].departmentID);
-            setAddress(addressData.street);
-            setPostalCode(addressData.postalCode);
-            setFilteredCities(cities.filter(c => c.departmentID === cities[cityID - 1].departmentID));
+            if (!isNaN(cityID) && cities.find(c => c.id === cityID)) {
+              setSelectedCityId(cityID);
+              const selectedCity = cities.find(c => c.id === cityID);
+              if (selectedCity) {
+                setSelectedDepartmentId(selectedCity.departmentID);
+                setAddress(addressData.street);
+                setPostalCode(addressData.postalCode);
+                // Cargar ciudades del departamento
+                try {
+                  const cityResponse = await getCitiesByDepartmentId(selectedCity.departmentID);
+                  setFilteredCities(cityResponse.data || []);
+                } catch (error) {
+                  console.error('Error cargando ciudades del departamento:', error);
+                  setFilteredCities([]);
+                }
+              }
+            }
           }
         } catch (error) {
           console.error('Error cargando dirección existente:', error);
@@ -355,7 +367,10 @@ export default function ProfileScreen() {
                 Dirección
               </Text>
               <TouchableOpacity
-                onPress={() => setShowAddressModal(true)}
+                onPress={() => {
+                  setFilteredCities([]);
+                  setShowAddressModal(true);
+                }}
                 className="bg-purple-900/30 border border-purple-700/50 rounded-lg p-4"
               >
                 <View className="flex-row justify-between items-center">
@@ -426,26 +441,63 @@ export default function ProfileScreen() {
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>Editar Dirección</Text>
             </View>
 
-            {/* Ciudad */}
-            <Text style={{ fontSize: 14, marginBottom: 6, color: '#555' }}>Ciudad</Text>
+            {/* Departamento */}
+            <Text style={{ fontSize: 14, marginBottom: 6, color: '#555' }}>Departamento</Text>
             <View style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12 }}>
               <Picker
-                selectedValue={selectedCityId?.toString()}
-                onValueChange={(itemValue) => {
+                selectedValue={selectedDepartmentId != null ? selectedDepartmentId.toString() : null}
+                onValueChange={async (itemValue) => {
+                  console.log('onValueChange departamento:', itemValue);
                   const numValue = itemValue ? parseInt(itemValue, 10) : null;
-                  setSelectedCityId(numValue);
+                  console.log('numValue departamento:', numValue);
+                  setSelectedDepartmentId(numValue);
+                  setSelectedCityId(null); // Reset city
                   if (numValue) {
-                    const selectedCity = cities[numValue - 1];
-                    if (selectedCity) {
-                      setSelectedDepartmentId(selectedCity.departmentID);
+                    console.log('Llamando getCitiesByDepartmentId para departamento:', numValue);
+                    try {
+                      const cityResponse = await getCitiesByDepartmentId(numValue);
+                      console.log('Respuesta de ciudades:', cityResponse);
+                      setFilteredCities(cityResponse.data || []);
+                      console.log('filteredCities set:', cityResponse.data?.length || 0);
+                    } catch (error) {
+                      console.error('Error cargando ciudades:', error);
+                      setFilteredCities([]);
                     }
+                  } else {
+                    setFilteredCities([]);
                   }
                 }}
                 style={{ height: 50, color: '#333' }}
               >
-                <Picker.Item label="Seleccionar ciudad" value={null} />
-                {cities.map((city, index) => (
-                  <Picker.Item key={index} label={city.name} value={(index + 1).toString()} />
+                <Picker.Item label="Seleccionar departamento" value={null} />
+                {departments.map((dept, index) => (
+                  <Picker.Item key={`dept-${index}`} label={dept.name} value={dept.id.toString()} />
+                ))}
+              </Picker>
+            </View>
+
+            {/* Ciudad */}
+            <Text style={{ fontSize: 14, marginBottom: 6, color: '#555' }}>Ciudad</Text>
+            <View style={{ backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 12 }}>
+              <Picker
+                selectedValue={selectedCityId != null ? selectedCityId.toString() : "0"}
+                onValueChange={(itemValue) => {
+                  const numValue = itemValue && itemValue !== "0" ? parseInt(itemValue, 10) : null;
+                  setSelectedCityId(numValue);
+                  if (numValue) {
+                    const selectedCity = filteredCities[numValue - 1];
+                    if (selectedCity) {
+                      setSelectedDepartmentId(selectedCity.departmentID);
+                    }
+                  } else {
+                    setSelectedCityId(null);
+                  }
+                }}
+                style={{ height: 50, color: '#333' }}
+              >
+                <Picker.Item label="Seleccionar ciudad" value="0" />
+                {filteredCities.map((city, index) => (
+                  <Picker.Item key={`city-${index}`} label={city.name} value={city.id ? city.id.toString() : (index + 1).toString()} />
                 ))}
               </Picker>
             </View>
