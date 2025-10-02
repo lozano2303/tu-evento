@@ -16,7 +16,8 @@ import {
   Theater,
   Sofa,
   Grid3x3,
-  Save
+  Save,
+  CheckCircle
 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 
@@ -581,6 +582,8 @@ const FloorPlanDesignerInner = () => {
   const [showSectionCreationModal, setShowSectionCreationModal] = useState(false);
   const [newSectionData, setNewSectionData] = useState({ name: '', price: 0 });
   const [isCreatingSection, setIsCreatingSection] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Load existing layout for the event when component mounts
   useEffect(() => {
@@ -1057,7 +1060,8 @@ const FloorPlanDesignerInner = () => {
             console.error('Error al actualizar el layout: ' + (updateResult.message || 'Error desconocido'));
             return;
           }
-          alert('Layout actualizado con éxito');
+          setSuccessMessage('Layout actualizado con éxito');
+          setShowSuccessModal(true);
         } else {
           throw new Error('Error getting existing layout: ' + (existingLayoutResult.message || 'Unknown error'));
         }
@@ -1080,7 +1084,8 @@ const FloorPlanDesignerInner = () => {
         }
 
         eventLayoutID = layoutResult.data.eventLayoutID; // Use the correct field name
-        alert('Layout creado con éxito');
+        setSuccessMessage('Layout creado con éxito');
+        setShowSuccessModal(true);
       }
 
       // Extract seats from chair elements
@@ -1778,6 +1783,42 @@ const FloorPlanDesignerInner = () => {
           setUnits={setUnits}
         />
       </div>
+
+      {/* Modal de éxito */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <CheckCircle className="w-8 h-8 text-purple-500" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">¡Éxito!</h3>
+              <p className="text-purple-100 text-sm">Operación completada</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-green-50 rounded-lg p-4 mb-4">
+                  <span className="text-green-800 text-sm">{successMessage}</span>
+                </div>
+              </div>
+
+              {/* Botón para continuar */}
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Continuar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showGuide && (
         <div className="fixed inset-0 flex items-center justify-center z-50">

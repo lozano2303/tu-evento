@@ -49,6 +49,10 @@ const ReservaEvento = () => {
   const [editRatingValue, setEditRatingValue] = useState(5);
   const [editCommentValue, setEditCommentValue] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [deleteRatingId, setDeleteRatingId] = useState(null);
   const [updateKey, setUpdateKey] = useState(0);
   const [eventImages, setEventImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -116,7 +120,8 @@ const handleSubmitRating = async () => {
       setMensaje('');
       setRating(0);
       loadEventRatings();
-      alert('Comentario enviado exitosamente.');
+      setSuccessMessage('¡Comentario enviado!\nTu comentario ha sido publicado exitosamente.');
+      setShowSuccessModal(true);
     } else {
       alert(result.message || 'Error al enviar el comentario.');
     }
@@ -150,7 +155,8 @@ const handleSubmitRating = async () => {
         setShowEditModal(false);
         setEditingRating(null);
         loadEventRatings();
-        alert('Comentario actualizado exitosamente.');
+        setSuccessMessage('¡Comentario actualizado!\nTu comentario ha sido actualizado exitosamente.');
+        setShowSuccessModal(true);
       } else {
         alert(result.message || 'Error al actualizar el comentario.');
       }
@@ -160,16 +166,23 @@ const handleSubmitRating = async () => {
     }
   };
 
-  const handleDeleteRating = async (ratingId, userId) => {
+  const handleDeleteRating = (ratingId, userId) => {
     if (!checkSession()) return;
-    if (!confirm('¿Estás seguro de que quieres eliminar este comentario?')) return;
+    setDeleteRatingId(ratingId);
+    setShowDeleteConfirmModal(true);
+  };
 
-    setDeletingRating(ratingId);
+  const confirmDeleteRating = async () => {
+    if (!deleteRatingId) return;
+
+    setShowDeleteConfirmModal(false);
+    setDeletingRating(deleteRatingId);
     try {
-      const result = await deleteEventRating(ratingId);
+      const result = await deleteEventRating(deleteRatingId);
       if (result.success) {
         loadEventRatings();
-        alert('Comentario eliminado exitosamente.');
+        setSuccessMessage('¡Comentario eliminado!\nTu comentario ha sido eliminado exitosamente.');
+        setShowSuccessModal(true);
       } else {
         alert(result.message || 'Error al eliminar el comentario.');
       }
@@ -178,6 +191,7 @@ const handleSubmitRating = async () => {
       alert('Error al eliminar el comentario.');
     } finally {
       setDeletingRating(null);
+      setDeleteRatingId(null);
     }
   };
 
@@ -1316,47 +1330,50 @@ const handleSubmitRating = async () => {
       {/* Modal para editar comentario */}
       {showEditModal && (
         <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600">✏️</span>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <span className="text-2xl">✏️</span>
                 </div>
-                <h2 className="text-xl font-bold text-gray-800">Editar comentario</h2>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Editar comentario</h3>
+              <p className="text-purple-100 text-sm">Modifica tu calificación y comentario</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6">
+              {/* Sistema de estrellas */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Calificación
+                </label>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-6 h-6 cursor-pointer transition-colors ${
+                        star <= editRatingValue ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'
+                      }`}
+                      onClick={() => setEditRatingValue(star)}
+                    />
+                  ))}
+                </div>
               </div>
 
+              {/* Área de comentario */}
               <div className="mb-6">
-                {/* Sistema de estrellas */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Calificación
-                  </label>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`w-6 h-6 cursor-pointer transition-colors ${
-                          star <= editRatingValue ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'
-                        }`}
-                        onClick={() => setEditRatingValue(star)}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Área de comentario */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Comentario
-                  </label>
-                  <textarea
-                    value={editCommentValue}
-                    onChange={(e) => setEditCommentValue(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-900 placeholder-gray-400 resize-none"
-                    rows="4"
-                    placeholder="Escribe tu comentario..."
-                  />
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Comentario
+                </label>
+                <textarea
+                  value={editCommentValue}
+                  onChange={(e) => setEditCommentValue(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-900 placeholder-gray-400 resize-none"
+                  rows="4"
+                  placeholder="Escribe tu comentario..."
+                />
               </div>
 
               <div className="flex gap-3">
@@ -1371,11 +1388,111 @@ const handleSubmitRating = async () => {
                 </button>
                 <button
                   onClick={handleSaveEditRating}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors"
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white py-2 px-4 rounded-lg transition-colors"
                 >
                   Guardar cambios
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteConfirmModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Eliminar comentario</h3>
+              <p className="text-purple-100 text-sm">¿Estás seguro de que quieres eliminar este comentario?</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-red-50 rounded-lg p-4 mb-4">
+                  <span className="text-red-600 text-sm font-medium">Esta acción no se puede deshacer.</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirmModal(false);
+                    setDeleteRatingId(null);
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDeleteRating}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors"
+                >
+                  Sí, eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de éxito de comentario */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <CheckCircle className="w-8 h-8 text-purple-500" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                {successMessage.includes('eliminado') ? '¡Comentario eliminado!' : '¡Comentario enviado!'}
+              </h3>
+              <p className="text-purple-100 text-sm">
+                {successMessage.includes('eliminado')
+                  ? 'Tu comentario ha sido eliminado exitosamente'
+                  : 'Tu comentario ha sido publicado exitosamente'
+                }
+              </p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="text-gray-700 text-sm">
+                    {successMessage.includes('eliminado') ? (
+                      <>
+                        <p className="mb-2">🗑️ Tu comentario ha sido eliminado</p>
+                        <p className="text-xs text-gray-500">El comentario ya no aparecerá en la lista.</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mb-2">💬 Tu opinión ha sido compartida</p>
+                        <p className="text-xs text-gray-500">¡Gracias por contribuir a la comunidad!</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Botón para continuar */}
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Continuar</span>
+              </button>
             </div>
           </div>
         </div>
