@@ -70,7 +70,7 @@ const AdminDashboard = () => {
                   fechaSolicitud: new Date().toLocaleDateString(), // Fecha actual ya que no viene del backend
                   descripcion: 'Solicitud para convertirse en organizador de eventos',
                   archivos: [
-                    { nombre: 'documento.pdf', tipo: 'Documento de Identidad' }
+                    { nombre: 'documento.pdf', tipo: 'Documento' }
                   ],
                   status: petition.status === 0 ? 'pendiente' : petition.status === 1 ? 'aprobado' : 'rechazado',
                   userData: userResult.data
@@ -293,6 +293,27 @@ const AdminDashboard = () => {
   };
 
   const solicitudesActivas = solicitudesPendientes.filter(s => s.status === 'pendiente');
+
+  const handleDownloadDocument = async (petitionId) => {
+    try {
+      const blob = await downloadPetitionDocument(petitionId);
+
+      // Crear un enlace temporal para descargar el archivo
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `documento-solicitud-${petitionId}.pdf`; // Nombre del archivo
+      document.body.appendChild(link);
+      link.click();
+
+      // Limpiar el enlace temporal
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error descargando documento:', error);
+      setError('Error descargando el documento. Inténtalo de nuevo.');
+    }
+  };
 
   // Componente de Vigilancia
   const VigilanciaAdmin = () => {
@@ -1098,7 +1119,10 @@ const AdminDashboard = () => {
                                     <div key={index} className="flex items-center gap-2 bg-gray-700 px-3 py-1 rounded-full text-xs">
                                       <FileText className="w-3 h-3 text-blue-400" />
                                       <span className="text-gray-300">{archivo.tipo}</span>
-                                      <button className="text-blue-400 hover:text-blue-300 transition-colors">
+                                      <button
+                                        onClick={() => handleDownloadDocument(solicitud.petitionId)}
+                                        className="text-blue-400 hover:text-blue-300 transition-colors"
+                                      >
                                         <Download className="w-3 h-3" />
                                       </button>
                                     </div>
@@ -1227,7 +1251,10 @@ const AdminDashboard = () => {
                                   <p className="text-gray-400 text-xs">{archivo.nombre}</p>
                                 </div>
                               </div>
-                              <button className="text-blue-400 hover:text-blue-300 transition-colors p-2">
+                              <button
+                                onClick={() => handleDownloadDocument(solicitudSeleccionada.petitionId)}
+                                className="text-blue-400 hover:text-blue-300 transition-colors p-2"
+                              >
                                 <Download className="w-4 h-4" />
                               </button>
                             </div>

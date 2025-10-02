@@ -173,7 +173,7 @@ export default function Navbar() {
                           setIsModalOpen(false);
                           setShowChangePasswordModal(true);
                         }}
-                        className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                       >
                         <Key className="w-4 h-4" />
                         <span>Cambiar contraseña</span>
@@ -181,7 +181,7 @@ export default function Navbar() {
 
                       <button
                         onClick={handleLogout}
-                        className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                        className="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                       >
                         <LogOut className="w-4 h-4" />
                         <span>Cerrar sesión</span>
