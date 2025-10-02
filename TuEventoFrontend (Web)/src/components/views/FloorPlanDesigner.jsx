@@ -15,7 +15,8 @@ import {
   Ruler,
   Theater,
   Sofa,
-  Grid3x3
+  Grid3x3,
+  Save
 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 
@@ -49,18 +50,18 @@ const TopNavbar = ({ onExport, onImport, onUploadEvent, onLoadLayout, onGoHome, 
         </button>
 
         <button title="Exportar" onClick={onExport} className="flex items-center px-3 py-2 rounded hover:bg-purple-800">
-          <Download size={16} className="mr-2" /> Exportar
+          <Upload size={16} className="mr-2" /> Exportar
         </button>
 
         <label className="flex items-center px-3 py-2 rounded hover:bg-purple-800 cursor-pointer">
-          <Upload size={16} className="mr-2" />
+          <Download size={16} className="mr-2" />
           <input type="file" accept=".json" onChange={(e)=>onImport && onImport(e.target.files[0])} className="hidden" />
           Importar
         </label>
 
 
         <button title="Guardar Layout" onClick={onUploadEvent} className="flex items-center px-3 py-2 rounded hover:bg-gray-700">
-          <Upload size={16} className="mr-2" /> Guardar Layout
+          <Save size={16} className="mr-2" /> Guardar Layout
         </button>
       </div>
     </div>
