@@ -11,7 +11,7 @@ export default function Footer() {
           <span className="text-lg font-semibold text-white">Tu Evento</span>
         </div>
         <p className="text-gray-400 text-sm">
-          © 2024 Tu Evento. Todos los derechos reservados.
+          © 2025 Tu Evento. Todos los derechos reservados.
         </p>
       </div>
     </footer>
