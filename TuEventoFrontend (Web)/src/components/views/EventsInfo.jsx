@@ -1058,7 +1058,6 @@ const handleSubmitRating = async () => {
 
             {/* Horarios y precios disponibles */}
             <div>
-              <h3 className="text-white text-lg font-semibold mb-4">Horarios y Precios</h3>
               <div className="space-y-3">
                 {loadingTickets ? (
                   <div className="text-center py-4">
