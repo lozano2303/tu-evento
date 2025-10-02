@@ -4,10 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import TuEvento.Backend.dto.NotificationDto;
+import TuEvento.Backend.dto.NotificationUserDto;
 import TuEvento.Backend.dto.TicketDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.model.*;
 import TuEvento.Backend.repository.*;
+import TuEvento.Backend.service.impl.NotificationUserServiceImpl;
 import TuEvento.Backend.service.TicketService;
 import TuEvento.Backend.service.email.TicketReservationEmailService;
 
@@ -51,6 +54,13 @@ public class TicketServiceImpl implements TicketService {
 
     @Autowired
     private EventLayoutRepository eventLayoutRepository;
+
+    @Autowired
+    private NotificationServiceImpl notificationRepository;
+
+    @Autowired
+    private NotificationUserServiceImpl notificationUserService;
+
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -178,6 +188,23 @@ public class TicketServiceImpl implements TicketService {
         try {
             // Get login information for email
             Optional<Login> loginOpt = loginRepository.findByUserID(user);
+            // Crear notificación
+            NotificationDto notificationDto = new NotificationDto();
+            notificationDto.setEventID(eventOpt.get().getId());
+            notificationDto.setMessage("Este es un recordatorio de tu reserva al evento " + eventOpt.get().getEventName() + ". Se hará dentro de 2 días. ¡Nos vemos en el evento!");
+            notificationDto.setSendDate(LocalDateTime.now());
+            notificationRepository.insertNotification(notificationDto);
+            ResponseDto<NotificationDto> notificationResponse = notificationRepository.insertNotification(notificationDto);
+            // Crear notificación para usuario
+            if (notificationResponse.isSuccess()) {
+                NotificationDto savedNotification = notificationResponse.getData();
+
+                // Crear notificación para usuario
+                NotificationUserDto notificationUserDto = new NotificationUserDto();
+                notificationUserDto.setUser(ticket.getUserId().getUserID());
+                notificationUserDto.setNotification(savedNotification.getNotificationID());
+                notificationUserService.insertNotificationUser(notificationUserDto);
+            }
             if (loginOpt.isPresent()) {
                 Login login = loginOpt.get();
 

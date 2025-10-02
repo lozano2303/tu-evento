@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import TuEvento.Backend.dto.NotificationUserDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
@@ -14,7 +15,7 @@ import TuEvento.Backend.repository.NotificationRepository;
 import TuEvento.Backend.repository.NotificationUserRepository;
 import TuEvento.Backend.repository.UserRepository;
 import TuEvento.Backend.service.NotificationUserService;
-
+@Service
 public class NotificationUserServiceImpl implements NotificationUserService{
     @Autowired
     private NotificationUserRepository notificationUserRepository;

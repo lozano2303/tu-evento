@@ -30,8 +30,12 @@ public class NotificationServiceImpl implements NotificationService {
             notification.setSendDate(notificationDto.getSendDate());
 
             notificationRepository.save(notification);
-
-            return new ResponseDto<>(true, "Notificación creada exitosamente");
+            NotificationDto dto = new NotificationDto();
+            dto.setNotificationID(notification.getNotificationID());
+            dto.setEventID(notification.getEventID().getId());
+            dto.setMessage(notification.getMessage());
+            dto.setSendDate(notification.getSendDate());
+            return new ResponseDto<>(true, "Notificación creada exitosamente", dto);
         } catch (Exception e) {
             return new ResponseDto<>(false, "Error creando notificación: " + e.getMessage());
         }
