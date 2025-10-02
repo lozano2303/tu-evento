@@ -5,6 +5,8 @@ import CodeVerification from "./CodeVerification.jsx";
 import ForgotPassword from "./ForgotPassword.jsx";
 
 export default function Login() {
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [view, setView] = useState('login');
   const [userID, setUserID] = useState(null);
   const [userData, setUserData] = useState(null);
@@ -109,7 +111,37 @@ export default function Login() {
     }
     return "";
   };
+  {/* Modal de Términos y Condiciones */}
+  {showTermsModal && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4">
+          <h3 className="text-lg font-bold text-white text-center">Términos y Condiciones</h3>
+        </div>
 
+        <div className="p-6 max-h-[400px] overflow-y-auto text-sm text-gray-700 space-y-4">
+          {/* Aquí pegas tu texto real de términos */}
+          <p>
+            Bienvenido a TuEvento. Al registrarte aceptas cumplir con nuestras
+            políticas de uso, privacidad y condiciones descritas en este documento...
+          </p>
+          <p>
+            El usuario se compromete a usar la plataforma de manera responsable...
+          </p>
+          {/* ... resto de tu texto */}
+        </div>
+
+        <div className="flex justify-end p-4 space-x-2">
+          <button
+            onClick={() => setShowTermsModal(false)}
+            className="px-4 py-2 bg-gray-200 rounded-lg text-sm hover:bg-gray-300"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
   const validateName = (name) => {
     if (!name || name.trim() === "") {
       return "El nombre completo es obligatorio";
@@ -417,6 +449,115 @@ export default function Login() {
                 </div>
               </>
             )}
+              {/* Modal de Términos y Condiciones */}
+              {showTermsModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden">
+                    
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4">
+                      <h3 className="text-lg font-bold text-white text-center">
+                        Términos y Condiciones de Uso
+                      </h3>
+                    </div>
+
+                    {/* Contenido scrollable */}
+                    <div className="p-6 max-h-[500px] overflow-y-auto text-sm text-gray-700 space-y-4">
+                      <p><strong>Última actualización:</strong> 2/10/2025</p>
+
+                      <h4 className="font-semibold">1. Aceptación de los términos</h4>
+                      <p>
+                        Al acceder, registrarse o utilizar la aplicación “Tu Evento” (en su versión web o Android), 
+                        desarrollada por CapySoft, el usuario acepta expresamente los presentes Términos y Condiciones. 
+                        Si no está de acuerdo, deberá abstenerse de utilizar la plataforma.
+                      </p>
+
+                      <h4 className="font-semibold">2. Definiciones</h4>
+                      <ul className="list-disc pl-6">
+                        <li><strong>Aplicación / Plataforma:</strong> Hace referencia a “Tu Evento” en su versión web y móvil.</li>
+                        <li><strong>Usuario:</strong> Persona que accede y utiliza la aplicación, ya sea como asistente o organizador.</li>
+                        <li><strong>Organizador:</strong> Usuario autorizado para crear, administrar y publicar eventos en la plataforma.</li>
+                        <li><strong>Asistente:</strong> Usuario que reserva, comenta o participa en eventos.</li>
+                        <li><strong>Administrador:</strong> Usuario con permisos especiales de validación y gestión dentro del sistema.</li>
+                      </ul>
+
+                      <h4 className="font-semibold">3. Uso de la plataforma</h4>
+                      <ul className="list-disc pl-6">
+                        <li>El acceso a la aplicación requiere conexión estable a Internet.</li>
+                        <li>Los usuarios deben registrarse con datos verídicos.</li>
+                        <li>El sistema no gestiona pagos en línea; la confirmación de pagos se realiza directamente con los organizadores.</li>
+                      </ul>
+
+                      <h4 className="font-semibold">4. Registro y cuentas</h4>
+                      <ul className="list-disc pl-6">
+                        <li>El usuario debe crear una cuenta con correo válido y contraseña segura.</li>
+                        <li>Es posible el registro mediante redes sociales (Google/Facebook) a través de OAuth.</li>
+                        <li>Cada usuario es responsable de mantener la confidencialidad de sus credenciales.</li>
+                        <li>El usuario puede solicitar la eliminación definitiva de su cuenta.</li>
+                      </ul>
+
+                      <h4 className="font-semibold">5. Reservas y tickets</h4>
+                      <ul className="list-disc pl-6">
+                        <li>Los asistentes pueden reservar asientos para eventos disponibles.</li>
+                        <li>La reserva quedará en estado pendiente hasta la validación física del pago por parte del organizador.</li>
+                        <li>Una vez confirmado el pago, se generará un código QR único e intransferible que servirá como comprobante de acceso al evento.</li>
+                        <li>El mal uso, duplicación o falsificación de códigos QR será motivo de denegación de acceso.</li>
+                      </ul>
+
+                      <h4 className="font-semibold">6. Responsabilidades del usuario</h4>
+                      <ul className="list-disc pl-6">
+                        <li>Hacer un uso correcto y lícito de la plataforma.</li>
+                        <li>No utilizar la aplicación para difundir información falsa, ofensiva o ilícita.</li>
+                        <li>No manipular ni intentar vulnerar la seguridad del sistema.</li>
+                      </ul>
+
+                      <h4 className="font-semibold">7. Limitación de responsabilidades</h4>
+                      <p>CapySoft no se hace responsable de:</p>
+                      <ul className="list-disc pl-6">
+                        <li>Fallas de conexión a Internet del usuario.</li>
+                        <li>Información falsa proporcionada por organizadores o asistentes.</li>
+                        <li>Cancelaciones o cambios en eventos ajenos al control de la plataforma.</li>
+                      </ul>
+                      <p>La aplicación se ofrece “tal cual”, sin garantía de disponibilidad ininterrumpida.</p>
+
+                      <h4 className="font-semibold">8. Seguridad y privacidad</h4>
+                      <p>No somos responsables de los eventos que publicas, los documentos que subas o los contenidos que compartas.</p>
+                      <ul className="list-disc pl-6">
+                        <li>Se implementan medidas de seguridad como autenticación de dos pasos (en registro normal) y validación de credenciales.</li>
+                        <li>En inicios de sesión con redes sociales, la seguridad dependerá del proveedor externo.</li>
+                      </ul>
+
+                      <h4 className="font-semibold">9. Propiedad intelectual</h4>
+                      <p>Queda prohibida la reproducción, distribución o modificación sin autorización expresa.</p>
+
+                      <h4 className="font-semibold">10. Modificaciones</h4>
+                      <p>
+                        CapySoft se reserva el derecho de modificar los presentes Términos y Condiciones en cualquier momento. 
+                        Los cambios entrarán en vigor desde su publicación en la aplicación.
+                      </p>
+
+                      <h4 className="font-semibold">11. Legislación aplicable</h4>
+                      <p>
+                        Los presentes términos se regirán por las leyes vigentes en Colombia, sin perjuicio de la normativa aplicable 
+                        en el país de residencia del usuario.
+                      </p>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex justify-end p-4 space-x-2">
+                      <button
+                        onClick={() => setShowTermsModal(false)}
+                        className="px-4 py-2 bg-gray-200 rounded-lg text-sm hover:bg-gray-300"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+
 
             {error && <p className="text-red-500 text-sm">{error}</p>}
 
@@ -496,6 +637,22 @@ export default function Login() {
                 >
                   {view === 'login' ? "Haz clic aquí" : "Inicia sesión"}
                 </button>
+                {/* Checkbox de términos */}
+                {view !== 'login' && (
+                  <div className="flex items-start space-x-5">
+                    <label htmlFor="terms" className="text-gray-400 text-xs">
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowTermsModal(true)}
+                          className="text-purple-400 hover:text-purple-300 underline"
+                        >
+                          Términos y Condiciones
+                        </button>
+                      </div>
+                    </label>
+                  </div>
+                )}
               </p>
             </div>
           </form>
