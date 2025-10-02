@@ -2,6 +2,7 @@ package TuEvento.Backend.controller;
 
 import TuEvento.Backend.dto.EventImgRequestDto;
 import TuEvento.Backend.dto.EventImgResponseDto;
+import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.service.EventImgService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,16 +21,19 @@ public class EventImgController {
 
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<?> uploadEventImg(@RequestParam int eventId,
-                                             @RequestParam("file") MultipartFile file,
-                                             @RequestParam int order) {
+                                              @RequestParam("file") MultipartFile file,
+                                              @RequestParam int order) {
         try {
-            EventImgRequestDto requestDto = new EventImgRequestDto(eventId, file, order);
+            EventImgRequestDto requestDto = new EventImgRequestDto();
+            requestDto.setEventId(eventId);
+            requestDto.setFile(file);
+            requestDto.setOrder(order);
             EventImgResponseDto response = eventImgService.saveEventImg(requestDto);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (RuntimeException e) {
-            return new ResponseEntity<>("Error procesado: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return ResponseEntity.badRequest().body(ResponseDto.error(e.getMessage()));
         } catch (Exception e) {
-            return new ResponseEntity<>("Error interno del servidor", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(500).body(ResponseDto.error("Error interno del servidor"));
         }
     }
 
@@ -47,7 +51,13 @@ public class EventImgController {
 
     @DeleteMapping("/{eventImgId}")
     public ResponseEntity<String> deleteEventImg(@PathVariable int eventImgId) {
-        eventImgService.deleteEventImg(eventImgId);
-        return new ResponseEntity<>("Image deleted successfully", HttpStatus.OK);
+        try {
+            eventImgService.deleteEventImg(eventImgId);
+            return new ResponseEntity<>("Image deleted successfully", HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>("Error procesado: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error interno del servidor", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
