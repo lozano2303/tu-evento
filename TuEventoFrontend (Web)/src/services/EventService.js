@@ -147,3 +147,27 @@ export const completeEvent = async (eventId) => {
     throw error;
   }
 };
+
+export const publishEvent = async (eventId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/v1/event/publish/${eventId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error publicando evento:', error);
+    throw error;
+  }
+};

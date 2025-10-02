@@ -213,7 +213,20 @@ public class EventServiceImpl implements EventService {
             }
 
             Event event = eventOpt.get();
-            event.setStatus(1); // Cambiar el status a 3 (cancelado)
+
+            // Check if event has images
+            List<EventImg> images = eventImgRepository.findByEventId(eventDto.getId());
+            if (images.isEmpty()) {
+                return ResponseDto.error("El evento debe tener al menos una imagen antes de publicarse");
+            }
+
+            // Check if event has categories
+            List<CategoryEvent> categories = categoryEventRepository.findByEvent_Id(eventDto.getId());
+            if (categories.isEmpty()) {
+                return ResponseDto.error("El evento debe tener al menos una categoría antes de publicarse");
+            }
+
+            event.setStatus(1); // Cambiar el status a 1 (publicado)
 
             Event savedEvent = eventRepository.save(event);
             EventDto resultDto = toDto(savedEvent);
@@ -351,9 +364,9 @@ public class EventServiceImpl implements EventService {
                 return ResponseDto.error("El evento debe tener al menos una categoría antes de completarse");
             }
 
-            // Mark event as completed
-            event.setStatus(0);
-            Event savedEvent = eventRepository.save(event);
+            // Event is already in draft status (0), no need to change
+            // Just return the current event
+            Event savedEvent = event;
 
             EventDto resultDto = toDto(savedEvent);
             return ResponseDto.ok("Evento completado correctamente", resultDto);

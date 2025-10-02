@@ -69,19 +69,14 @@ const TuEvento = () => {
         setLoading(true);
         const result = await getAllEvents();
         if (result.success) {
-          // Filter events: show only completed events (status=1) with images and categories to all users
-          const filteredEvents = result.data.filter(event => {
-            return event.status === 1 && eventImagesMap[event.id] && eventCategoriesMap[event.id];
-          });
-
-          setEvents(filteredEvents);
-          setFilteredEvents(filteredEvents);
+          // Set all events first
+          setEvents(result.data);
 
           // Load hero image from events
-          await loadHeroImage(filteredEvents);
+          await loadHeroImage(result.data);
           // Load event images and categories for cards
-          await loadEventImages(filteredEvents);
-          await loadEventCategories(filteredEvents);
+          await loadEventImages(result.data);
+          await loadEventCategories(result.data);
         } else {
           setError(result.message || 'Error al cargar eventos');
         }
@@ -98,6 +93,16 @@ const TuEvento = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId]);
+
+  // Filter events when maps are loaded
+  useEffect(() => {
+    if (events.length > 0) {
+      const filtered = events.filter(event => {
+        return event.status === 1 && eventImagesMap[event.id] && eventCategoriesMap[event.id];
+      });
+      setFilteredEvents(filtered);
+    }
+  }, [events, eventImagesMap, eventCategoriesMap]);
 
   const loadHeroImage = async (eventsList) => {
     try {

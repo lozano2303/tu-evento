@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Plus, MapPin, Users, Settings, ArrowLeft, Upload, Tag } from 'lucide-react';
-import { getEventsByUser, completeEvent } from '../../services/EventService.js';
+import { getEventsByUser, completeEvent, publishEvent } from '../../services/EventService.js';
 import { getEventImages } from '../../services/EventImgService.js';
 import { getCategoriesByEvent } from '../../services/CategoryService.js';
 import { API_BASE_URL } from '../../services/apiconstant.js';
@@ -37,13 +37,13 @@ const EventManagement = () => {
       const result = await getEventsByUser();
 
       if (result.success) {
-        // Filter events by status 0 (in progress/draft)
-        const draftEvents = result.data.filter(event => event.status === 0);
-        setEvents(draftEvents);
+        // Filter events by status 0 (in progress/draft) and 1 (published)
+        const userEvents = result.data.filter(event => event.status === 0 || event.status === 1);
+        setEvents(userEvents);
 
         // Load images and categories for each event
-        await loadEventImages(draftEvents);
-        await loadEventCategories(draftEvents);
+        await loadEventImages(userEvents);
+        await loadEventCategories(userEvents);
       } else {
         setError(result.message || 'Error al cargar eventos');
       }
@@ -57,12 +57,18 @@ const EventManagement = () => {
 
   const loadEventImages = async (eventsList) => {
     const newImagesMap = { ...eventImagesMap };
+    // Initialize all events as false first
+    for (const event of eventsList) {
+      newImagesMap[event.id] = false;
+    }
+    // Then try to load actual data
     for (const event of eventsList) {
       try {
         const imagesResult = await getEventImages(event.id);
         newImagesMap[event.id] = imagesResult.success && imagesResult.data && imagesResult.data.length > 0;
       } catch (error) {
-        newImagesMap[event.id] = false;
+        // Keep as false
+        console.log(`Error loading images for event ${event.id}:`, error);
       }
     }
     setEventImagesMap(newImagesMap);
@@ -70,12 +76,18 @@ const EventManagement = () => {
 
   const loadEventCategories = async (eventsList) => {
     const newCategoriesMap = { ...eventCategoriesMap };
+    // Initialize all events as false first
+    for (const event of eventsList) {
+      newCategoriesMap[event.id] = false;
+    }
+    // Then try to load actual data
     for (const event of eventsList) {
       try {
         const categoriesResult = await getCategoriesByEvent(event.id);
         newCategoriesMap[event.id] = categoriesResult.success && categoriesResult.data && categoriesResult.data.length > 0;
       } catch (error) {
-        newCategoriesMap[event.id] = false;
+        // Keep as false
+        console.log(`Error loading categories for event ${event.id}:`, error);
       }
     }
     setEventCategoriesMap(newCategoriesMap);
@@ -91,7 +103,7 @@ const EventManagement = () => {
 
   const handlePublishEvent = async (eventId) => {
     try {
-      const result = await completeEvent(eventId);
+      const result = await publishEvent(eventId);
       if (result.success) {
         alert('¡Evento publicado exitosamente!');
         // Reload events to update the list
@@ -199,8 +211,8 @@ const EventManagement = () => {
           {/* Events List */}
           <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-700">
-              <h2 className="text-xl font-semibold">Eventos en Proceso</h2>
-              <p className="text-sm text-gray-400 mt-1">Completa tus eventos para publicarlos</p>
+              <h2 className="text-xl font-semibold">Mis Eventos</h2>
+              <p className="text-sm text-gray-400 mt-1">Gestiona tus eventos: completa y publica los que están en proceso</p>
             </div>
 
             {events.length === 0 ? (
@@ -223,6 +235,7 @@ const EventManagement = () => {
                   const hasImages = eventImagesMap[event.id];
                   const hasCategories = eventCategoriesMap[event.id];
                   const isComplete = hasImages && hasCategories;
+                  const isPublished = event.status === 1 && isComplete;
 
                   return (
                     <div key={event.id} className="p-6 hover:bg-gray-700/50 transition-colors">
@@ -231,11 +244,13 @@ const EventManagement = () => {
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="text-lg font-semibold">{event.eventName}</h3>
                             <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              isComplete
+                              isPublished
+                                ? 'bg-blue-600 text-white'
+                                : isComplete
                                 ? 'bg-green-600 text-white'
                                 : 'bg-yellow-600 text-black'
                             }`}>
-                              {isComplete ? 'Listo para publicar' : 'En proceso'}
+                              {isPublished ? 'Publicado' : isComplete ? 'Listo para publicar' : 'En proceso'}
                             </div>
                           </div>
                           <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
@@ -263,7 +278,7 @@ const EventManagement = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          {!isComplete && (
+                          {!isPublished && !isComplete && (
                             <button
                               onClick={() => handleCompleteEvent(event.id)}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
@@ -278,7 +293,7 @@ const EventManagement = () => {
                           >
                             Ver Detalles
                           </button>
-                          {isComplete && (
+                          {!isPublished && isComplete && (
                             <button
                               onClick={() => handlePublishEvent(event.id)}
                               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
