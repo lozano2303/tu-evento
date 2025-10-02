@@ -49,6 +49,7 @@ const ReservaEvento = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [loadingImages, setLoadingImages] = useState(false);
   const [autoplay, setAutoplay] = useState(true);
+  const [expandedDescription, setExpandedDescription] = useState(false);
 
   const MAX_SEATS_PER_PURCHASE = 10;
 
@@ -980,25 +981,46 @@ const handleSubmitRating = async () => {
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             
             {/* Información del evento */}
-            <div 
+            <div
               className="p-6 rounded-lg"
               style={{ backgroundColor: '#8b5cf6' }}
             >
               <h2 className="text-white text-xl font-bold mb-4">
                 ¡Prepárate para {event.eventName}!
               </h2>
-              <p className="text-white text-sm leading-relaxed mb-4">
-                {event.description || 'Descripción del evento no disponible.'}
-              </p>
-              <p className="text-white text-sm leading-relaxed mb-4">
-                Fecha: {event.startDate ? new Date(event.startDate).toLocaleDateString() : 'Fecha no disponible'}
-              </p>
-              <p className="text-white text-sm leading-relaxed mb-6">
-                Ubicación: {event.locationID?.name || 'Ubicación no disponible'}
-              </p>
-              <button className="bg-purple-800 hover:bg-purple-900 text-white px-6 py-2 rounded-lg transition-colors">
-                Ver más
-              </button>
+              <div className="text-white text-sm leading-relaxed mb-4 space-y-2">
+                <div><strong>Nombre del Evento:</strong> {event.eventName}</div>
+                <div><strong>Descripción:</strong>
+                  {event.description && event.description.length > 100 && !expandedDescription ? (
+                    <>
+                      {event.description.substring(0, 100)}...
+                      <button
+                        onClick={() => setExpandedDescription(true)}
+                        className="text-purple-200 hover:text-purple-100 ml-2 underline"
+                      >
+                        Ver más
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {event.description}
+                      {event.description && event.description.length > 100 && (
+                        <button
+                          onClick={() => setExpandedDescription(false)}
+                          className="text-purple-200 hover:text-purple-100 ml-2 underline"
+                        >
+                          Ver menos
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div><strong>Fecha de Inicio:</strong> {event.startDate ? new Date(event.startDate).toLocaleDateString() : 'No definida'}</div>
+                <div><strong>Fecha de Fin:</strong> {event.finishDate ? new Date(event.finishDate).toLocaleDateString() : 'No definida'}</div>
+                <div><strong>Ubicación:</strong> {event.locationID?.name || 'No definida'}</div>
+                <div><strong>Ciudad:</strong> {event.locationID?.address?.city?.name || 'No definida'}</div>
+                <div><strong>Departamento:</strong> {event.locationID?.address?.city?.department?.name || 'No definido'}</div>
+              </div>
             </div>
 
             {/* Horarios y precios disponibles */}
