@@ -176,16 +176,16 @@ export default function LadingPage() {
             <div className="space-y-6 order-1 md:order-2">
               <h3 className="text-3xl md:text-4xl font-bold text-white leading-tight">
                 Solicitud de
-                <span className="block">organizador.</span>
+                <span className="block">Eventos excepcionales.</span>
               </h3>
               <p className="text-gray-300 text-lg">
-                Si eres organizador de eventos, solicita la creación de tu evento personalizado. Completa el formulario con toda la información necesaria y nuestro equipo se pondrá en contacto contigo.
+                Si buscas nuevas experiencias, revisa nuestra lista de eventos disponibles. Explora todas las opciones y encuentra el plan perfecto para ti.
               </p>
               <button
-                onClick={() => navigate('/event-request')}
+                onClick={() => navigate('/events')}
                 className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg hover:shadow-xl"
               >
-                Solicitud de organizador
+                Revisa los eventos disponibles
               </button>
             </div>
           </div>
