@@ -372,9 +372,21 @@ export default function AboutUs() {
               <div className="relative">
                 <div className="relative group">
                   <div className={`w-80 h-80 mx-auto bg-gradient-to-r ${member.gradient} rounded-3xl overflow-hidden shadow-2xl group-hover:scale-105 transition-all duration-500`}>
-                    <div className="w-full h-full flex items-center justify-center text-white font-bold text-6xl">
-                      {member.initials}
-                    </div>
+                    {member.id === 1 ? (
+                      <img src="/src/assets/images/francisco.jpg" alt={member.name} className="w-full h-full object-cover" />
+                    ) : member.id === 2 ? (
+                      <img src="/src/assets/images/keiner.png" alt={member.name} className="w-full h-full object-cover" />
+                    ) : member.id === 3 ? (
+                      <img src="/src/assets/images/cristofer.jpg" alt={member.name} className="w-full h-full object-cover" />
+                    ) : member.id === 4 ? (
+                      <img src="/src/assets/images/angel.jpg" alt={member.name} className="w-full h-full object-cover" />
+                    ) : member.id === 5 ? (
+                      <img src="/src/assets/images/jhampier.jpg" alt={member.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white font-bold text-6xl">
+                        {member.initials}
+                      </div>
+                    )}
                   </div>
                   {/* Elementos decorativos alrededor de la foto */}
                   <div className="absolute -top-4 -left-4 w-8 h-8 bg-yellow-400 rounded-full animate-pulse"></div>
