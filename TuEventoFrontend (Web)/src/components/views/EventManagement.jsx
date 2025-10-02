@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Plus, MapPin, Users, Settings, ArrowLeft, Upload, Tag } from 'lucide-react';
-import { getEventsByUser, completeEvent, publishEvent } from '../../services/EventService.js';
+import { getEventsByUser, completeEvent, publishEvent, cancelEvent } from '../../services/EventService.js';
 import { getEventImages } from '../../services/EventImgService.js';
 import { getCategoriesByEvent } from '../../services/CategoryService.js';
 import { API_BASE_URL } from '../../services/apiconstant.js';
@@ -119,6 +119,24 @@ const EventManagement = () => {
 
   const handleCompleteEvent = (eventId) => {
     navigate(`/complete-event?id=${eventId}`);
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar este evento?')) {
+      try {
+        const result = await cancelEvent(eventId);
+        if (result.success) {
+          alert('Evento eliminado exitosamente');
+          // Reload events to update the list
+          loadEvents();
+        } else {
+          alert('Error al eliminar el evento: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Error deleting event:', error);
+        alert('Error al eliminar el evento');
+      }
+    }
   };
 
   if (loading) {
@@ -308,6 +326,12 @@ const EventManagement = () => {
                           >
                             <Settings className="w-4 h-4" />
                             Maquetación
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEvent(event.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+                          >
+                            Eliminar
                           </button>
                         </div>
                       </div>
