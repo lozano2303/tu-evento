@@ -138,6 +138,31 @@ export const updateUserAddress = async (userId: number, newAddressId: number): P
   }
 };
 
+export const getAddressById = async (addressId: number): Promise<any> => {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error("No token found");
+    }
+    const response = await fetch(`${SEND_ADRESS_ENDPOINT}/${addressId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+    const responseData = await response.json();
+    if (!response.ok || responseData.success === false) {
+      throw new Error(responseData.message || "Error al obtener la dirección");
+    }
+    console.log('Dirección obtenida:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error en getAddressById:', error);
+    throw error;
+  }
+};
+
 export const updateUserBirthDate = async (userId: number, newBirthDate: string): Promise<IUserProfileResponse> => {
   try {
     const token = await getToken();

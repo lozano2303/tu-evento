@@ -15,7 +15,7 @@ export interface IUserProfile {
   fullName: string;
   telephone: string;
   birthDate: string | null;
-  address: string | null;
+  address: number | null;
   activated: boolean;
 }
 

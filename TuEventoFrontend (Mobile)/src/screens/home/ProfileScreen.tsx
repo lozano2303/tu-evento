@@ -3,7 +3,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getUserIdFromToken, removeToken } from '../../api/services/Token';
-import { getUserProfile, updateUserPhone, updateUserBirthDate, getAllDepartments, getCitiesByDepartment, deactivateUserAccount, createAddress, updateUserAddress } from '../../api/services/UserApi';
+import { getUserProfile, updateUserPhone, updateUserBirthDate, getAllDepartments, getCitiesByDepartment, deactivateUserAccount, createAddress, updateUserAddress, getAddressById } from '../../api/services/UserApi';
 import { IUserProfile, IDepartment, ICity } from '../../api/types/IUser';
 import Input from "../../components/common/Input";
 import Button from '../../components/common/Button';
@@ -27,6 +27,7 @@ export default function ProfileScreen() {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [departments, setDepartments] = useState<IDepartment[]>([]);
   const [cities, setCities] = useState<ICity[]>([]);
+  const [filteredCities, setFilteredCities] = useState<ICity[]>([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
   const [selectedCityId, setSelectedCityId] = useState<number | null>(null);
   const [address, setAddress] = useState('');
@@ -66,6 +67,7 @@ export default function ProfileScreen() {
 
         const cityResponse = await getCitiesByDepartment();
         setCities(cityResponse.data || []);
+        setFilteredCities(cityResponse.data || []);
       } catch (error) {
         console.error('Error loading departments and cities:', error);
       }
@@ -73,6 +75,29 @@ export default function ProfileScreen() {
 
     loadDepartmentsAndCities();
   }, []);
+
+  useEffect(() => {
+    const loadAddress = async () => {
+      if (profile?.address && cities.length > 0) {
+        try {
+          const addressResponse = await getAddressById(profile.address);
+          const addressData = addressResponse.data;
+          if (addressData) {
+            const cityID = parseInt(addressData.cityID, 10);
+            setSelectedCityId(cityID);
+            setSelectedDepartmentId(cities[cityID - 1].departmentID);
+            setAddress(addressData.street);
+            setPostalCode(addressData.postalCode);
+            setFilteredCities(cities.filter(c => c.departmentID === cities[cityID - 1].departmentID));
+          }
+        } catch (error) {
+          console.error('Error cargando dirección existente:', error);
+        }
+      }
+    };
+
+    loadAddress();
+  }, [profile, cities]);
 
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('es-ES', {
