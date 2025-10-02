@@ -171,8 +171,8 @@ export default function ForgotPassword({ onBackToLogin }) {
 
         {/* Notificación de contraseña restablecida exitosamente */}
         {showSuccessNotification && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform animate-pulse">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
               {/* Header con gradiente morado */}
               <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
                 <div className="flex justify-center mb-4">
@@ -180,8 +180,8 @@ export default function ForgotPassword({ onBackToLogin }) {
                     <CheckCircle className="w-8 h-8 text-purple-500" />
                   </div>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">¡Contraseña Restablecida!</h3>
-                <p className="text-purple-100 text-sm">Tu contraseña ha sido actualizada exitosamente</p>
+                <h3 className="text-xl font-bold text-white mb-2">¡Bienvenido de Vuelta!</h3>
+                <p className="text-purple-100 text-sm">Has iniciado sesión exitosamente</p>
               </div>
 
               {/* Contenido */}

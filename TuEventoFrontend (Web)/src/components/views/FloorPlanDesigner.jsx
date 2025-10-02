@@ -44,15 +44,15 @@ const TopNavbar = ({ onExport, onImport, onUploadEvent, onLoadLayout, onGoHome, 
           <Home size={16} className="mr-2" /> Inicio
         </button>
 
-        <button title="Ver Eventos" onClick={onGoToEvents} className="flex items-center px-3 py-2 rounded hover:bg-gray-700">
+        <button title="Ver Eventos" onClick={onGoToEvents} className="flex items-center px-3 py-2 rounded hover:bg-purple-800">
           <Calendar size={16} className="mr-2" /> Eventos
         </button>
 
-        <button title="Exportar" onClick={onExport} className="flex items-center px-3 py-2 rounded hover:bg-gray-700">
+        <button title="Exportar" onClick={onExport} className="flex items-center px-3 py-2 rounded hover:bg-purple-800">
           <Download size={16} className="mr-2" /> Exportar
         </button>
 
-        <label className="flex items-center px-3 py-2 rounded hover:bg-gray-700 cursor-pointer">
+        <label className="flex items-center px-3 py-2 rounded hover:bg-purple-800 cursor-pointer">
           <Upload size={16} className="mr-2" />
           <input type="file" accept=".json" onChange={(e)=>onImport && onImport(e.target.files[0])} className="hidden" />
           Importar

@@ -238,12 +238,26 @@ const TuEvento = () => {
     { name: "Deportes", image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=200&h=140&fit=crop" },
     { name: "Actividades", image: "https://images.unsplash.com/photo-1507924538820-ede94a04019d?w=200&h=140&fit=crop" }
   ];
+return (
+  <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, rgba(15, 10, 26, 1) 0%, rgba(26, 26, 26, 1) 100%)' }}>
 
-  return (
-    <div className="min-h-screen text-white" style={{ backgroundColor: '#1a1a1a' }}>
+    {/* Hero Section */}
+    <section className="relative min-h-screen">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url("${heroImage}")`
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.7) 0%, rgba(168, 85, 247, 0.6) 25%, rgba(217, 70, 239, 0.5) 50%, rgba(236, 72, 153, 0.4) 75%, rgba(219, 39, 119, 0.3) 100%)'
+        }}
+      />
 
-      {/* SISTEMA DE FILTROS - Barra morada arriba debajo de la nav */}
-      <div className="bg-purple-900/95 backdrop-blur-sm border-b border-purple-700">
+      {/* SISTEMA DE FILTROS - Dentro del hero */}
+      <div className="relative z-10" style={{ background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.7) 0%, rgba(168, 85, 247, 0.6) 25%, rgba(217, 70, 239, 0.5) 50%, rgba(236, 72, 153, 0.4) 75%, rgba(219, 39, 119, 0.3) 100%)' }}>
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex flex-wrap items-center justify-center gap-4">
 
@@ -277,13 +291,12 @@ const TuEvento = () => {
                   // opcional: ejecutar búsqueda automática al elegir fecha
                   handleServerFilter();
                 }}
-                className="bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600 
+                className="bg-purple-800/50 rounded-full px-4 py-2 border border-purple-600
                           hover:border-purple-400 transition-colors text-white outline-none"
               />
             </div>
 
-           
-            
+
 
             {/* Filtrar */}
             <button
@@ -298,28 +311,10 @@ const TuEvento = () => {
         </div>
       </div>
 
-      {/* Hero Section */}
-      <section className="relative h-96">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: `url("${heroImage}")`
-          }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.7) 0%, rgba(168, 85, 247, 0.6) 25%, rgba(217, 70, 239, 0.5) 50%, rgba(236, 72, 153, 0.4) 75%, rgba(219, 39, 119, 0.3) 100%)'
-          }}
-        />
-      </section>
+      {/* Contenido principal - Dentro del hero */}
+      <div className="relative z-10 px-6 py-12">
+        <div className="max-w-7xl mx-auto">
 
-      {/* Contenido principal */}
-      <div style={{ backgroundColor: 'rgba(16, 1, 30, 0.92)' }} className="px-">
-        <div className="max-w-7xl mx-auto py-12">
-
-
-         
           {/* POPULARES */}
           <div className="mb-16">
             <h2 className="text-white text-3xl font-bold mb-12 text-center">EVENTOS</h2>
@@ -341,7 +336,7 @@ const TuEvento = () => {
                             <img
                               src={eventImagesMap[event.id]}
                               alt={event.name}
-                              className="w-full h-48 object-cover"
+                              className="w-full h-48 object-contain bg-gray-800"
                             />
                           ) : (
                             <div className="w-full h-48 bg-purple-600 flex items-center justify-center">
@@ -351,7 +346,7 @@ const TuEvento = () => {
 
                           {/* Status badge para eventos del creador */}
                           {currentUserId === event.userID?.userID && event.status === 0 && (
-                            <div className="absolute top-2 right-2 bg-yellow-500 text-black px-2 py-1 text-xs font-bold rounded">
+                            <div className="absolute top-2 left-2 bg-yellow-500 text-black px-2 py-1 text-xs font-bold rounded">
                               {!eventImagesMap[event.id]
                                 ? "FALTA IMÁGENES"
                                 : !eventCategoriesMap[event.id]
@@ -360,22 +355,13 @@ const TuEvento = () => {
                             </div>
                           )}
 
-                          <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/70">
-                            <h3 className="text-white text-sm mb-2">{event.name}</h3>
-                            <p className="text-gray-300 text-xs mb-2">
-                              {event.location?.city}
-                            </p>
-                            <div className="flex gap-2">
-                              <button
-                                className="text-white px-4 py-1 text-sm rounded font-medium"
-                                style={{ backgroundColor: "#8b5cf6" }}
-                                onClick={() => navigate(`/event-info?id=${event.id}`)}
-                              >
-                                Ver detalles
-                              </button>
-                            </div>
-                          </div>
                         </div>
+                        <button
+                          className="absolute top-1 right-1 text-white px-3 py-1 text-sm rounded font-medium bg-purple-600 hover:bg-purple-700 transition-colors shadow-lg z-10"
+                          onClick={() => navigate(`/event-info?id=${event.id}`)}
+                        >
+                          Ver detalles
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -395,69 +381,11 @@ const TuEvento = () => {
             )}
           </div>
 
-          
-          {/* COMENTARIOS DE LA COMUNIDAD */}
-          <div className="mb-16">
-            <h2 className="text-white text-lg font-medium mb-10 text-center">COMENTARIOS DE LA COMUNIDAD</h2>
-            <div className="grid md:grid-cols-2 gap-10 items-center">
-              <div className="relative">
-                <button
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white p-2 rounded z-20 hover:opacity-80"
-                  style={{ backgroundColor: '#8b5cf6' }}
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white p-2 rounded z-20 hover:opacity-80"
-                  style={{ backgroundColor: '#8b5cf6' }}
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-
-                <img
-                  src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=450&h=300&fit=crop"
-                  alt="Banda"
-                  className="w-full h-72 object-cover rounded-lg"
-                />
-              </div>
-              <div className="p-8 rounded-lg" style={{ backgroundColor: '#8b5cf6' }}>
-                <h3 className="text-white font-bold text-xl mb-5">The queen</h3>
-                <p className="text-white text-sm leading-relaxed mb-5">
-                  "Anteriormente se hizo un evento y pues me gustó. Hubo mucha gente, todo muy bonito aunque..."
-                </p>
-                <button className="text-white underline text-sm">Ver eventos</button>
-              </div>
-            </div>
-          </div>
-
-          {/* EXPLORA CATEGORÍAS */}
-          <div className="mb-16">
-            <h2 className="text-white text-lg font-medium mb-10 text-center">EXPLORA CATEGORÍAS</h2>
-            <div className="grid grid-cols-3 gap-4 px-12">
-              {categories.map((category, index) => (
-                <div key={index} className="relative group cursor-pointer">
-                  <img
-                    src={category.image}
-                    alt={category.name}
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
-                  <div
-                    className="absolute inset-0 rounded-lg flex items-center justify-center"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.8) 0%, rgba(168, 85, 247, 0.7) 50%, rgba(217, 70, 239, 0.6) 100%)'
-                    }}
-                  >
-                    <h3 className="text-white font-bold text-base">{category.name}</h3>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
         </div>
       </div>
-    </div>
-  );
+    </section>
+  </div>
+);
 };
 
 export default TuEvento;
