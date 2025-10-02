@@ -100,7 +100,7 @@ public class CityServiceImpl implements CityService {
 
             cityRepository.save(city);
 
-            return ResponseDto.ok("Ciudad creada exitosamente", new CityDto(cityDto.getDepartmentID(), city.getName()));
+            return ResponseDto.ok("Ciudad creada exitosamente", new CityDto(city.getCityID(), cityDto.getDepartmentID(), city.getName()));
 
         } catch (DataAccessException e) {
             System.err.println("Error de base de datos en creación de ciudad: " + e.getMessage());
@@ -167,7 +167,7 @@ public class CityServiceImpl implements CityService {
         }
 
         List<CityDto> citiesDto = cities.stream()
-            .map(city -> new CityDto(city.getDepartment().getDepartmentID(), city.getName()))
+            .map(city -> new CityDto(city.getCityID(), city.getDepartment().getDepartmentID(), city.getName()))
             .collect(Collectors.toList());
 
         return ResponseDto.ok("Ciudades encontradas", citiesDto);
@@ -181,7 +181,7 @@ public class CityServiceImpl implements CityService {
         }
 
         City city = cityOpt.get();
-        CityDto cityDto = new CityDto(city.getDepartment().getDepartmentID(), city.getName());
+        CityDto cityDto = new CityDto(city.getCityID(), city.getDepartment().getDepartmentID(), city.getName());
 
         return ResponseDto.ok("Ciudad encontrada", cityDto);
     }

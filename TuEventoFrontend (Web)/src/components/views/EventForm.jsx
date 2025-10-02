@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save, MapPin, Upload, X, ChevronRight, ChevronLeft, Minus } from 'lucide-react';
 import { createEvent, getEventById, updateEvent, completeEvent } from '../../services/EventService.js';
+import { API_BASE_URL } from '../../services/apiconstant.js';
 import { getAllLocations } from '../../services/LocationService.js';
 import { getAllCities } from '../../services/CityService.js';
-import { getDepartmentById } from '../../services/DepartmentService.js';
+import { getAllDepartments, getDepartmentById } from '../../services/DepartmentService.js';
 import { uploadEventImage, getEventImages } from '../../services/EventImgService.js';
 import { getRootCategories, getSubCategories, assignCategoryToEvent, getCategoriesByEvent } from '../../services/CategoryService.js';
 
@@ -21,6 +22,7 @@ const EventForm = () => {
     description: '',
     startDate: '',
     finishDate: '',
+    departmentID: '',
     cityID: '',
     locationID: '',
   });
@@ -34,6 +36,9 @@ const EventForm = () => {
   const [uploadingImages, setUploadingImages] = useState({}); // Estado de carga por imagen
   const [cities, setCities] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [filteredCities, setFilteredCities] = useState([]);
+  const [filteredLocations, setFilteredLocations] = useState([]);
   const [department, setDepartment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -45,6 +50,7 @@ const EventForm = () => {
   useEffect(() => {
     loadCities();
     loadLocations();
+    loadDepartments();
     loadRootCategories();
   }, []);
 
@@ -59,6 +65,34 @@ const EventForm = () => {
       loadEventForEdit();
     }
   }, [isEditMode, editEventId]);
+
+  useEffect(() => {
+    if (formData.departmentID) {
+      setFilteredCities(cities.filter(city => city.departmentID === parseInt(formData.departmentID)));
+    } else {
+      setFilteredCities([]);
+    }
+  }, [cities, formData.departmentID]);
+
+  useEffect(() => {
+    if (formData.cityID) {
+      fetch(`${API_BASE_URL}/v1/locations/city/${formData.cityID}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setFilteredLocations(data.data);
+          } else {
+            setFilteredLocations([]);
+          }
+        })
+        .catch(err => {
+          console.error('Error loading locations by city:', err);
+          setFilteredLocations([]);
+        });
+    } else {
+      setFilteredLocations([]);
+    }
+  }, [formData.cityID]);
 
   const loadCities = async () => {
     try {
@@ -85,6 +119,20 @@ const EventForm = () => {
     } catch (err) {
       setError('Error de conexión al cargar ubicaciones');
       console.error('Error loading locations:', err);
+    }
+  };
+
+  const loadDepartments = async () => {
+    try {
+      const result = await getAllDepartments();
+      if (result.success) {
+        setDepartments(result.data);
+      } else {
+        setError(result.message || 'Error al cargar departamentos');
+      }
+    } catch (err) {
+      setError('Error de conexión al cargar departamentos');
+      console.error('Error loading departments:', err);
     }
   };
 
@@ -140,6 +188,7 @@ const EventForm = () => {
         description: event.description || '',
         startDate: event.startDate ? event.startDate.split('T')[0] : '',
         finishDate: event.finishDate ? event.finishDate.split('T')[0] : '',
+        departmentID: event.locationID?.address?.city?.department?.departmentID?.toString() || '',
         cityID: event.locationID?.address?.city?.cityID?.toString() || '',
         locationID: event.locationID?.locationID?.toString() || '',
       });
@@ -147,6 +196,11 @@ const EventForm = () => {
       // Load department if city is set
       if (event.locationID?.address?.city?.department) {
         setDepartment(event.locationID.address.city.department.name);
+        // Filter cities and locations
+        const deptID = event.locationID.address.city.department.departmentID;
+        setFilteredCities(cities.filter(city => city.departmentID === deptID));
+        const cityID = event.locationID.address.city.cityID;
+        setFilteredLocations(locations.filter(loc => loc.cityID === cityID));
       }
 
       // Load existing images
@@ -284,18 +338,16 @@ const EventForm = () => {
       }));
     }
 
-    if (name === 'cityID' && value) {
-      try {
-        const selectedCity = cities.find(city => city.departmentID === parseInt(value));
-        if (selectedCity && selectedCity.departmentID) {
-          const deptResult = await getDepartmentById(selectedCity.departmentID);
-          if (deptResult.success) {
-            setDepartment(deptResult.data.name);
-          }
-        }
-      } catch (err) {
-        console.error('Error loading department:', err);
+    if (name === 'departmentID' && value) {
+      const selectedDept = departments.find(dept => dept.departmentID === parseInt(value));
+      if (selectedDept) {
+        setDepartment(selectedDept.name);
+        setFormData(prev => ({ ...prev, cityID: '', locationID: '' }));
       }
+    }
+
+    if (name === 'cityID' && value) {
+      setFormData(prev => ({ ...prev, locationID: '' }));
     }
 
     if (name === 'parentCategory' && value) {
@@ -426,6 +478,7 @@ const EventForm = () => {
       errors.finishDate = dateError;
     }
 
+    if (!formData.departmentID) errors.departmentID = "El departamento es obligatorio";
     if (!formData.cityID) errors.cityID = "La ciudad es obligatoria";
     if (!formData.locationID) errors.locationID = "La ubicación es obligatoria";
 
@@ -853,7 +906,29 @@ const EventForm = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label htmlFor="departmentID" className="block text-sm font-medium text-gray-300 mb-2">
+                      Departamento *
+                    </label>
+                    <select
+                      id="departmentID"
+                      name="departmentID"
+                      value={formData.departmentID}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="">Selecciona un departamento</option>
+                      {departments.map((dept, index) => (
+                        <option key={`dept-${dept.departmentID}-${index}`} value={dept.departmentID}>
+                          {dept.name}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldErrors.departmentID && <p className="text-red-500 text-xs mt-1">{fieldErrors.departmentID}</p>}
+                  </div>
+
                   <div>
                     <label htmlFor="cityID" className="block text-sm font-medium text-gray-300 mb-2">
                       Ciudad *
@@ -864,11 +939,14 @@ const EventForm = () => {
                       value={formData.cityID}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      disabled={!formData.departmentID}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
                     >
-                      <option value="">Selecciona una ciudad</option>
-                      {cities.map((city, index) => (
-                        <option key={`city-${city.departmentID}-${index}`} value={city.departmentID}>
+                      <option value="">
+                        {formData.departmentID ? 'Selecciona una ciudad' : 'Primero selecciona un departamento'}
+                      </option>
+                      {filteredCities.map((city, index) => (
+                        <option key={`city-${city.cityID}-${index}`} value={city.cityID}>
                           {city.name}
                         </option>
                       ))}
@@ -877,40 +955,29 @@ const EventForm = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="department" className="block text-sm font-medium text-gray-300 mb-2">
-                      Departamento
+                    <label htmlFor="locationID" className="block text-sm font-medium text-gray-300 mb-2">
+                      Ubicación *
                     </label>
-                    <input
-                      type="text"
-                      id="department"
-                      value={department}
-                      readOnly
-                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded-lg text-gray-300 cursor-not-allowed"
-                      placeholder="Se carga automáticamente"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="locationID" className="block text-sm font-medium text-gray-300 mb-2">
-                    Ubicación *
-                  </label>
-                  <select
-                    id="locationID"
-                    name="locationID"
-                    value={formData.locationID}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="">Selecciona una ubicación</option>
-                    {locations.map((location, index) => (
-                      <option key={`location-${location.addressID}-${index}`} value={location.addressID}>
-                        {location.name}
+                    <select
+                      id="locationID"
+                      name="locationID"
+                      value={formData.locationID}
+                      onChange={handleInputChange}
+                      required
+                      disabled={!formData.cityID}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {formData.cityID ? 'Selecciona una ubicación' : 'Primero selecciona una ciudad'}
                       </option>
-                    ))}
-                  </select>
-                  {fieldErrors.locationID && <p className="text-red-500 text-xs mt-1">{fieldErrors.locationID}</p>}
+                      {filteredLocations.map((location, index) => (
+                        <option key={`location-${location.locationID}-${index}`} value={location.locationID}>
+                          {location.name}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldErrors.locationID && <p className="text-red-500 text-xs mt-1">{fieldErrors.locationID}</p>}
+                  </div>
                 </div>
               </div>
             ) : currentStep === 2 ? (

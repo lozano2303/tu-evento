@@ -5,6 +5,7 @@ import TuEvento.Backend.dto.responses.ResponseDto;
 import java.util.Optional;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -124,7 +125,7 @@ public class DepartmentServiceImpl implements DepartmentService{
             return ResponseDto.error("Departamento no encontrado");
         }
         Department department = departmentOpt.get();
-        DepartmentDto departmentDto = new DepartmentDto(department.getName());
+        DepartmentDto departmentDto = new DepartmentDto(department.getDepartmentID(), department.getName());
         return ResponseDto.ok("Departamento encontrado", departmentDto);
     }
 
@@ -138,8 +139,8 @@ public class DepartmentServiceImpl implements DepartmentService{
         }
 
         List<DepartmentDto> departmentsDto = departments.stream()
-            .map(dept -> new DepartmentDto(dept.getName()))
-            .toList();
+            .map(dept -> new DepartmentDto(dept.getDepartmentID(), dept.getName()))
+            .collect(Collectors.toList());
 
         return ResponseDto.ok("Departamentos encontrados", departmentsDto);
     }

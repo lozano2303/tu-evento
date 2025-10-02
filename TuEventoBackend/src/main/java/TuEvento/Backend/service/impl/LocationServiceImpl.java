@@ -101,7 +101,7 @@ public class LocationServiceImpl implements LocationService {
             locationRepository.save(location);
 
             return ResponseDto.ok("Ubicación creada exitosamente",
-                    new LocationDto(locationDto.getAddressID(), location.getName()));
+                    new LocationDto(location.getLocationID(), locationDto.getAddressID(), location.getAddress().getCity().getCityID(), location.getName()));
 
         } catch (DataAccessException e) {
             System.err.println("Error de base de datos en creación de ubicación: " + e.getMessage());
@@ -161,9 +161,14 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public ResponseDto<List<LocationDto>> getAllLocations() {
-        List<Location> locations = locationRepository.findAll();
+        List<Location> locations = locationRepository.findAllWithAddressAndCity();
         List<LocationDto> locationsDto = locations.stream()
-                .map(loc -> new LocationDto(loc.getAddress().getAddressID(), loc.getName()))
+                .map(loc -> {
+                    Address a = loc.getAddress();
+                    int addressID = (a != null) ? a.getAddressID() : 0;
+                    int cityID = (a != null && a.getCity() != null) ? a.getCity().getCityID() : 0;
+                    return new LocationDto(loc.getLocationID(), addressID, cityID, loc.getName());
+                })
                 .collect(Collectors.toList());
 
         return ResponseDto.ok("Ubicaciones encontradas", locationsDto);
@@ -171,14 +176,31 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public ResponseDto<LocationDto> getLocationById(int locationID) {
-        Optional<Location> locationOpt = locationRepository.findById(locationID);
-        if (!locationOpt.isPresent()) {
+        Location location = locationRepository.findByIdWithAddressAndCity(locationID);
+        if (location == null) {
             return ResponseDto.error("Ubicación no encontrada");
         }
 
-        Location location = locationOpt.get();
-        LocationDto locationDto = new LocationDto(location.getAddress().getAddressID(), location.getName());
+        Address a = location.getAddress();
+        int addressID = (a != null) ? a.getAddressID() : 0;
+        int cityID = (a != null && a.getCity() != null) ? a.getCity().getCityID() : 0;
+        LocationDto locationDto = new LocationDto(location.getLocationID(), addressID, cityID, location.getName());
 
         return ResponseDto.ok("Ubicación encontrada", locationDto);
+    }
+
+    @Override
+    public ResponseDto<List<LocationDto>> getLocationsByCityId(int cityID) {
+        List<Location> locations = locationRepository.findByCityId(cityID);
+        List<LocationDto> locationsDto = locations.stream()
+                .map(loc -> {
+                    Address a = loc.getAddress();
+                    int addressID = (a != null) ? a.getAddressID() : 0;
+                    int cityIDLoc = (a != null && a.getCity() != null) ? a.getCity().getCityID() : 0;
+                    return new LocationDto(loc.getLocationID(), addressID, cityIDLoc, loc.getName());
+                })
+                .collect(Collectors.toList());
+
+        return ResponseDto.ok("Ubicaciones encontradas", locationsDto);
     }
 }

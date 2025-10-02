@@ -11,4 +11,5 @@ public interface LocationService {
     ResponseDto<String> deleteLocation(int locationID);
     ResponseDto<List<LocationDto>> getAllLocations();
     ResponseDto<LocationDto> getLocationById(int locationID);
+    ResponseDto<List<LocationDto>> getLocationsByCityId(int cityID);
 }

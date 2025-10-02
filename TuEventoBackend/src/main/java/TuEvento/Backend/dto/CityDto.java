@@ -2,18 +2,28 @@ package TuEvento.Backend.dto;
 
 public class CityDto {
 
+    private int cityID;
     private int departmentID;
     private String name;
 
     // Constructor
     public CityDto() {}
 
-    public CityDto(int departmentID, String name) {
+    public CityDto(int cityID, int departmentID, String name) {
+        this.cityID = cityID;
         this.departmentID = departmentID;
         this.name = name;
     }
 
     // Getters and setters
+    public int getCityID() {
+        return cityID;
+    }
+
+    public void setCityID(int cityID) {
+        this.cityID = cityID;
+    }
+
     public int getDepartmentID() {
         return departmentID;
     }

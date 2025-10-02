@@ -45,4 +45,10 @@ public class LocationController {
         ResponseDto<LocationDto> response = locationService.getLocationById(locationID);
         return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
     }
+
+    @GetMapping("/city/{cityID}")
+    public ResponseEntity<ResponseDto<List<LocationDto>>> getLocationsByCityId(@PathVariable int cityID) {
+        ResponseDto<List<LocationDto>> response = locationService.getLocationsByCityId(cityID);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 404).body(response);
+    }
 }
