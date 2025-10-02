@@ -10,17 +10,21 @@ public class UserDto {
     private Integer address;
     private boolean activated;
     private boolean organizer;
+    private String role;
+    private String email;
 
     public UserDto() {
     }
 
-    public UserDto(String fullName, String telephone, Date birthDate, Integer address, boolean activated, boolean organizer) {
+    public UserDto(String fullName, String telephone, Date birthDate, Integer address, boolean activated, boolean organizer, String role, String email) {
         this.fullName = fullName;
         this.telephone = telephone;
         this.birthDate = birthDate;
         this.address = address;
         this.activated = activated;
         this.organizer = organizer;
+        this.role = role;
+        this.email = email;
     }
 
     public String getFullName() {
@@ -69,5 +73,21 @@ public class UserDto {
 
     public void setOrganizer(boolean organizer) {
         this.organizer = organizer;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

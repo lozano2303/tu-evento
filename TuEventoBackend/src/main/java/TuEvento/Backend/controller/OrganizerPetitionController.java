@@ -31,8 +31,14 @@ public class OrganizerPetitionController {
             @RequestParam int userID,
             @RequestParam("file") MultipartFile file) {
 
-        ResponseDto<String> response = petitionService.submitPetition(userID, file);
-        return ResponseEntity.status(response.isSuccess() ? 201 : 400).body(response);
+        try {
+            ResponseDto<String> response = petitionService.submitPetition(userID, file);
+            return ResponseEntity.status(response.isSuccess() ? 201 : 400).body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ResponseDto.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ResponseDto.error("Error interno del servidor"));
+        }
     }
 
     // Listar todas las peticiones

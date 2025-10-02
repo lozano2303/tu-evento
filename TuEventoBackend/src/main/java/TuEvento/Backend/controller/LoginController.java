@@ -34,22 +34,26 @@ public class LoginController {
     private LoginServiceImpl loginServiceImpl;
 
     @PostMapping("/start")
-    public ResponseDto<ResponseLogin> login(@RequestBody LoginDto loginDto) { // Cambiado a ResponseLogin
-        return loginService.login(loginDto);
+    public ResponseEntity<ResponseDto<ResponseLogin>> login(@RequestBody LoginDto loginDto) {
+        ResponseDto<ResponseLogin> response = loginService.login(loginDto);
+        if (!response.isSuccess()) {
+            return ResponseEntity.badRequest().body(response);
+        }
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/changePassword")
     public ResponseEntity<ResponseDto> changePassword(@RequestBody ChangePasswordDto dto) {
         // Esto lo pongo para tener el nombre del usuario XD
-        String email = SecurityContextHolder.getContext().getAuthentication().getName(); 
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
         System.out.println("Correo de usuario: " + email);
         ResponseDto response = loginServiceImpl.changePassword(email, dto);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
     @PostMapping("/forgot")
     public ResponseEntity<Object> forgotPassword(@RequestBody ForgotPasswordDto dto) {
         ResponseDto response = loginServiceImpl.forgotPassword(dto.getEmail());
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
     /**
      * Endpoint para validar el token de reseteo de contraseña.
@@ -57,7 +61,7 @@ public class LoginController {
     @GetMapping("/validateResetToken")
     public ResponseEntity<ResponseDto<String>> validateResetToken(@RequestParam String token) {
         ResponseDto<String> response = loginServiceImpl.validateResetToken(token);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 
     /**
@@ -66,6 +70,6 @@ public class LoginController {
     @PostMapping("/resetPasswordWithToken")
     public ResponseEntity<ResponseDto<String>> resetPasswordWithToken(@RequestBody ResetPasswordDTO dto) {
         ResponseDto<String> response = loginServiceImpl.resetPasswordWithToken(dto);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return ResponseEntity.status(response.isSuccess() ? 200 : 400).body(response);
     }
 }

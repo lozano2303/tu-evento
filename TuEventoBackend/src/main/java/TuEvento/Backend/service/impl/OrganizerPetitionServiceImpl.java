@@ -48,6 +48,12 @@ public class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
                 return ResponseDto.error("El archivo está vacío o no fue enviado");
             }
 
+            // Validar que sea PDF
+            String contentType = file.getContentType();
+            if (!"application/pdf".equals(contentType)) {
+                throw new IllegalArgumentException("Solo se permiten archivos PDF");
+            }
+
             // Crear petición
             OrganizerPetition petition = new OrganizerPetition();
             petition.setUserID(userOpt.get());

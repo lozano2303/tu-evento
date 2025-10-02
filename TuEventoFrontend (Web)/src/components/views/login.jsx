@@ -199,6 +199,9 @@ export default function Login() {
       if (view === 'login') {
         const result = await loginUser(formData.email, formData.password);
         if (result.success) {
+          console.log('Login successful - User data:', result.data);
+          console.log('Role from login:', result.data.role);
+          console.log('Email used for login:', formData.email);
           localStorage.setItem('token', result.data.token);
           localStorage.setItem('userID', result.data.userID);
           localStorage.setItem('role', result.data.role);

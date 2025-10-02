@@ -386,13 +386,22 @@ public class UserServiceImpl implements UserService {
     private UserDto mapToDto(User user) {
         Integer addressId = (user.getAddress() != null) ? user.getAddress().getAddressID() : null;
 
+        // Obtener email del login relacionado
+        String email = null;
+        Optional<Login> loginOpt = loginRepository.findByUserID(user);
+        if (loginOpt.isPresent()) {
+            email = loginOpt.get().getEmail();
+        }
+
         return new UserDto(
             user.getFullName(),
             user.getTelephone(),
             user.getBirthDate(),
             addressId,
             user.isActivated(),
-            user.isOrganicer()
+            user.isOrganicer(),
+            user.getRole() != null ? user.getRole().name() : null,
+            email
         );
     }
 

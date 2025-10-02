@@ -17,6 +17,9 @@ export default function Navbar() {
     if (token && storedUserID) {
       getUserById(storedUserID).then(result => {
         if (result.success) {
+          console.log('UserData from backend:', result.data);
+          console.log('Role from backend:', result.data.role);
+          console.log('Email from backend:', result.data.email);
           setUserData(result.data);
         } else {
           localStorage.removeItem('token');
@@ -58,7 +61,7 @@ export default function Navbar() {
     }
 
     // Verificar si es organizador
-    const isOrganizer = userData.organizer || userData.organicer;
+    const isOrganizer = userData.organizer;
     if (!isOrganizer) {
       // No es organizador, ir a solicitud
       navigate('/organizer-petition');
@@ -91,9 +94,11 @@ export default function Navbar() {
         </div>
 
         <div className="flex space-x-2">
-          <button className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors text-white">
-            <Link to="/admin-login">Admin</Link>
-          </button>
+          {userData && (userData.role === 'ADMIN' || userData.email === 'atuevento72@gmail.com') && (
+            <button className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors text-white">
+              <Link to="/admin-dashboard">Admin</Link>
+            </button>
+          )}
           {userData ? (
             <div className="relative">
               <button
@@ -102,6 +107,13 @@ export default function Navbar() {
               >
                 <User className="w-4 h-4" />
                 <span>{userData.fullName.split(' ')[0]}</span>
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  (userData.role === 'ADMIN' || userData.email === 'atuevento72@gmail.com') ? 'bg-red-500' :
+                  userData.organizer ? 'bg-blue-500' : 'bg-gray-500'
+                }`}>
+                  {(userData.role === 'ADMIN' || userData.email === 'atuevento72@gmail.com') ? 'Admin' :
+                   userData.organizer ? 'Org' : 'User'}
+                </span>
               </button>
               {isModalOpen && (
                 <div className="user-modal absolute right-0 mt-2 w-64 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50">
@@ -110,9 +122,52 @@ export default function Navbar() {
                       <User className="w-12 h-12 mx-auto text-purple-400 mb-2" />
                       <h3 className="text-white font-semibold">{userData.fullName}</h3>
                       <p className="text-gray-400 text-sm">{userData.email}</p>
-                      <p className="text-gray-400 text-sm">Rol: {userData.role}</p>
+                      <div className="flex items-center justify-center space-x-2">
+                        <span className="text-gray-400 text-sm">Rol:</span>
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                          (userData.role === 'ADMIN' || userData.email === 'atuevento72@gmail.com') ? 'bg-red-500 text-white' :
+                          userData.organizer ? 'bg-blue-500 text-white' :
+                          'bg-gray-500 text-white'
+                        }`}>
+                          {(userData.role === 'ADMIN' || userData.email === 'atuevento72@gmail.com') ? 'Administrador' :
+                           userData.organizer ? 'Organizador' :
+                           'Usuario'}
+                        </span>
+                      </div>
                     </div>
                     <div className="space-y-2">
+                      {/* Opciones específicas por rol */}
+                      {(userData.role === 'ADMIN' || userData.email === 'atuevento72@gmail.com') && (
+                        <Link
+                          to="/admin-dashboard"
+                          onClick={() => setIsModalOpen(false)}
+                          className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                        >
+                          <User className="w-4 h-4" />
+                          <span>Panel Admin</span>
+                        </Link>
+                      )}
+
+                      {userData.organizer && (
+                        <Link
+                          to="/event-management"
+                          onClick={() => setIsModalOpen(false)}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                        >
+                          <Calendar className="w-4 h-4" />
+                          <span>Gestionar Eventos</span>
+                        </Link>
+                      )}
+
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsModalOpen(false)}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <User className="w-4 h-4" />
+                        <span>Mi Perfil</span>
+                      </Link>
+
                       <button
                         onClick={() => {
                           setIsModalOpen(false);
@@ -123,6 +178,7 @@ export default function Navbar() {
                         <Key className="w-4 h-4" />
                         <span>Cambiar contraseña</span>
                       </button>
+
                       <button
                         onClick={handleLogout}
                         className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
