@@ -240,26 +240,19 @@ export default function LadingPage() {
 
       {/* Compatibility Section */}
       <section className="py-20 bg-gray-800">
-        <div className="max-w-4xl mx-auto px-4 text-center">
+        <div className="max-w-2xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-12">
             Dispositivos con compatibilidad.
           </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-4">
-              <div className="w-20 h-20 bg-gray-700 rounded-2xl flex items-center justify-center mx-auto">
-                <Smartphone className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold">iOS</h3>
-            </div>
-            
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center">
             <div className="space-y-4">
               <div className="w-20 h-20 bg-gray-700 rounded-2xl flex items-center justify-center mx-auto">
                 <Globe className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-xl font-semibold">WEB</h3>
             </div>
-            
+
             <div className="space-y-4">
               <div className="w-20 h-20 bg-gray-700 rounded-2xl flex items-center justify-center mx-auto">
                 <Smartphone className="w-10 h-10 text-white" />
