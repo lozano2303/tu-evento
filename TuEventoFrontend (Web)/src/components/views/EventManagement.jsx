@@ -319,9 +319,8 @@ const EventManagement = () => {
                           {!isPublished && !isComplete && (
                             <button
                               onClick={() => handleCompleteEvent(event.id)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
                             >
-                              <Settings className="w-4 h-4" />
                               Completar
                             </button>
                           )}
@@ -342,9 +341,8 @@ const EventManagement = () => {
                           )}
                           <button
                             onClick={() => handleFloorPlanDesigner(event.id)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
                           >
-                            <Settings className="w-4 h-4" />
                             Maquetación
                           </button>
                           <button
