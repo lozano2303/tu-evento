@@ -1097,7 +1097,6 @@ const handleSubmitRating = async () => {
 
             {/* Horarios y precios disponibles */}
             <div>
-              <h3 className="text-white text-lg font-semibold mb-4">Horarios y Precios</h3>
               <div className="space-y-3">
                 {loadingTickets ? (
                   <div className="text-center py-4">
@@ -1138,7 +1137,11 @@ const handleSubmitRating = async () => {
                     </p>
                   )}
                 </div>
-
+      
+                {/* Footer de la página */}
+                <div className="text-center py-8">
+                </div>
+      
               </div>
             </div>
 
@@ -1320,8 +1323,6 @@ const handleSubmitRating = async () => {
 
           {/* Footer de la página */}
           <div className="text-center py-8">
-            <p className="text-gray-400 text-sm">DESCUBRIR MAS</p>
-            <p className="text-gray-500 text-xs mt-2">Tu Evento</p>
           </div>
 
         </div>
