@@ -449,6 +449,7 @@ export default function Login() {
                 </div>
               </>
             )}
+
               {/* Modal de Términos y Condiciones */}
               {showTermsModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -637,23 +638,21 @@ export default function Login() {
                 >
                   {view === 'login' ? "Haz clic aquí" : "Inicia sesión"}
                 </button>
-                {/* Checkbox de términos */}
-                {view !== 'login' && (
-                  <div className="flex items-start space-x-5">
-                    <label htmlFor="terms" className="text-gray-400 text-xs">
-                      <div className="text-center">
-                        <button
-                          type="button"
-                          onClick={() => setShowTermsModal(true)}
-                          className="text-purple-400 hover:text-purple-300 underline"
-                        >
-                          Términos y Condiciones
-                        </button>
-                      </div>
-                    </label>
-                  </div>
-                )}
               </p>
+
+              {/* Texto de términos y condiciones */}
+              <div className="text-center mt-2">
+                <p className="text-gray-500 text-xs">
+                  {view === 'login' ? "Al iniciar sesión, aceptas nuestros" : "Al crear una cuenta, aceptas nuestros"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(true)}
+                  className="text-purple-400 hover:text-purple-300 underline text-xs"
+                >
+                  Términos y condiciones
+                </button>
+              </div>
             </div>
           </form>
         </div>

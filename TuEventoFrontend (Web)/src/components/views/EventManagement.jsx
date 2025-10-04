@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Plus, MapPin, Users, Settings, ArrowLeft, Upload, Tag } from 'lucide-react';
+import { Calendar, Plus, MapPin, Users, Settings, ArrowLeft, Upload, Tag, CheckCircle } from 'lucide-react';
 import { getEventsByUser, completeEvent, publishEvent, cancelEvent } from '../../services/EventService.js';
 import { getEventImages } from '../../services/EventImgService.js';
 import { getCategoriesByEvent } from '../../services/CategoryService.js';
@@ -13,6 +13,12 @@ const EventManagement = () => {
   const [error, setError] = useState(null);
   const [eventImagesMap, setEventImagesMap] = useState({});
   const [eventCategoriesMap, setEventCategoriesMap] = useState({});
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [deleteEventId, setDeleteEventId] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     loadEvents();
@@ -105,15 +111,18 @@ const EventManagement = () => {
     try {
       const result = await publishEvent(eventId);
       if (result.success) {
-        alert('¡Evento publicado exitosamente!');
+        setSuccessMessage('¡Evento publicado exitosamente!');
+        setShowSuccessModal(true);
         // Reload events to update the list
         loadEvents();
       } else {
-        alert('Error al publicar el evento: ' + result.message);
+        setErrorMessage('Error al publicar el evento: ' + result.message);
+        setShowErrorModal(true);
       }
     } catch (error) {
       console.error('Error publishing event:', error);
-      alert('Error al publicar el evento');
+      setErrorMessage('Error al publicar el evento');
+      setShowErrorModal(true);
     }
   };
 
@@ -121,21 +130,32 @@ const EventManagement = () => {
     navigate(`/complete-event?id=${eventId}`);
   };
 
-  const handleDeleteEvent = async (eventId) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este evento?')) {
-      try {
-        const result = await cancelEvent(eventId);
-        if (result.success) {
-          alert('Evento eliminado exitosamente');
-          // Reload events to update the list
-          loadEvents();
-        } else {
-          alert('Error al eliminar el evento: ' + result.message);
-        }
-      } catch (error) {
-        console.error('Error deleting event:', error);
-        alert('Error al eliminar el evento');
+  const handleDeleteEvent = (eventId) => {
+    setDeleteEventId(eventId);
+    setShowDeleteConfirmModal(true);
+  };
+
+  const confirmDeleteEvent = async () => {
+    if (!deleteEventId) return;
+
+    setShowDeleteConfirmModal(false);
+    try {
+      const result = await cancelEvent(deleteEventId);
+      if (result.success) {
+        setSuccessMessage('Evento eliminado exitosamente');
+        setShowSuccessModal(true);
+        // Reload events to update the list
+        loadEvents();
+      } else {
+        setErrorMessage('Error al eliminar el evento: ' + result.message);
+        setShowErrorModal(true);
       }
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      setErrorMessage('Error al eliminar el evento');
+      setShowErrorModal(true);
+    } finally {
+      setDeleteEventId(null);
     }
   };
 
@@ -299,9 +319,8 @@ const EventManagement = () => {
                           {!isPublished && !isComplete && (
                             <button
                               onClick={() => handleCompleteEvent(event.id)}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
                             >
-                              <Settings className="w-4 h-4" />
                               Completar
                             </button>
                           )}
@@ -322,9 +341,8 @@ const EventManagement = () => {
                           )}
                           <button
                             onClick={() => handleFloorPlanDesigner(event.id)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
                           >
-                            <Settings className="w-4 h-4" />
                             Maquetación
                           </button>
                           <button
@@ -343,6 +361,122 @@ const EventManagement = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmación de eliminación de evento */}
+      {showDeleteConfirmModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Eliminar Evento</h3>
+              <p className="text-red-100 text-sm">¿Estás seguro de que deseas eliminar este evento?</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-red-50 rounded-lg p-4 mb-4">
+                  <span className="text-red-800 text-sm font-medium">Esta acción no se puede deshacer.</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirmModal(false);
+                    setDeleteEventId(null);
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDeleteEvent}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors"
+                >
+                  Sí, eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de éxito */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <CheckCircle className="w-8 h-8 text-purple-500" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">¡Éxito!</h3>
+              <p className="text-purple-100 text-sm">Operación completada</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-green-50 rounded-lg p-4 mb-4">
+                  <span className="text-green-800 text-sm">{successMessage}</span>
+                </div>
+              </div>
+
+              {/* Botón para continuar */}
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Continuar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de error */}
+      {showErrorModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Error</h3>
+              <p className="text-red-100 text-sm">Ha ocurrido un problema</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-red-50 rounded-lg p-4 mb-4">
+                  <span className="text-red-800 text-sm">{errorMessage}</span>
+                </div>
+              </div>
+
+              {/* Botón para continuar */}
+              <button
+                onClick={() => setShowErrorModal(false)}
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+              >
+                <span>Aceptar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

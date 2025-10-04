@@ -14,6 +14,7 @@ import TuEvento.Backend.repository.UserRepository;
 import TuEvento.Backend.repository.LocationRepository;
 import TuEvento.Backend.repository.EventImgRepository;
 import TuEvento.Backend.repository.CategoryEventRepository;
+import TuEvento.Backend.repository.EventLayoutRepository;
 import TuEvento.Backend.service.EventService;
 
 import org.apache.catalina.connector.Response;
@@ -45,6 +46,9 @@ public class EventServiceImpl implements EventService {
 
     @Autowired
     private CategoryEventRepository categoryEventRepository;
+
+    @Autowired
+    private EventLayoutRepository eventLayoutRepository;
 
     private EventDto toDto(Event event) {
         return new EventDto(
@@ -227,6 +231,12 @@ public class EventServiceImpl implements EventService {
                 return ResponseDto.error("El evento debe tener al menos una categoría antes de publicarse");
             }
 
+            // Check if event has layout
+            boolean hasLayout = eventLayoutRepository.existsByEventID(event);
+            if (!hasLayout) {
+                return ResponseDto.error("El evento debe tener una maquetación antes de publicarse");
+            }
+
             event.setStatus(1); // Cambiar el status a 1 (publicado)
 
             Event savedEvent = eventRepository.save(event);
@@ -365,6 +375,12 @@ public ResponseDto<List<EventDto>> filterEvents(String name, LocalDate date, boo
             List<CategoryEvent> categories = categoryEventRepository.findByEvent_Id(eventId);
             if (categories.isEmpty()) {
                 return ResponseDto.error("El evento debe tener al menos una categoría antes de completarse");
+            }
+
+            // Check if event has layout
+            boolean hasLayout = eventLayoutRepository.existsByEventID(event);
+            if (!hasLayout) {
+                return ResponseDto.error("El evento debe tener una maquetación antes de completarse");
             }
 
             // Event is already in draft status (0), no need to change

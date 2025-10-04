@@ -7,7 +7,7 @@ import { getEventLayoutByEventId } from '../../services/EventLayoutService.js';
 import { getTicketsByEvent, createTicketWithSeats } from '../../services/TicketService.js';
 import { getSeatsBySection, updateSeatStatus, createSeat, releaseExpiredReservations } from '../../services/SeatService.js';
 import { getAllSections, createSection } from '../../services/SectionService.js';
-import { insertEventRating, getEventRatingByEvent, deleteEventRating } from '../../services/EventRatingService.js';
+import { insertEventRating, getEventRatingByEvent, deleteEventRating, updateEventRating } from '../../services/EventRatingService.js';
 import { getUserById } from '../../services/UserService.js';
 import { getEventImages } from '../../services/EventImgService.js';
 import { getCategoriesByEvent } from '../../services/CategoryService.js';
@@ -45,6 +45,14 @@ const ReservaEvento = () => {
   const [userInfo, setUserInfo] = useState({});
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [deletingRating, setDeletingRating] = useState(null);
+  const [editingRating, setEditingRating] = useState(null);
+  const [editRatingValue, setEditRatingValue] = useState(5);
+  const [editCommentValue, setEditCommentValue] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [deleteRatingId, setDeleteRatingId] = useState(null);
   const [updateKey, setUpdateKey] = useState(0);
   const [eventImages, setEventImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -112,7 +120,8 @@ const handleSubmitRating = async () => {
       setMensaje('');
       setRating(0);
       loadEventRatings();
-      alert('Comentario enviado exitosamente.');
+      setSuccessMessage('¡Comentario enviado!\nTu comentario ha sido publicado exitosamente.');
+      setShowSuccessModal(true);
     } else {
       alert(result.message || 'Error al enviar el comentario.');
     }
@@ -125,16 +134,55 @@ const handleSubmitRating = async () => {
 };
 
 
-  const handleDeleteRating = async (ratingId, userId) => {
-    if (!checkSession()) return;
-    if (!confirm('¿Estás seguro de que quieres eliminar este comentario?')) return;
+  const handleEditRating = (rating) => {
+    setEditingRating(rating);
+    setEditRatingValue(rating.rating);
+    setEditCommentValue(rating.comment);
+    setShowEditModal(true);
+  };
 
-    setDeletingRating(ratingId);
+  const handleSaveEditRating = async () => {
+    if (!editingRating) return;
+
     try {
-      const result = await deleteEventRating(ratingId);
+      const result = await updateEventRating({
+        ratingID: editingRating.ratingID,
+        rating: editRatingValue,
+        comment: editCommentValue,
+      });
+
       if (result.success) {
-        loadEventRatings(); 
-        alert('Comentario eliminado exitosamente.');
+        setShowEditModal(false);
+        setEditingRating(null);
+        loadEventRatings();
+        setSuccessMessage('¡Comentario actualizado!\nTu comentario ha sido actualizado exitosamente.');
+        setShowSuccessModal(true);
+      } else {
+        alert(result.message || 'Error al actualizar el comentario.');
+      }
+    } catch (error) {
+      console.error('Error updating rating:', error);
+      alert('Error al actualizar el comentario.');
+    }
+  };
+
+  const handleDeleteRating = (ratingId, userId) => {
+    if (!checkSession()) return;
+    setDeleteRatingId(ratingId);
+    setShowDeleteConfirmModal(true);
+  };
+
+  const confirmDeleteRating = async () => {
+    if (!deleteRatingId) return;
+
+    setShowDeleteConfirmModal(false);
+    setDeletingRating(deleteRatingId);
+    try {
+      const result = await deleteEventRating(deleteRatingId);
+      if (result.success) {
+        loadEventRatings();
+        setSuccessMessage('¡Comentario eliminado!\nTu comentario ha sido eliminado exitosamente.');
+        setShowSuccessModal(true);
       } else {
         alert(result.message || 'Error al eliminar el comentario.');
       }
@@ -143,6 +191,7 @@ const handleSubmitRating = async () => {
       alert('Error al eliminar el comentario.');
     } finally {
       setDeletingRating(null);
+      setDeleteRatingId(null);
     }
   };
 
@@ -288,34 +337,24 @@ const handleSubmitRating = async () => {
         return;
       }
 
-      if (!checkSession()) return;
-
       try {
         setLoading(true);
         const result = await getEventById(eventId);
         if (result.success) {
           setEvent(result.data);
         } else {
-          if (result.message?.includes('token') || result.message?.includes('sesión')) {
-            checkSession();
-          } else {
-            setError(result.message || 'Error al cargar el evento');
-          }
+          setError(result.message || 'Error al cargar el evento');
         }
       } catch (err) {
-        if (err.message?.includes('401') || err.message?.includes('token')) {
-          checkSession();
-        } else {
-          setError('Error de conexión al cargar el evento');
-          console.error('Error loading event:', err);
-        }
+        setError('Error de conexión al cargar el evento');
+        console.error('Error loading event:', err);
       } finally {
         setLoading(false);
       }
     };
 
     loadEvent();
-  }, [eventId, checkSession]);
+  }, [eventId]);
 
   useEffect(() => {
     if (event) {
@@ -1058,7 +1097,6 @@ const handleSubmitRating = async () => {
 
             {/* Horarios y precios disponibles */}
             <div>
-              <h3 className="text-white text-lg font-semibold mb-4">Horarios y Precios</h3>
               <div className="space-y-3">
                 {loadingTickets ? (
                   <div className="text-center py-4">
@@ -1084,13 +1122,26 @@ const handleSubmitRating = async () => {
                 {/* Botón para ver mapa del evento */}
                 <div className="mt-6 text-center">
                   <button
-                    onClick={handleShowMap}
+                    onClick={() => {
+                      if (checkSession()) {
+                        handleShowMap();
+                      }
+                    }}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
                   >
                     Ver mapa de evento
                   </button>
+                  {!localStorage.getItem('token') && (
+                    <p className="text-gray-400 text-xs mt-2">
+                      Inicia sesión para reservar asientos
+                    </p>
+                  )}
                 </div>
-
+      
+                {/* Footer de la página */}
+                <div className="text-center py-8">
+                </div>
+      
               </div>
             </div>
 
@@ -1100,53 +1151,67 @@ const handleSubmitRating = async () => {
           <div className="mb-12">
             
             {/* Formulario para escribir comentario */}
-            <div className="mb-8">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">U</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-white text-sm mb-2">Título del mensaje:</p>
-                  <p className="text-white text-sm mb-3">Puntuación:</p>
-                  
-                  {/* Sistema de estrellas */}
-                  <div className="flex items-center gap-1 mb-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`w-5 h-5 cursor-pointer transition-colors ${
-                          star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'
-                        }`}
-                        onClick={() => handleStarClick(star)}
-                      />
-                    ))}
+            {localStorage.getItem('token') ? (
+              <div className="mb-8">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm">U</span>
                   </div>
-                  
-                  <p className="text-white text-sm mb-3">Escribe tu mensaje:</p>
-                  
-                  {/* Área de texto */}
-                  <textarea
-                    value={mensaje}
-                    onChange={(e) => setMensaje(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white placeholder-gray-400 resize-none"
-                    rows="4"
-                    placeholder="Escribe tu comentario aquí..."
-                  />
-                  
-                  {/* Botón de enviar */}
-                  <div className="flex justify-center mt-4">
-                    <button
-                      onClick={handleSubmitRating}
-                      disabled={submittingRating}
-                      className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                    >
-                      {submittingRating ? 'Enviando...' : 'Enviar'}
-                      <Send className="w-4 h-4" />
-                    </button>
+                  <div className="flex-1">
+                    <p className="text-white text-sm mb-2">Título del mensaje:</p>
+                    <p className="text-white text-sm mb-3">Puntuación:</p>
+
+                    {/* Sistema de estrellas */}
+                    <div className="flex items-center gap-1 mb-4">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-5 h-5 cursor-pointer transition-colors ${
+                            star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'
+                          }`}
+                          onClick={() => handleStarClick(star)}
+                        />
+                      ))}
+                    </div>
+
+                    <p className="text-white text-sm mb-3">Escribe tu mensaje:</p>
+
+                    {/* Área de texto */}
+                    <textarea
+                      value={mensaje}
+                      onChange={(e) => setMensaje(e.target.value)}
+                      className="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white placeholder-gray-400 resize-none"
+                      rows="4"
+                      placeholder="Escribe tu comentario aquí..."
+                    />
+
+                    {/* Botón de enviar */}
+                    <div className="flex justify-center mt-4">
+                      <button
+                        onClick={handleSubmitRating}
+                        disabled={submittingRating}
+                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                      >
+                        {submittingRating ? 'Enviando...' : 'Enviar'}
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="mb-8 text-center">
+                <div className="bg-gray-800 p-6 rounded-lg">
+                  <p className="text-gray-300 mb-4">Para dejar comentarios y calificaciones, necesitas iniciar sesión.</p>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors"
+                  >
+                    Iniciar Sesión
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Comentarios existentes */}
             <div className="space-y-6">
@@ -1188,18 +1253,27 @@ const handleSubmitRating = async () => {
                               </div>
                             </div>
                             {canDelete && (
-                              <button
-                                onClick={() => handleDeleteRating(rating.ratingID, rating.userId)}
-                                disabled={deletingRating === rating.ratingID}
-                                className="text-red-500 hover:text-red-700 disabled:opacity-50 p-1"
-                                title="Eliminar comentario"
-                              >
-                                {deletingRating === rating.ratingID ? (
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
-                                ) : (
-                                  <Trash2 className="w-4 h-4" />
-                                )}
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditRating(rating)}
+                                  className="text-blue-500 hover:text-blue-700 p-1"
+                                  title="Editar comentario"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteRating(rating.ratingID, rating.userId)}
+                                  disabled={deletingRating === rating.ratingID}
+                                  className="text-red-500 hover:text-red-700 disabled:opacity-50 p-1"
+                                  title="Eliminar comentario"
+                                >
+                                  {deletingRating === rating.ratingID ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
+                                  ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                  )}
+                                </button>
+                              </div>
                             )}
                           </div>
                           <p className="text-gray-400 text-xs leading-relaxed">
@@ -1249,12 +1323,181 @@ const handleSubmitRating = async () => {
 
           {/* Footer de la página */}
           <div className="text-center py-8">
-            <p className="text-gray-400 text-sm">DESCUBRIR MAS</p>
-            <p className="text-gray-500 text-xs mt-2">Tu Evento</p>
           </div>
 
         </div>
       </div>
+
+      {/* Modal para editar comentario */}
+      {showEditModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <span className="text-2xl">✏️</span>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Editar comentario</h3>
+              <p className="text-purple-100 text-sm">Modifica tu calificación y comentario</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6">
+              {/* Sistema de estrellas */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Calificación
+                </label>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-6 h-6 cursor-pointer transition-colors ${
+                        star <= editRatingValue ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'
+                      }`}
+                      onClick={() => setEditRatingValue(star)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Área de comentario */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Comentario
+                </label>
+                <textarea
+                  value={editCommentValue}
+                  onChange={(e) => setEditCommentValue(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-900 placeholder-gray-400 resize-none"
+                  rows="4"
+                  placeholder="Escribe tu comentario..."
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingRating(null);
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveEditRating}
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white py-2 px-4 rounded-lg transition-colors"
+                >
+                  Guardar cambios
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteConfirmModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Eliminar comentario</h3>
+              <p className="text-purple-100 text-sm">¿Estás seguro de que quieres eliminar este comentario?</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-red-50 rounded-lg p-4 mb-4">
+                  <span className="text-red-600 text-sm font-medium">Esta acción no se puede deshacer.</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirmModal(false);
+                    setDeleteRatingId(null);
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDeleteRating}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors"
+                >
+                  Sí, eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de éxito de comentario */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <CheckCircle className="w-8 h-8 text-purple-500" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                {successMessage.includes('eliminado') ? '¡Comentario eliminado!' : '¡Comentario enviado!'}
+              </h3>
+              <p className="text-purple-100 text-sm">
+                {successMessage.includes('eliminado')
+                  ? 'Tu comentario ha sido eliminado exitosamente'
+                  : 'Tu comentario ha sido publicado exitosamente'
+                }
+              </p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="text-gray-700 text-sm">
+                    {successMessage.includes('eliminado') ? (
+                      <>
+                        <p className="mb-2">🗑️ Tu comentario ha sido eliminado</p>
+                        <p className="text-xs text-gray-500">El comentario ya no aparecerá en la lista.</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mb-2">💬 Tu opinión ha sido compartida</p>
+                        <p className="text-xs text-gray-500">¡Gracias por contribuir a la comunidad!</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Botón para continuar */}
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Continuar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de confirmación de compra */}
       {showPurchaseModal && (
