@@ -18,6 +18,9 @@ class OAuth2LoginSuccessHandler {
 class SecurityConfig {
 }
 
+class StorageConfig {
+}
+
 class SwaggerConfig {
 }
 

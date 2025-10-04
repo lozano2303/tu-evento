@@ -13,5 +13,6 @@ public interface SeatService {
     ResponseDto<SeatDto> getSeatById(int seatID);
     ResponseDto<String> updateSeatStatus(int seatID, boolean newStatus);
     ResponseDto<List<SeatDto>> getSeatsBySection(int sectionId);
+    ResponseDto<String> deleteSeatsBySection(int sectionId);
     ResponseDto<String> releaseExpiredReservations();
 }

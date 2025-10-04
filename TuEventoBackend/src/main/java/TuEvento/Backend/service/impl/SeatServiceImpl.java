@@ -230,6 +230,38 @@ public class SeatServiceImpl implements SeatService {
 
     @Override
     @Transactional
+    public ResponseDto<String> deleteSeatsBySection(int sectionId) {
+        try {
+            // Check if section exists
+            Optional<Section> sectionOpt = sectionRepository.findById(sectionId);
+            if (!sectionOpt.isPresent()) {
+                return ResponseDto.error("Sección no encontrada");
+            }
+
+            // Find all seats for this section
+            List<Seat> seatsToDelete = seatRepository.findBySectionID_SectionID(sectionId);
+
+            if (seatsToDelete.isEmpty()) {
+                return ResponseDto.ok("No hay asientos para eliminar en esta sección");
+            }
+
+            // Delete all seats for this section
+            int deletedCount = 0;
+            for (Seat seat : seatsToDelete) {
+                seatRepository.delete(seat);
+                deletedCount++;
+            }
+
+            return ResponseDto.ok("Eliminados " + deletedCount + " asientos de la sección");
+        } catch (DataAccessException e) {
+            return ResponseDto.error("Error de la base de datos al eliminar asientos");
+        } catch (Exception e) {
+            return ResponseDto.error("Error inesperado al eliminar asientos de la sección");
+        }
+    }
+
+    @Override
+    @Transactional
     public ResponseDto<String> releaseExpiredReservations() {
         try {
             // For now, release all occupied seats that might be stuck from failed reservations

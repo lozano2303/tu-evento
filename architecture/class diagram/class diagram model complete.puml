@@ -139,9 +139,12 @@ class Seat {
     - Section sectionID
     - EventLayout eventLayoutID
     - int seatNumber
+    - String row
+    - double x
+    - double y
     - boolean status
     + Seat()
-    + Seat(int, Section, EventLayout, int, boolean)
+    + Seat(int, Section, EventLayout, int, String, double, double, boolean)
     + int getSeatID()
     + void setSeatID(int)
     + Section getSectionID()
@@ -150,22 +153,42 @@ class Seat {
     + void setEventLayoutID(EventLayout)
     + int getSeatNumber()
     + void setSeatNumber(int)
+    + String getRow()
+    + void setRow(String)
+    + double getX()
+    + void setX(double)
+    + double getY()
+    + void setY(double)
     + boolean isStatus()
     + void setStatus(boolean)
 }
 
 class Section {
     - int sectionID
-    - String sectionName
+    - Event eventID
+    - SectionName sectionNameID
     - BigDecimal price
     + Section()
-    + Section(int, String, BigDecimal)
+    + Section(int, SectionName, BigDecimal)
     + int getSectionID()
     + void setSectionID(int)
-    + String getSectionName()
-    + void setSectionName(String)
+    + Event getEventID()
+    + void setEventID(Event)
+    + SectionName getSectionNameID()
+    + void setSectionNameID(SectionName)
     + BigDecimal getPrice()
     + void setPrice(BigDecimal)
+}
+
+class SectionName {
+    - Integer sectionNameID
+    - String name
+    + SectionName()
+    + SectionName(Integer, String)
+    + Integer getSectionNameID()
+    + void setSectionNameID(Integer)
+    + String getName()
+    + void setName(String)
 }
 
 class Ticket {
@@ -431,6 +454,41 @@ Event --> Location : locationID
 EventLayout --> Event : eventID
 Seat --> Section : sectionID
 Seat --> EventLayout : eventLayoutID
+Section --> Event : eventID
+Section --> SectionName : sectionNameID
+Ticket --> Event : eventId
+Ticket --> User : userId
+EventRating --> User : userId
+EventRating --> Event : eventId
+Notification --> Event : event
+NotificationUser --> User : user
+NotificationUser --> Notification : notification
+Login --> User : userID
+AccountActivation --> User : userID
+OrganizerPetition --> User : userID
+RecoverPassword --> User : userID
+Category --> Category : parentCategory
+Category --> "*" Category : subCategories
+CategoryEvent --> Category : category
+CategoryEvent --> Event : event
+SeatTicket --> Seat : seat
+SeatTicket --> Ticket : ticket
+EventImg --> Event : event
+
+@enduml
+
+' Relationships
+User --> Address : address
+Address --> City : city
+City --> Department : department
+Location --> Address : address
+Event --> User : userID
+Event --> Location : locationID
+EventLayout --> Event : eventID
+Seat --> Section : sectionID
+Seat --> EventLayout : eventLayoutID
+Section --> Event : eventID
+Section --> SectionName : sectionNameID
 Ticket --> Event : eventId
 Ticket --> User : userId
 EventRating --> User : userId

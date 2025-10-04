@@ -27,6 +27,9 @@ class Seat {
 class Section {
 }
 
+class SectionName {
+}
+
 class Ticket {
 }
 
@@ -84,6 +87,8 @@ Event --> Location : locationID
 EventLayout --> Event : eventID
 Seat --> Section : sectionID
 Seat --> EventLayout : eventLayoutID
+Section --> Event : eventID
+Section --> SectionName : sectionNameID
 Ticket --> Event : eventId
 Ticket --> User : userId
 EventRating --> User : userId

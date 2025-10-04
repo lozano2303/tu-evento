@@ -54,6 +54,9 @@ class SeatDto {
 class SectionDto {
 }
 
+class SectionNameDto {
+}
+
 class TicketDto {
 }
 
@@ -61,6 +64,12 @@ class UserDto {
 }
 
 class UserSocial {
+}
+
+class EventImgRequestDto {
+}
+
+class EventImgResponseDto {
 }
 
 ' Relationships

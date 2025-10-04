@@ -46,8 +46,9 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
   const rotation = element.rotation || 0;
   const transform = `rotate(${rotation}, ${center.x}, ${center.y})`;
 
-  const renderLabelElement = (labelX, labelY) => {
-    if (!element.meta?.label) return null;
+  const renderLabelElement = (labelX, labelY, customText = null) => {
+    const labelText = customText || element.meta?.label;
+    if (!labelText) return null;
 
     // Tamaño de fuente según tipo de elemento
     const fontSize = element.type === 'chair' ? '8' :
@@ -76,7 +77,7 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
           cursor: 'pointer'
         }}
       >
-        {element.meta.label}
+        {labelText}
       </text>
     );
   };
@@ -87,6 +88,14 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
       case "section":
       case "stage": {
         const isSection = element.type === 'section';
+        const isExistingSection = isSection && element.meta?.isExistingSection;
+
+        // Colores diferentes para secciones existentes vs nuevas
+        const sectionFill = isExistingSection ? 'rgba(34, 197, 94, 0.1)' : 'transparent';
+        const sectionStroke = isExistingSection ? '#22c55e' : element.stroke || '#8b5cf6';
+        const sectionStrokeDasharray = isExistingSection ? '10,5' : '5,5';
+        const labelText = isSection ? (isExistingSection ? `${element.meta?.label || 'Sección'} (Guardada)` : `${element.meta?.label || 'Sección'} (Pendiente)`) : element.meta?.label;
+
         return (
           <g data-element-id={element.id} transform={transform} {...baseProps}>
             <rect
@@ -95,12 +104,12 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
               width={element.width}
               height={element.height}
               rx={2}
-              fill={isSection ? 'transparent' : element.fill}
-              stroke={element.stroke}
+              fill={isSection ? sectionFill : element.fill}
+              stroke={isSection ? sectionStroke : element.stroke}
               strokeWidth={isSection ? 2 : 1}
-              strokeDasharray={isSection ? '5,5' : undefined}
+              strokeDasharray={isSection ? sectionStrokeDasharray : undefined}
             />
-            {renderLabelElement(element.x, element.y - (isSection ? 10 : 0))}
+            {renderLabelElement(element.x, element.y - (isSection ? 10 : 0), labelText)}
             {isSection && element.meta && (
               <text
                 x={element.x}

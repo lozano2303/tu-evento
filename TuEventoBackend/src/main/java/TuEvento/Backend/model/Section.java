@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.JoinColumn;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity(name = "section")
 public class Section {
@@ -22,14 +23,15 @@ public class Section {
     @JoinColumn(name="eventID", nullable = false)
     private Event eventID;
 
-    @Column(name = "sectionName", nullable = false, length = 50)
-    private String sectionName;
+    @ManyToOne
+    @JoinColumn(name = "sectionNameID", nullable = false)
+    private SectionName sectionNameID;
     @Column(name="price", nullable = false, precision = 10, scale = 3)
     private BigDecimal price;
     public Section(){}
-    public Section(int sectionID, String sectionName, BigDecimal price) {
+    public Section(int sectionID, SectionName sectionNameID, BigDecimal price) {
         this.sectionID = sectionID;
-        this.sectionName = sectionName;
+        this.sectionNameID = sectionNameID;
         this.price = price;
     }
     public int getSectionID() {
@@ -38,11 +40,11 @@ public class Section {
     public void setSectionID(int sectionID) {
         this.sectionID = sectionID;
     }
-    public String getSectionName() {
-        return sectionName;
+    public SectionName getSectionNameID() {
+        return sectionNameID;
     }
-    public void setSectionName(String sectionName) {
-        this.sectionName = sectionName;
+    public void setSectionNameID(SectionName sectionNameID) {
+        this.sectionNameID = sectionNameID;
     }
     public BigDecimal getPrice() {
         return price;

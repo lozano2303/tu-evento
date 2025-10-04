@@ -1,9 +1,9 @@
 import { API_BASE_URL } from './apiconstant.js';
 
-export const getAllSections = async () => {
+export const getAllSectionNames = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_BASE_URL}/v1/sections`, {
+    const response = await fetch(`${API_BASE_URL}/v1/section-names`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -13,15 +13,15 @@ export const getAllSections = async () => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error obteniendo secciones:', error);
+    console.error('Error obteniendo nombres de secciones:', error);
     throw error;
   }
 };
 
-export const getSectionById = async (sectionId) => {
+export const getSectionNameById = async (sectionNameId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_BASE_URL}/v1/sections/${sectionId}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/section-names/${sectionNameId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -31,68 +31,53 @@ export const getSectionById = async (sectionId) => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error obteniendo sección:', error);
+    console.error('Error obteniendo nombre de sección:', error);
     throw error;
   }
 };
 
-export const createSection = async (sectionData) => {
+export const createSectionName = async (sectionNameData) => {
   try {
     const token = localStorage.getItem('token');
-    // Adaptar los datos para el formato esperado por el backend
-    const adaptedData = {
-      eventId: sectionData.eventId,
-      sectionNameID: sectionData.sectionNameID,
-      price: sectionData.price
-    };
-
-    const response = await fetch(`${API_BASE_URL}/v1/sections`, {
+    const response = await fetch(`${API_BASE_URL}/v1/section-names`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(adaptedData),
+      body: JSON.stringify(sectionNameData),
     });
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error creando sección:', error);
+    console.error('Error creando nombre de sección:', error);
     throw error;
   }
 };
 
-export const updateSection = async (sectionData) => {
+export const updateSectionName = async (sectionNameData) => {
   try {
     const token = localStorage.getItem('token');
-    // Adaptar los datos para el formato esperado por el backend
-    const adaptedData = {
-      sectionID: sectionData.sectionID || sectionData.id,
-      eventId: sectionData.eventId,
-      sectionNameID: sectionData.sectionNameID,
-      price: sectionData.price
-    };
-
-    const response = await fetch(`${API_BASE_URL}/v1/sections`, {
+    const response = await fetch(`${API_BASE_URL}/v1/section-names`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(adaptedData),
+      body: JSON.stringify(sectionNameData),
     });
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error actualizando sección:', error);
+    console.error('Error actualizando nombre de sección:', error);
     throw error;
   }
 };
 
-export const deleteSection = async (sectionId) => {
+export const deleteSectionName = async (sectionNameId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_BASE_URL}/v1/sections/${sectionId}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/section-names/${sectionNameId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -102,7 +87,7 @@ export const deleteSection = async (sectionId) => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error eliminando sección:', error);
+    console.error('Error eliminando nombre de sección:', error);
     throw error;
   }
 };

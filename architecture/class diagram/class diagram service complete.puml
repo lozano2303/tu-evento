@@ -330,4 +330,29 @@ class UserServiceImpl implements UserService {
     + ResponseDto<List<UserDto>> getAllUsers()
 }
 }
+
+interface EventImgService {
+    + EventImgResponseDto saveEventImg(EventImgRequestDto)
+    + List<EventImgResponseDto> getEventImgsByEventId(int)
+    + void deleteEventImg(int)
+}
+
+interface SectionNameService {
+    + ResponseDto<SectionNameDto> insertSectionName(SectionNameDto)
+    + ResponseDto<String> updateSectionName(Integer, SectionNameDto)
+    + ResponseDto<String> deleteSectionName(Integer)
+    + ResponseDto<List<SectionNameDto>> getAllSectionNames()
+    + ResponseDto<SectionNameDto> getSectionNameById(Integer)
+    + ResponseDto<List<SectionNameDto>> searchSectionNamesByName(String)
+}
+
+class SectionNameServiceImpl implements SectionNameService {
+    + ResponseDto<SectionNameDto> insertSectionName(SectionNameDto)
+    + ResponseDto<String> updateSectionName(Integer, SectionNameDto)
+    + ResponseDto<String> deleteSectionName(Integer)
+    + ResponseDto<List<SectionNameDto>> getAllSectionNames()
+    + ResponseDto<SectionNameDto> getSectionNameById(Integer)
+    + ResponseDto<List<SectionNameDto>> searchSectionNamesByName(String)
+}
+
 @enduml

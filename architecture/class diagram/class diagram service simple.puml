@@ -115,4 +115,14 @@ interface UserService {
 class UserServiceImpl implements UserService {
 }
 }
+
+interface EventImgService {
+}
+
+interface SectionNameService {
+}
+
+class SectionNameServiceImpl implements SectionNameService {
+}
+
 @enduml

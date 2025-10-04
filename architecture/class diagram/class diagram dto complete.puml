@@ -258,16 +258,30 @@ class SeatDto {
 
 class SectionDto {
     - int sectionID
-    - String sectionName
-    - BigDecimal price
+    - int eventId
+    - Integer sectionNameID
+    - double price
     + SectionDto()
-    + SectionDto(int, String, BigDecimal)
+    + SectionDto(int, int, Integer, double)
     + int getSectionID()
     + void setSectionID(int)
-    + String getSectionName()
-    + void setSectionName(String)
-    + BigDecimal getPrice()
-    + void setPrice(BigDecimal)
+    + int getEventId()
+    + void setEventId(int)
+    + Integer getSectionNameID()
+    + void setSectionNameID(Integer)
+    + double getPrice()
+    + void setPrice(double)
+}
+
+class SectionNameDto {
+    - Integer sectionNameID
+    - String name
+    + SectionNameDto()
+    + SectionNameDto(Integer, String)
+    + Integer getSectionNameID()
+    + void setSectionNameID(Integer)
+    + String getName()
+    + void setName(String)
 }
 
 class TicketDto {
@@ -319,6 +333,34 @@ class UserSocial {
     + UserSocial(int)
     + int getUserID()
     + void setUserID(int)
+}
+
+class EventImgRequestDto {
+    - int eventId
+    - MultipartFile file
+    - int order
+    + EventImgRequestDto()
+    + EventImgRequestDto(int, MultipartFile, int)
+    + int getEventId()
+    + void setEventId(int)
+    + MultipartFile getFile()
+    + void setFile(MultipartFile)
+    + int getOrder()
+    + void setOrder(int)
+}
+
+class EventImgResponseDto {
+    - int eventImgID
+    - String url
+    - int order
+    + EventImgResponseDto()
+    + EventImgResponseDto(int, String, int)
+    + int getEventImgID()
+    + void setEventImgID(int)
+    + String getUrl()
+    + void setUrl(String)
+    + int getOrder()
+    + void setOrder(int)
 }
 
 ' Relationships

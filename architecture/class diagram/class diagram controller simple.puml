@@ -54,4 +54,13 @@ class TicketController {
 class UserController {
 }
 
+class EventImgController {
+}
+
+class StorageController {
+}
+
+class AccountActivationEmailController {
+}
+
 @enduml

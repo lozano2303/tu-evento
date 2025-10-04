@@ -29,6 +29,8 @@ const DrawingCanvas = ({
   selectedSeatPositionsForSection = new Set(),
   onChairSelectForSection,
   onSeatPositionSelectForSection,
+  chairsWithSections = new Map(),
+  existingChairsWithSections = new Map(),
   zoom: externalZoom,
   setZoom: externalSetZoom,
   offset: externalOffset,
@@ -78,13 +80,23 @@ const DrawingCanvas = ({
     if (!svg) return { x: 0, y: 0 }
 
     const svgRect = svg.getBoundingClientRect()
-    // Calcular la escala correctamente: el viewBox visible dividido por el tamaño del SVG en pantalla
-    const scaleX = (viewWidth / zoom) / svgRect.width
-    const scaleY = (viewHeight / zoom) / svgRect.height
+    const viewBoxWidth = viewWidth / zoom
+    const viewBoxHeight = viewHeight / zoom
 
-    // Convertir coordenadas del mouse al espacio del viewBox
-    const x = offset.x + (clientX - svgRect.left) * scaleX
-    const y = offset.y + (clientY - svgRect.top) * scaleY
+    // Calcular la escala manteniendo aspect ratio (preserveAspectRatio="xMidYMid meet")
+    const scale = Math.min(svgRect.width / viewBoxWidth, svgRect.height / viewBoxHeight)
+
+    // Calcular offsets para centrar el viewBox
+    const offsetX = (svgRect.width - viewBoxWidth * scale) / 2
+    const offsetY = (svgRect.height - viewBoxHeight * scale) / 2
+
+    // Coordenadas relativas al viewBox
+    const relX = clientX - svgRect.left - offsetX
+    const relY = clientY - svgRect.top - offsetY
+
+    // Convertir al espacio del viewBox
+    const x = offset.x + relX / scale
+    const y = offset.y + relY / scale
 
     return { x, y }
   }
@@ -447,8 +459,11 @@ const DrawingCanvas = ({
     if (isPanning) {
       const svg = svgRef.current
       const rect = svg.getBoundingClientRect()
-      const dx = (panOrigin.current.x - e.clientX) * (viewWidth / (zoom * rect.width))
-      const dy = (panOrigin.current.y - e.clientY) * (viewHeight / (zoom * rect.height))
+      const viewBoxWidth = viewWidth / zoom
+      const viewBoxHeight = viewHeight / zoom
+      const scale = Math.min(rect.width / viewBoxWidth, rect.height / viewBoxHeight)
+      const dx = (panOrigin.current.x - e.clientX) / scale
+      const dy = (panOrigin.current.y - e.clientY) / scale
       setOffset({
         x: panOrigin.current.offset.x + dx,
         y: panOrigin.current.offset.y + dy,
@@ -652,20 +667,28 @@ const DrawingCanvas = ({
     const cursorX = e.clientX - rect.left
     const cursorY = e.clientY - rect.top
 
-    const scaleX = viewWidth / zoom / rect.width
-    const scaleY = viewHeight / zoom / rect.height
+    const viewBoxWidth = viewWidth / zoom
+    const viewBoxHeight = viewHeight / zoom
+    const scale = Math.min(rect.width / viewBoxWidth, rect.height / viewBoxHeight)
+    const offsetX = (rect.width - viewBoxWidth * scale) / 2
+    const offsetY = (rect.height - viewBoxHeight * scale) / 2
+    const relCursorX = cursorX - offsetX
+    const relCursorY = cursorY - offsetY
+    const cursorViewX = offset.x + relCursorX / scale
+    const cursorViewY = offset.y + relCursorY / scale
 
-    const cursorViewX = offset.x + cursorX * scaleX
-    const cursorViewY = offset.y + cursorY * scaleY
-
-    const newScaleX = viewWidth / newZoom / rect.width
-    const newScaleY = viewHeight / newZoom / rect.height
-
-    const newOffsetX = cursorViewX - cursorX * newScaleX
-    const newOffsetY = cursorViewY - cursorY * newScaleY
+    const newViewBoxWidth = viewWidth / newZoom
+    const newViewBoxHeight = viewHeight / newZoom
+    const newScale = Math.min(rect.width / newViewBoxWidth, rect.height / newViewBoxHeight)
+    const newOffsetX = (rect.width - newViewBoxWidth * newScale) / 2
+    const newOffsetY = (rect.height - newViewBoxHeight * newScale) / 2
+    const newRelCursorX = cursorX - newOffsetX
+    const newRelCursorY = cursorY - newOffsetY
+    const newOffsetX_final = cursorViewX - newRelCursorX / newScale
+    const newOffsetY_final = cursorViewY - newRelCursorY / newScale
 
     setZoom(newZoom)
-    setOffset({ x: newOffsetX, y: newOffsetY })
+    setOffset({ x: newOffsetX_final, y: newOffsetY_final })
   }
 
   const getDefaultFill = (type) => {
@@ -814,15 +837,112 @@ const DrawingCanvas = ({
             />
           ))}
 
-        {/* Renderizar sillas cuando está en modo creación de sección */}
-        {isSectionCreationMode && (
+        {/* Renderizar cubitos rojos para sillas bloqueadas (de secciones existentes) siempre visible */}
+        {(
           <>
-            {/* Sillas individuales */}
+            {/* Cubitos para sillas individuales bloqueadas */}
             {elements
               .filter(el => el.type === 'chair')
               .map((chair) => {
+                const sectionName = chairsWithSections.get(chair.id)
+                const isAlreadyInSection = !!sectionName
+                const isSelectedForRemoval = isSectionCreationMode && selectedChairsForSection.has(chair.id)
+
+                // Solo mostrar si está en alguna sección (existente o pendiente)
+                if (!isAlreadyInSection) return null
+
+                return (
+                  <g key={`blocked-chair-${chair.id}`} data-chair-id={chair.id}>
+                    <rect
+                      x={chair.x - 15}
+                      y={chair.y - 15}
+                      width={30}
+                      height={30}
+                      fill={isSelectedForRemoval ? "#3b82f6" : "#dc2626"} // Azul si seleccionada para quitar, rojo si bloqueada
+                      stroke={isSelectedForRemoval ? "#1e40af" : "#b91c1c"}
+                      strokeWidth={2}
+                      rx={4}
+                      className={isSelectedForRemoval ? "cursor-pointer" : "cursor-not-allowed"}
+                    />
+                    <text
+                      x={chair.x}
+                      y={chair.y + 4}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fontWeight="bold"
+                      fill="white"
+                      pointerEvents="none"
+                    >
+                      {sectionName}
+                    </text>
+                  </g>
+                )
+              })}
+
+            {/* Cubitos para posiciones de asiento bloqueadas */}
+            {elements
+              .filter(el => el.type === 'seatRow' && el.seatPositions)
+              .map(el => el.seatPositions.map((seatPos, index) => {
+                const positionKey = `${el.id}-${index}`;
+                const sectionName = chairsWithSections.get(positionKey)
+                const isAlreadyInSection = !!sectionName
+                const isSelectedForRemoval = isSectionCreationMode && selectedSeatPositionsForSection.has(positionKey)
+
+                // Solo mostrar si está en alguna sección (existente o pendiente)
+                if (!isAlreadyInSection) return null
+
+                return (
+                  <g key={`blocked-seat-${positionKey}`} data-seat-position-id={positionKey}>
+                    <rect
+                      x={seatPos.x - 15}
+                      y={seatPos.y - 15}
+                      width={30}
+                      height={30}
+                      fill={isSelectedForRemoval ? "#3b82f6" : "#dc2626"} // Azul si seleccionada para quitar, rojo si bloqueada
+                      stroke={isSelectedForRemoval ? "#1e40af" : "#b91c1c"}
+                      strokeWidth={2}
+                      rx={4}
+                      className={isSelectedForRemoval ? "cursor-pointer" : "cursor-not-allowed"}
+                    />
+                    <text
+                      x={seatPos.x}
+                      y={seatPos.y + 4}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fontWeight="bold"
+                      fill="white"
+                      pointerEvents="none"
+                    >
+                      {sectionName}
+                    </text>
+                  </g>
+                );
+              }))}
+          </>
+        )}
+
+        {/* Renderizar sillas cuando está en modo creación de sección */}
+        {isSectionCreationMode && (
+          <>
+            {/* Sillas individuales - solo las que NO están en secciones existentes */}
+            {elements
+              .filter(el => el.type === 'chair')
+              .filter(chair => !chairsWithSections.has(chair.id)) // Excluir sillas ya en secciones
+              .map((chair) => {
                 const isSelected = selectedChairsForSection.has(chair.id)
                 const isHovered = hoveredSeat && hoveredSeat.id === chair.id
+
+                // Determinar colores basados en el estado
+                let fillColor = '#6b7280' // Gris por defecto
+                let strokeColor = '#374151'
+                let strokeWidth = 2
+
+                if (isSelected) {
+                  fillColor = '#8b5cf6' // Púrpura para seleccionado
+                  strokeColor = '#7c3aed'
+                  strokeWidth = 3
+                }
+
                 return (
                   <g key={chair.id} data-chair-id={chair.id}>
                     <rect
@@ -830,9 +950,9 @@ const DrawingCanvas = ({
                       y={chair.y - 25}
                       width={50}
                       height={50}
-                      fill={isSelected ? '#8b5cf6' : '#6b7280'}
-                      stroke={isSelected ? '#7c3aed' : '#374151'}
-                      strokeWidth={isSelected ? 3 : 2}
+                      fill={fillColor}
+                      stroke={strokeColor}
+                      strokeWidth={strokeWidth}
                       rx={4}
                       className="cursor-pointer"
                     />
@@ -851,40 +971,58 @@ const DrawingCanvas = ({
                 )
               })}
 
-            {/* Posiciones de asiento en filas - renderizadas como rectángulos igual que sillas */}
+            {/* Posiciones de asiento en filas - solo las que NO están en secciones existentes */}
             {elements
               .filter(el => el.type === 'seatRow' && el.seatPositions)
-              .map(el => el.seatPositions.map((seatPos, index) => {
-                const positionKey = `${el.id}-${index}`;
-                const isSelected = selectedSeatPositionsForSection.has(positionKey);
-                const isHovered = hoveredSeat && hoveredSeat.positionKey === positionKey;
-                return (
-                  <g key={positionKey} data-seat-position-id={positionKey}>
-                    <rect
-                      x={seatPos.x - 25}
-                      y={seatPos.y - 25}
-                      width={50}
-                      height={50}
-                      fill={isSelected ? '#8b5cf6' : '#6b7280'}
-                      stroke={isSelected ? '#7c3aed' : '#374151'}
-                      strokeWidth={isSelected ? 3 : 2}
-                      rx={4}
-                      className="cursor-pointer"
-                    />
-                    <text
-                      x={seatPos.x}
-                      y={seatPos.y + 4}
-                      textAnchor="middle"
-                      fontSize="12"
-                      fontWeight="bold"
-                      fill="white"
-                      pointerEvents="none"
-                    >
-                      {seatPos.row}{seatPos.seatNumber}
-                    </text>
-                  </g>
-                );
-              }))}
+              .map(el => el.seatPositions
+                .map((seatPos, index) => {
+                  const positionKey = `${el.id}-${index}`;
+                  // Excluir posiciones que ya están en secciones existentes
+                  if (chairsWithSections.has(positionKey)) return null;
+
+                  const isSelected = selectedSeatPositionsForSection.has(positionKey);
+                  const isHovered = hoveredSeat && hoveredSeat.positionKey === positionKey;
+
+                  // Determinar colores basados en el estado
+                  let fillColor = '#6b7280' // Gris por defecto
+                  let strokeColor = '#374151'
+                  let strokeWidth = 2
+
+                  if (isSelected) {
+                    fillColor = '#8b5cf6' // Púrpura para seleccionado
+                    strokeColor = '#7c3aed'
+                    strokeWidth = 3
+                  }
+
+                  return (
+                    <g key={positionKey} data-seat-position-id={positionKey}>
+                      <rect
+                        x={seatPos.x - 25}
+                        y={seatPos.y - 25}
+                        width={50}
+                        height={50}
+                        fill={fillColor}
+                        stroke={strokeColor}
+                        strokeWidth={strokeWidth}
+                        rx={4}
+                        className="cursor-pointer"
+                      />
+                      <text
+                        x={seatPos.x}
+                        y={seatPos.y + 4}
+                        textAnchor="middle"
+                        fontSize="12"
+                        fontWeight="bold"
+                        fill="white"
+                        pointerEvents="none"
+                      >
+                        {seatPos.row}{seatPos.seatNumber}
+                      </text>
+                    </g>
+                  );
+                })
+                .filter(Boolean) // Remover nulls
+              )}
           </>
         )}
 

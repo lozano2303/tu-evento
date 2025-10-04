@@ -25,8 +25,9 @@ import useDragAndDrop from './Hooks/useDragAndDrop';
 import DrawingCanvas from '../DrawingCanvas';
 import { MapProvider, useMapState, useMapDispatch } from '../context/MapContext';
 import { saveEventLayout, getEventLayoutByEventId, hasEventLayout, updateEventLayout } from '../../services/EventLayoutService.js';
-import { createSection, getAllSections } from '../../services/SectionService.js';
-import { createSeat, getSeatsBySection, updateSeatStatus } from '../../services/SeatService.js';
+import { createSection, updateSection, deleteSection, getAllSections } from '../../services/SectionService.js';
+import { createSectionName, getAllSectionNames } from '../../services/SectionNameService.js';
+import { createSeat, getSeatsBySection, updateSeatStatus, updateSeat } from '../../services/SeatService.js';
 import { createTicketWithSeats } from '../../services/TicketService.js';
 import eventLayoutExample from './LayoutStructureExample.js';
 
@@ -130,7 +131,7 @@ const tools = [
 };
 
 // Properties panel
-const PropertiesPanel = ({ selectedElement, selectedIds, elements, onUpdate, onDelete, units, setUnits }) => {
+const PropertiesPanel = ({ selectedElement, selectedIds, elements, onUpdate, onDelete, units, setUnits, availableSectionNames, onSectionNameChange }) => {
   const [inputValues, setInputValues] = useState({});
 
   // Calcular información de selección múltiple
@@ -277,13 +278,26 @@ const PropertiesPanel = ({ selectedElement, selectedIds, elements, onUpdate, onD
           <>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Sección</label>
-              <input
-                type="text"
-                value={selectedElement.meta?.label || ''}
-                onChange={(e) => onUpdate(selectedElement.id, { meta: { ...selectedElement.meta, label: e.target.value } })}
+              <select
+                value={selectedElement.meta?.sectionNameId || ''}
+                onChange={(e) => {
+                  const oldLabel = selectedElement.meta?.label;
+                  const selected = availableSectionNames.find(sn => sn.sectionNameID === parseInt(e.target.value));
+                  const newLabel = selected?.name || '';
+                  onUpdate(selectedElement.id, { meta: { ...selectedElement.meta, sectionNameId: parseInt(e.target.value), label: newLabel, isModified: true } });
+                  if (oldLabel !== newLabel) {
+                    onSectionNameChange(selectedElement.id, oldLabel, newLabel);
+                  }
+                }}
                 className="w-full p-2 border border-gray-300 rounded text-sm"
-                placeholder="Ej: VIP, General"
-              />
+              >
+                <option value="">Selecciona un nombre</option>
+                {availableSectionNames.map(sectionName => (
+                  <option key={sectionName.sectionNameID} value={sectionName.sectionNameID}>
+                    {sectionName.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
@@ -292,7 +306,7 @@ const PropertiesPanel = ({ selectedElement, selectedIds, elements, onUpdate, onD
                 step="0.01"
                 min="0"
                 value={selectedElement.meta?.price || ''}
-                onChange={(e) => onUpdate(selectedElement.id, { meta: { ...selectedElement.meta, price: parseFloat(e.target.value) || 0 } })}
+                onChange={(e) => onUpdate(selectedElement.id, { meta: { ...selectedElement.meta, price: parseFloat(e.target.value) || 0, isModified: true } })}
                 className="w-full p-2 border border-gray-300 rounded text-sm"
                 placeholder="Ej: 50.00"
               />
@@ -301,7 +315,7 @@ const PropertiesPanel = ({ selectedElement, selectedIds, elements, onUpdate, onD
               <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
               <select
                 value={selectedElement.meta?.category || 'General'}
-                onChange={(e) => onUpdate(selectedElement.id, { meta: { ...selectedElement.meta, category: e.target.value } })}
+                onChange={(e) => onUpdate(selectedElement.id, { meta: { ...selectedElement.meta, category: e.target.value, isModified: true } })}
                 className="w-full p-2 border border-gray-300 rounded text-sm"
               >
                 <option value="General">General</option>
@@ -579,8 +593,15 @@ const FloorPlanDesignerInner = () => {
   const [selectedSeatPositionsForSection, setSelectedSeatPositionsForSection] = useState(new Set());
   const [selectedIds, setSelectedIds] = useState(new Set()); // Para selección múltiple en modo normal
   const [showSectionCreationModal, setShowSectionCreationModal] = useState(false);
-  const [newSectionData, setNewSectionData] = useState({ name: '', price: 0 });
+  const [newSectionData, setNewSectionData] = useState({ sectionNameId: '', price: 0 });
   const [isCreatingSection, setIsCreatingSection] = useState(false);
+  const [showSectionsPanel, setShowSectionsPanel] = useState(false);
+  const [availableSectionNames, setAvailableSectionNames] = useState([]);
+  const [existingSections, setExistingSections] = useState([]); // Secciones existentes del evento
+  const [chairsWithSections, setChairsWithSections] = useState(new Map()); // Mapa de chairId -> sectionName (incluye pendientes)
+  const [existingChairsWithSections, setExistingChairsWithSections] = useState(new Map()); // Mapa solo de sillas en secciones existentes (BD)
+  const [editingSection, setEditingSection] = useState(null); // Sección que se está editando
+  const [existingSectionsLoaded, setExistingSectionsLoaded] = useState(false); // Para saber si ya se cargaron las secciones existentes
 
   // Load existing layout for the event when component mounts
   useEffect(() => {
@@ -593,8 +614,53 @@ const FloorPlanDesignerInner = () => {
     }
   }, [eventId]);
 
+  // Load available section names when modal opens
+  useEffect(() => {
+    if (showSectionCreationModal) {
+      loadAvailableSectionNames();
+    }
+  }, [showSectionCreationModal]);
+
+  // Load available section names when section creation mode is activated
+  // Load existing sections only once per session to avoid overriding
+  // the state of chairs assigned to new sections that haven't been saved yet
+  useEffect(() => {
+    if (isSectionCreationMode) {
+      loadAvailableSectionNames();
+      // Load existing sections only if not loaded before
+      if (!existingSectionsLoaded) {
+        loadExistingSections().then(() => {
+          setExistingSectionsLoaded(true);
+        });
+      }
+    }
+  }, [isSectionCreationMode, eventId, existingSectionsLoaded]);
+
   const snapToGridValue = (value, gridSize = 20) => {
     return Math.round(value / gridSize) * gridSize;
+  };
+
+  // Función para detectar si dos rectángulos se solapan
+  const rectanglesOverlap = (rect1, rect2) => {
+    return !(rect1.x + rect1.width / 2 < rect2.x - rect2.width / 2 ||
+             rect1.x - rect1.width / 2 > rect2.x + rect2.width / 2 ||
+             rect1.y + rect1.height / 2 < rect2.y - rect2.height / 2 ||
+             rect1.y - rect1.height / 2 > rect2.y + rect2.height / 2);
+  };
+
+  // Función para verificar si una nueva sección se solapa con secciones existentes
+  const checkSectionOverlap = (newSectionRect) => {
+    // Solo verificar solapamiento con secciones ya guardadas en BD, no con secciones pendientes
+    const existingSections = elements.filter(el => el.type === 'section' && el.meta?.isExistingSection);
+    return existingSections.some(existingSection => {
+      const existingRect = {
+        x: existingSection.x,
+        y: existingSection.y,
+        width: existingSection.width || 0,
+        height: existingSection.height || 0
+      };
+      return rectanglesOverlap(newSectionRect, existingRect);
+    });
   };
 
   const generateSeatGrid = (centerX, startY, cols, rows, spacingX, spacingY, sectionName = '') => {
@@ -852,7 +918,7 @@ const FloorPlanDesignerInner = () => {
       }
 
       if (toolShortcuts[e.key.toLowerCase()]) {
-        e.preventDefault()
+        try { e.preventDefault(); } catch {}
         setActiveTool(toolShortcuts[e.key.toLowerCase()])
         return
       }
@@ -863,27 +929,27 @@ const FloorPlanDesignerInner = () => {
       let updates = {}
 
       if (e.ctrlKey && e.key === 'z') {
-        e.preventDefault()
+        try { e.preventDefault(); } catch {}
         undo()
         return
       }
       if (e.ctrlKey && e.key === 'y') {
-        e.preventDefault()
+        try { e.preventDefault(); } catch {}
         redo()
         return
       }
       if (e.key === '+') {
-        e.preventDefault()
+        try { e.preventDefault(); } catch {}
         setZoom(prev => Math.min(4, prev + 0.2))
         return
       }
       if (e.key === '-') {
-        e.preventDefault()
+        try { e.preventDefault(); } catch {}
         setZoom(prev => Math.max(0.2, prev - 0.2))
         return
       }
       if (e.ctrlKey && e.key === 'c' && selectedId) {
-        e.preventDefault()
+        try { e.preventDefault(); } catch {}
         const element = elements.find(el => el.id === selectedId)
         if (element) {
           setClipboard({ ...element, id: nanoid() })
@@ -891,13 +957,13 @@ const FloorPlanDesignerInner = () => {
         return
       }
       if (e.ctrlKey && e.key === 'v' && clipboard) {
-        e.preventDefault()
+        try { e.preventDefault(); } catch {}
         const newEl = { ...clipboard, x: clipboard.x + 20, y: clipboard.y + 20 }
         pushSnapshot([...elements, newEl])
         return
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        e.preventDefault()
+        try { e.preventDefault(); } catch {}
         handleDelete(selectedId)
         return
       }
@@ -956,18 +1022,44 @@ const FloorPlanDesignerInner = () => {
 
 
   const exportMap = useCallback(() => {
+    // Contar elementos por tipo
+    const elementCounts = elements.reduce((acc, el) => {
+      acc[el.type] = (acc[el.type] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Información sobre secciones
+    const sections = elements.filter(el => el.type === 'section').map(section => ({
+      id: section.id,
+      name: section.meta?.label || 'Sin nombre',
+      price: section.meta?.price || 0,
+      isExisting: section.meta?.isExistingSection || false,
+      selectedChairs: section.meta?.selectedChairs?.length || 0,
+      selectedSeatPositions: section.meta?.selectedSeatPositions?.length || 0
+    }));
+
     const data = {
       exportedAt: new Date().toISOString(),
-      elements
+      eventId: eventId,
+      summary: {
+        totalElements: elements.length,
+        elementCounts,
+        sectionsCount: sections.length,
+        sections: sections
+      },
+      elements: elements
     };
+
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `map-export-${new Date().toISOString()}.json`;
+    a.download = `layout-event-${eventId}-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [elements]);
+
+    console.log('Layout exportado:', data);
+  }, [elements, eventId]);
 
   const importMap = useCallback((file) => {
     if (!file) return;
@@ -1005,146 +1097,428 @@ const FloorPlanDesignerInner = () => {
     }
 
     try {
-      // Extract sections from elements
-      const sections = elements.filter(el => el.type === 'section').map(section => ({
-        eventId: parseInt(eventId),
-        sectionName: section.meta?.label || 'Sección',
-        price: section.meta?.price || 0
-      }));
-
-      // Validate section names are unique
-      const sectionNames = sections.map(s => s.sectionName);
-      const uniqueNames = new Set(sectionNames);
-      if (uniqueNames.size !== sectionNames.length) {
-        alert('Error: No se permiten secciones con nombres duplicados. Cada sección debe tener un nombre único.');
-        return;
-      }
-
-      // Check for empty section names
-      if (sectionNames.some(name => !name.trim())) {
-        alert('Error: Todas las secciones deben tener un nombre válido.');
-        return;
-      }
-
-      // Save sections
-      const createdSections = [];
-      for (const section of sections) {
-        const result = await createSection(section);
-        if (result.success && result.data) {
-          createdSections.push(result.data); // Assume returns section with id
-        }
-      }
-
-      // Check if layout exists
+      // Check if layout exists first
       const hasLayoutResult = await hasEventLayout(eventId);
       let eventLayoutID;
 
       if (hasLayoutResult.success && hasLayoutResult.data) {
-        // Layout exists, get its ID and update
+        // Layout exists, get its ID
         const existingLayoutResult = await getEventLayoutByEventId(eventId);
         if (existingLayoutResult.success) {
           eventLayoutID = existingLayoutResult.data.eventLayoutID;
-          // Update the layout
-          const updateData = {
-            layoutData: {
-              elements: elements,
-              exportedAt: new Date().toISOString(),
-              name: `event_${eventId}`
-            }
-          };
-          const updateResult = await updateEventLayout(eventLayoutID, updateData);
-          if (!updateResult.success) {
-            console.error('Error al actualizar el layout: ' + (updateResult.message || 'Error desconocido'));
-            return;
-          }
-          alert('Layout actualizado con éxito');
         } else {
           throw new Error('Error getting existing layout: ' + (existingLayoutResult.message || 'Unknown error'));
         }
       } else {
-        // Create new layout
+        // Create new layout first to get eventLayoutID
         const layoutData = {
-          eventId: parseInt(eventId), // Event ID as number
+          eventId: parseInt(eventId),
           layoutData: {
-            elements: elements,
+            elements: [], // Empty initially, will be updated after processing sections
             exportedAt: new Date().toISOString(),
             name: `event_${eventId}`
           }
-          // createdAt will be set by backend
         };
 
         const layoutResult = await saveEventLayout(layoutData);
         if (!layoutResult.success) {
-          console.error('Error al guardar el layout: ' + (layoutResult.message || 'Error desconocido'));
+          console.error('Error al crear el layout: ' + (layoutResult.message || 'Error desconocido'));
           return;
         }
 
-        eventLayoutID = layoutResult.data.eventLayoutID; // Use the correct field name
-        alert('Layout creado con éxito');
+        eventLayoutID = layoutResult.data.eventLayoutID;
       }
 
-      // Extract seats from chair elements
-      const chairElements = elements.filter(el => el.type === 'chair');
-      const defaultSectionId = createdSections.length > 0 ? createdSections[0].id : 1; // Use first section or fallback to 1
+      // Process sections from elements
+      const sectionElements = elements.filter(el => el.type === 'section');
+      const createdSections = [];
 
+      // Process sections marked for deletion in the JSON
+      const sectionsMarkedForDeletion = elements.filter(el => el.type === 'section' && el.meta?.markedForDeletion);
+
+      // Delete sections that are marked for deletion
+      let deletedSectionsCount = 0;
+      for (const sectionElement of sectionsMarkedForDeletion) {
+        try {
+          const sectionId = sectionElement.meta?.sectionId || sectionElement.meta?.sectionID;
+          if (sectionId) {
+            console.log('Attempting to delete section with ID:', sectionId, sectionElement);
+            const deleteResult = await deleteSection(sectionId);
+            if (!deleteResult.success) {
+              console.error('Error deleting section:', sectionElement, deleteResult.message);
+              alert(`Error eliminando sección "${sectionElement.meta?.label}": ${deleteResult.message}`);
+            } else {
+              console.log('Successfully deleted section:', sectionElement);
+              deletedSectionsCount++;
+            }
+          } else {
+            console.warn('Section marked for deletion but no sectionId found:', sectionElement);
+            alert(`No se puede eliminar la sección "${sectionElement.meta?.label}" porque no tiene ID válido.`);
+          }
+        } catch (error) {
+          console.error('Error deleting section:', sectionElement, error);
+          alert(`Error eliminando sección "${sectionElement.meta?.label}": ${error.message}`);
+        }
+      }
+
+      // Remove deleted sections from elements array (they are no longer needed in the JSON)
+      const elementsAfterDeletion = elements.filter(el =>
+        !(el.type === 'section' && el.meta?.markedForDeletion)
+      );
+
+      console.log('Sections marked for deletion:', sectionsMarkedForDeletion.length);
+      console.log('Elements before deletion:', elements.length);
+      console.log('Elements after deletion:', elementsAfterDeletion.length);
+
+      // Reload seats after deletions to sync with backend
+      await loadSeatsForEvent();
+
+      console.log('Processing sections for save:', sectionElements.length);
+      for (const sectionElement of sectionElements) {
+        console.log('Processing section:', sectionElement.id, sectionElement.meta);
+        const sectionNameId = sectionElement.meta?.sectionNameId;
+        const price = sectionElement.meta?.price || 0;
+        const isModified = sectionElement.meta?.isModified;
+        const sectionId = sectionElement.meta?.sectionId;
+
+        if (!sectionNameId) {
+          console.warn('Sección sin sectionNameId, saltando:', sectionElement);
+          continue;
+        }
+
+        let sectionResult;
+        if (isModified && sectionId) {
+          // Actualizar sección existente
+          const sectionData = {
+            sectionID: sectionId,
+            eventId: parseInt(eventId),
+            sectionNameID: sectionNameId,
+            price: price
+          };
+          sectionResult = await updateSection(sectionData);
+        } else {
+          // Crear nueva sección
+          const sectionData = {
+            eventId: parseInt(eventId),
+            sectionNameID: sectionNameId,
+            price: price
+          };
+          sectionResult = await createSection(sectionData);
+        }
+
+        if (sectionResult.success && sectionResult.data) {
+          console.log('Section created/updated successfully:', sectionResult.data);
+          createdSections.push({
+            ...sectionResult.data,
+            elementId: sectionElement.id, // Keep reference to canvas element
+            selectedChairs: sectionElement.meta?.selectedChairs || [],
+            selectedSeatPositions: sectionElement.meta?.selectedSeatPositions || [],
+            isModified: isModified
+          });
+        } else {
+          console.error('Error creando/actualizando sección:', sectionResult.message);
+        }
+      }
+
+      // Create seats for each section
       const createdSeats = [];
-      for (const chair of chairElements) {
+      const updatedSeats = [];
+
+      // Create seats for individual chairs not in sections
+      const individualChairs = elementsAfterDeletion.filter(el => el.type === 'chair' && !el.backendId);
+      for (const chair of individualChairs) {
         const seatData = {
-          sectionID: defaultSectionId, // Use actual section ID
+          sectionID: null,
           eventLayoutID: eventLayoutID,
-          seatNumber: chair.seatNumber,
-          row: chair.row, // Use row from chair element
+          seatNumber: chair.seatNumber || 1,
+          row: chair.row || 'A',
           x: Math.round(chair.x),
           y: Math.round(chair.y),
-          status: chair.status === 'AVAILABLE' ? false : true // Convert to boolean
+          status: false
         };
-        const result = await createSeat(seatData);
-        if (result.success && result.data) {
+
+        const seatResult = await createSeat(seatData);
+        if (seatResult.success && seatResult.data) {
           createdSeats.push({
             ...chair,
-            backendId: result.data.id, // Store the backend ID
-            seatNumber: result.data.seatNumber,
-            row: result.data.row, // Ensure row is set
-            status: result.data.status
+            backendId: seatResult.data.id,
+            sectionId: null
           });
         }
       }
 
-      // Update chair elements with backend IDs
+      for (const section of createdSections) {
+        let seatCounter = 1;
+
+        // Process selected chairs for this section
+        for (const chairId of section.selectedChairs) {
+          const chairElement = elements.find(el => el.id === chairId && el.type === 'chair');
+          if (chairElement) {
+            // Check if this chair already exists in the backend (was moved from another section)
+            const existingSeat = seats.find(seat =>
+              Math.abs(seat.x - chairElement.x) < 5 &&
+              Math.abs(seat.y - chairElement.y) < 5
+            );
+
+            if (existingSeat) {
+              // Update existing seat to new section
+              const updateData = {
+                id: existingSeat.id,
+                sectionID: section.sectionID || section.id,
+                seatNumber: seatCounter++,
+                row: chairElement.row || 'A',
+                x: Math.round(chairElement.x),
+                y: Math.round(chairElement.y),
+                status: false
+              };
+
+              const updateResult = await updateSeat(existingSeat.id, updateData);
+              if (updateResult.success) {
+                updatedSeats.push({
+                  ...chairElement,
+                  backendId: existingSeat.id,
+                  sectionId: section.sectionID || section.id
+                });
+              }
+            } else {
+              // Create new seat
+              const seatData = {
+                sectionID: section.sectionID || section.id,
+                eventLayoutID: eventLayoutID,
+                seatNumber: seatCounter++,
+                row: chairElement.row || 'A',
+                x: Math.round(chairElement.x),
+                y: Math.round(chairElement.y),
+                status: false
+              };
+
+              const seatResult = await createSeat(seatData);
+              if (seatResult.success && seatResult.data) {
+                createdSeats.push({
+                  ...chairElement,
+                  backendId: seatResult.data.id,
+                  sectionId: section.sectionID || section.id
+                });
+              }
+            }
+          }
+        }
+
+        // Process selected seat positions for this section
+        for (const positionKey of section.selectedSeatPositions) {
+          const [seatRowId, seatIndex] = positionKey.split('-');
+          const seatRow = elements.find(el => el.id === seatRowId && el.type === 'seatRow');
+          if (seatRow && seatRow.seatPositions && seatRow.seatPositions[seatIndex]) {
+            const seatPos = seatRow.seatPositions[seatIndex];
+
+            // Check if this seat position already exists in the backend
+            const existingSeat = seats.find(seat =>
+              Math.abs(seat.x - seatPos.x) < 5 &&
+              Math.abs(seat.y - seatPos.y) < 5
+            );
+
+            if (existingSeat) {
+              // Update existing seat to new section
+              const updateData = {
+                id: existingSeat.id,
+                sectionID: section.sectionID || section.id,
+                seatNumber: seatCounter++,
+                row: seatPos.row || 'A',
+                x: Math.round(seatPos.x),
+                y: Math.round(seatPos.y),
+                status: false
+              };
+
+              const updateResult = await updateSeat(existingSeat.id, updateData);
+              if (updateResult.success) {
+                updatedSeats.push({
+                  ...seatPos,
+                  backendId: existingSeat.id,
+                  sectionId: section.sectionID || section.id,
+                  positionKey: positionKey
+                });
+              }
+            } else {
+              // Create new seat
+              const seatData = {
+                sectionID: section.sectionID || section.id,
+                eventLayoutID: eventLayoutID,
+                seatNumber: seatCounter++,
+                row: seatPos.row || 'A',
+                x: Math.round(seatPos.x),
+                y: Math.round(seatPos.y),
+                status: false
+              };
+
+              const seatResult = await createSeat(seatData);
+              if (seatResult.success && seatResult.data) {
+                createdSeats.push({
+                  ...seatPos,
+                  backendId: seatResult.data.id,
+                  sectionId: section.sectionID || section.id,
+                  positionKey: positionKey
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // Update elements with backend IDs and clean up section metadata
       const updatedElements = elements.map(element => {
         if (element.type === 'chair') {
           const createdSeat = createdSeats.find(seat =>
             Math.abs(seat.x - element.x) < 5 &&
-            Math.abs(seat.y - element.y) < 5 &&
-            seat.seatNumber === element.seatNumber
+            Math.abs(seat.y - element.y) < 5
           );
           if (createdSeat) {
             return {
               ...element,
               backendId: createdSeat.backendId,
-              seatNumber: createdSeat.seatNumber,
-              row: createdSeat.row,
-              status: createdSeat.status ? 'OCCUPIED' : 'AVAILABLE'
+              sectionId: createdSeat.sectionId
             };
           }
+        } else if (element.type === 'section') {
+          // Remove temporary metadata used for creation, keep only visual properties
+          const { selectedChairs, selectedSeatPositions, sectionNameId, ...cleanMeta } = element.meta;
+          return {
+            ...element,
+            meta: cleanMeta
+          };
+        } else if (element.type === 'seatRow' && element.seatPositions) {
+          // Update seat positions with backend IDs
+          const updatedPositions = element.seatPositions.map((pos, index) => {
+            const positionKey = `${element.id}-${index}`;
+            const createdSeat = createdSeats.find(seat => seat.positionKey === positionKey);
+            if (createdSeat) {
+              return {
+                ...pos,
+                backendId: createdSeat.backendId,
+                sectionId: createdSeat.sectionId
+              };
+            }
+            return pos;
+          });
+          return {
+            ...element,
+            seatPositions: updatedPositions
+          };
         }
         return element;
       });
 
-      // Update the layout with the new elements containing backend IDs
+      // Update elements with backend IDs and clean up section metadata
+      let updatedElementsWithExisting = elementsAfterDeletion.map(element => {
+        if (element.type === 'chair') {
+          const createdSeat = createdSeats.find(seat =>
+            Math.abs(seat.x - element.x) < 5 &&
+            Math.abs(seat.y - element.y) < 5
+          );
+          if (createdSeat) {
+            return {
+              ...element,
+              backendId: createdSeat.backendId,
+              sectionId: createdSeat.sectionId
+            };
+          }
+        } else if (element.type === 'section') {
+          // Remove temporary metadata used for creation, keep only visual properties
+          const { selectedChairs, selectedSeatPositions, sectionNameId, ...cleanMeta } = element.meta;
+          return {
+            ...element,
+            meta: cleanMeta
+          };
+        } else if (element.type === 'seatRow' && element.seatPositions) {
+          // Update seat positions with backend IDs
+          const updatedPositions = element.seatPositions.map((pos, index) => {
+            const positionKey = `${element.id}-${index}`;
+            const createdSeat = createdSeats.find(seat => seat.positionKey === positionKey);
+            if (createdSeat) {
+              return {
+                ...pos,
+                backendId: createdSeat.backendId,
+                sectionId: createdSeat.sectionId
+              };
+            }
+            return pos;
+          });
+          return {
+            ...element,
+            seatPositions: updatedPositions
+          };
+        }
+        return element;
+      });
+
+      // Marcar secciones creadas como existentes para mostrar en verde
+      if (createdSections.length > 0) {
+        updatedElementsWithExisting = updatedElementsWithExisting.map(el => {
+          if (el.type === 'section') {
+            const createdSection = createdSections.find(cs => cs.elementId === el.id);
+            if (createdSection) {
+              return {
+                ...el,
+                meta: {
+                  ...el.meta,
+                  isExistingSection: true,
+                  sectionId: createdSection.sectionID
+                }
+              };
+            }
+          }
+          return el;
+        });
+      }
+
+      // Remove chair elements that have backendId to avoid duplication with BD seats
+      const finalElements = updatedElementsWithExisting.filter(element => {
+        if (element.type === 'chair' && element.backendId) {
+          return false;
+        }
+        if (element.type === 'seatRow' && element.seatPositions) {
+          // Remove positions that have backendId
+          element.seatPositions = element.seatPositions.filter(pos => !pos.backendId);
+          // If no positions left, remove the seatRow
+          if (element.seatPositions.length === 0) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      // Update the layout with processed elements (excluding deleted sections and with updated IDs)
       const updateData = {
         layoutData: {
-          elements: updatedElements,
+          elements: finalElements,
           exportedAt: new Date().toISOString(),
-          name: `event_${eventId}`
+          name: `event_${eventId}`,
+          sectionsCreated: createdSections.length,
+          sectionsDeleted: sectionsMarkedForDeletion.length,
+          seatsCreated: createdSeats.length
         }
       };
+
       const updateResult = await updateEventLayout(eventLayoutID, updateData);
-      if (!updateResult.success) {
-        console.error('Error updating layout with backend IDs: ' + (updateResult.message || 'Error desconocido'));
+      if (updateResult.success) {
+        alert(`Layout guardado exitosamente!\nSecciones creadas: ${createdSections.length}\nSecciones eliminadas: ${deletedSectionsCount}\nAsientos creados: ${createdSeats.length}\nAsientos actualizados: ${updatedSeats.length}`);
+
+        // Update local state with backend IDs (excluding deleted sections)
+        pushSnapshot(updatedElementsWithExisting);
+
+        // Asegurar que availableSectionNames esté cargado antes de recargar secciones
+        await loadAvailableSectionNames();
+
+        // Recargar secciones existentes para actualizar los mapas de sillas bloqueadas
+        // Esto es importante para sincronizar el estado después de guardar
+        await loadExistingSections();
+      } else {
+        console.error('Error updating layout with processed data: ' + (updateResult.message || 'Error desconocido'));
+        alert('Error al actualizar el layout con los datos procesados');
       }
+
     } catch (error) {
       console.error('Error saving layout to backend:', error);
+      alert('Error al guardar el layout: ' + error.message);
     }
   };
 
@@ -1158,20 +1532,79 @@ const FloorPlanDesignerInner = () => {
       const result = await getEventLayoutByEventId(eventIdParam);
       if (result.success && result.data && result.data.layoutData && result.data.layoutData.elements) {
         let elements = result.data.layoutData.elements;
+
+        // Load available section names first (needed for section name resolution)
+        await loadAvailableSectionNames();
+
+        // Load existing sections first to get synchronization data
+        await loadExistingSections();
+        await loadSeatsForEvent();
+
+        // Synchronize section elements with backend data
+        elements = elements.map(element => {
+          if (element.type === 'section') {
+            // Find matching section in existing sections
+            const matchingSection = existingSections.find(section =>
+              section.id === element.meta?.sectionId ||
+              section.sectionID === element.meta?.sectionId ||
+              (section.sectionNameID === element.meta?.sectionNameId &&
+               Math.abs(section.price - (element.meta?.price || 0)) < 0.01)
+            );
+
+            if (matchingSection) {
+              // Mark as existing section and update with backend data
+              return {
+                ...element,
+                meta: {
+                  ...element.meta,
+                  isExistingSection: true,
+                  sectionId: matchingSection.id || matchingSection.sectionID,
+                  label: availableSectionNames.find(sn => sn.sectionNameID === matchingSection.sectionNameID)?.name || element.meta?.label || 'Sección'
+                }
+              };
+            }
+          }
+          return element;
+        });
+
+        // Load seats from BD and add as chair elements if not already in elements
+        const seatsFromBD = await loadSeatsForEvent();
+        for (const seat of seatsFromBD) {
+          // Check if this seat is already in elements as a chair
+          const existingChair = elements.find(el => el.type === 'chair' && Math.abs(el.x - seat.x) < 5 && Math.abs(el.y - seat.y) < 5);
+          if (!existingChair) {
+            // Add as chair element
+            const chairElement = {
+              id: `chair-${seat.id}`,
+              type: 'chair',
+              x: seat.x,
+              y: seat.y,
+              width: 50,
+              height: 50,
+              fill: 'transparent',
+              stroke: '#6b7280',
+              row: seat.row,
+              seatNumber: seat.seatNumber,
+              status: seat.status,
+              backendId: seat.id,
+              sectionId: seat.sectionID
+            };
+            elements.push(chairElement);
+          }
+        }
+
         dispatch({ type: 'SET_ELEMENTS', payload: elements });
         historyWrapper.pushState(elements);
         console.log('Layout cargado exitosamente desde el backend para evento:', eventIdParam);
 
-        // Load seats associated with this layout
-        await loadSeatsForEvent();
-
-        // Match loaded seats with seatPositions in elements to identify seats by backend ID
+        // Match loaded seats with elements to identify seats by backend ID
         elements = matchSeatsWithLayout(elements);
         dispatch({ type: 'SET_ELEMENTS', payload: elements });
         historyWrapper.pushState(elements);
       } else {
         console.log('No se encontró layout existente para el evento:', eventIdParam, '- Esto es normal para eventos nuevos');
-        // Don't show error for new events without layouts
+        // For new events, still load existing sections if any (shouldn't happen but safety check)
+        await loadExistingSections();
       }
     } catch (error) {
       console.error('Error loading layout from backend:', error);
@@ -1264,6 +1697,188 @@ const FloorPlanDesignerInner = () => {
     }
   };
 
+  const loadAvailableSectionNames = async () => {
+    try {
+      const result = await getAllSectionNames();
+      if (result.success) {
+        setAvailableSectionNames(result.data);
+      } else {
+        console.error('Error cargando nombres de sección:', result.message);
+        setAvailableSectionNames([]);
+      }
+    } catch (error) {
+      console.error('Error cargando nombres de sección:', error);
+      setAvailableSectionNames([]);
+    }
+  };
+
+  const loadExistingSections = async () => {
+    if (!eventId) return;
+
+    try {
+      const result = await getAllSections();
+      if (result.success) {
+        const eventSections = result.data.filter(s => s.eventId === parseInt(eventId));
+        const validSections = eventSections.filter(section => section.id || section.sectionID);
+        setExistingSections(validSections);
+
+        // Limpiar completamente los mapas antes de recargar
+        const chairsMap = new Map();
+
+        // Para cada sección existente con ID válido, cargar sus asientos
+        for (const section of validSections) {
+          const seatsResult = await getSeatsBySection(section.id || section.sectionID);
+          if (seatsResult.success) {
+            // Encontrar el nombre de la sección
+            const sectionName = availableSectionNames.find(sn => sn.sectionNameID === section.sectionNameID)?.name || 'Sección';
+
+            // Mapear asientos a elementos del canvas
+            for (const seat of seatsResult.data) {
+              // Buscar el elemento chair correspondiente por coordenadas
+              const chairElement = elements.find(el =>
+                el.type === 'chair' &&
+                Math.abs(el.x - seat.x) < 5 &&
+                Math.abs(el.y - seat.y) < 5
+              );
+
+              if (chairElement) {
+                chairsMap.set(chairElement.id, sectionName);
+              }
+
+              // También buscar en seatRows
+              const seatRowElement = elements.find(el =>
+                el.type === 'seatRow' &&
+                el.seatPositions &&
+                el.seatPositions.some(pos =>
+                  Math.abs(pos.x - seat.x) < 5 &&
+                  Math.abs(pos.y - seat.y) < 5
+                )
+              );
+
+              if (seatRowElement) {
+                const positionIndex = seatRowElement.seatPositions.findIndex(pos =>
+                  Math.abs(pos.x - seat.x) < 5 &&
+                  Math.abs(pos.y - seat.y) < 5
+                );
+                if (positionIndex >= 0) {
+                  const positionKey = `${seatRowElement.id}-${positionIndex}`;
+                  chairsMap.set(positionKey, sectionName);
+                }
+              }
+            }
+          }
+        }
+
+        // Crear mapa solo para sillas de secciones existentes (ya guardadas en BD)
+        const existingChairsMap = new Map();
+        for (const section of eventSections) {
+          const sectionName = availableSectionNames.find(sn => sn.sectionNameID === section.sectionNameID)?.name || 'Sección';
+          const seatsResult = await getSeatsBySection(section.id || section.sectionID);
+          if (seatsResult.success) {
+            for (const seat of seatsResult.data) {
+              // Buscar el elemento chair correspondiente por coordenadas
+              const chairElement = elements.find(el =>
+                el.type === 'chair' &&
+                Math.abs(el.x - seat.x) < 5 &&
+                Math.abs(el.y - seat.y) < 5
+              );
+
+              if (chairElement) {
+                existingChairsMap.set(chairElement.id, sectionName);
+              }
+
+              // También buscar en seatRows
+              const seatRowElement = elements.find(el =>
+                el.type === 'seatRow' &&
+                el.seatPositions &&
+                el.seatPositions.some(pos =>
+                  Math.abs(pos.x - seat.x) < 5 &&
+                  Math.abs(pos.y - seat.y) < 5
+                )
+              );
+
+              if (seatRowElement) {
+                const positionIndex = seatRowElement.seatPositions.findIndex(pos =>
+                  Math.abs(pos.x - seat.x) < 5 &&
+                  Math.abs(pos.y - seat.y) < 5
+                );
+                if (positionIndex >= 0) {
+                  const positionKey = `${seatRowElement.id}-${positionIndex}`;
+                  existingChairsMap.set(positionKey, sectionName);
+                }
+              }
+            }
+          }
+        }
+
+        // Actualizar ambos mapas: mantener secciones pendientes y agregar secciones existentes
+        // existingChairsWithSections solo incluye sillas de secciones ya guardadas en BD
+        const updatedChairsMap = new Map(chairsWithSections);
+        // Agregar sillas de secciones existentes (no sobrescribir secciones pendientes)
+        for (const [key, value] of chairsMap) {
+          updatedChairsMap.set(key, value);
+        }
+        setChairsWithSections(updatedChairsMap);
+        setExistingChairsWithSections(existingChairsMap);
+
+        // Crear elementos visuales para secciones existentes que no estén ya en el canvas
+        const existingSectionElements = elements.filter(el => el.type === 'section');
+        const existingSectionIds = new Set(existingSectionElements.map(el => el.meta?.sectionId || el.meta?.sectionID));
+        const sectionsToCreateVisuals = validSections.filter(section => !existingSectionIds.has(section.id || section.sectionID));
+
+        if (sectionsToCreateVisuals.length > 0) {
+          // Crear elementos visuales para secciones existentes faltantes (solo para visualización)
+          const sectionVisualElements = [];
+          for (const section of sectionsToCreateVisuals) {
+            const sectionName = availableSectionNames.find(sn => sn.sectionNameID === section.sectionNameID)?.name || 'Sección';
+            const seatsResult = await getSeatsBySection(section.id || section.sectionID);
+
+            if (seatsResult.success && seatsResult.data.length > 0) {
+              // Calcular bounding box de los asientos de esta sección
+              const sectionSeats = seatsResult.data;
+              const minX = Math.min(...sectionSeats.map(s => s.x));
+              const minY = Math.min(...sectionSeats.map(s => s.y));
+              const maxX = Math.max(...sectionSeats.map(s => s.x));
+              const maxY = Math.max(...sectionSeats.map(s => s.y));
+
+              const sectionElement = {
+                id: `existing-section-${section.sectionID}`,
+                type: 'section',
+                x: minX - 50,
+                y: minY - 50,
+                width: (maxX - minX) + 100,
+                height: (maxY - minY) + 100,
+                meta: {
+                  label: sectionName,
+                  price: section.price || 0,
+                  category: 'General',
+                  sectionId: section.id || section.sectionID,
+                  sectionNameId: section.sectionNameID,
+                  isExistingSection: true // Marcar como sección existente
+                }
+              };
+              sectionVisualElements.push(sectionElement);
+            }
+          }
+
+          if (sectionVisualElements.length > 0) {
+            const updatedElements = [...elements, ...sectionVisualElements];
+            dispatch({ type: 'SET_ELEMENTS', payload: updatedElements });
+            historyWrapper.pushState(updatedElements);
+          }
+        }
+      } else {
+        console.error('Error cargando secciones existentes:', result.message);
+        setExistingSections([]);
+        setChairsWithSections(new Map());
+      }
+    } catch (error) {
+      console.error('Error cargando secciones existentes:', error);
+      setExistingSections([]);
+      setChairsWithSections(new Map());
+    }
+  };
+
   const loadSeatsForEvent = async () => {
     if (!eventId) return;
     try {
@@ -1271,10 +1886,12 @@ const FloorPlanDesignerInner = () => {
       const sectionsResult = await getAllSections();
       if (sectionsResult.success) {
         const eventSections = sectionsResult.data.filter(s => s.eventId === parseInt(eventId));
-        // Para cada sección, cargar asientos
+        // Para cada sección con ID válido, cargar asientos
         const allSeats = [];
-        for (const section of eventSections) {
-          const seatsResult = await getSeatsBySection(section.id);
+        const validSections = eventSections.filter(section => section.id || section.sectionID);
+        for (const section of validSections) {
+          const sectionId = section.id || section.sectionID;
+          const seatsResult = await getSeatsBySection(sectionId);
           if (seatsResult.success) {
             allSeats.push(...seatsResult.data);
           }
@@ -1298,7 +1915,7 @@ const FloorPlanDesignerInner = () => {
             Math.abs(seat.y - position.y) < 5 &&
             seat.seatNumber === position.seatNumber
           );
-
+  
           if (matchingSeat) {
             return {
               ...position,
@@ -1315,6 +1932,23 @@ const FloorPlanDesignerInner = () => {
       return element;
     });
     return updatedElements;
+  };
+  
+  const handleSectionNameChange = (sectionId, oldName, newName) => {
+    const updatedChairsMap = new Map(chairsWithSections);
+    const updatedExistingChairsMap = new Map(existingChairsWithSections);
+    chairsWithSections.forEach((sectName, chairId) => {
+      if (sectName === oldName) {
+        updatedChairsMap.set(chairId, newName);
+      }
+    });
+    existingChairsWithSections.forEach((sectName, chairId) => {
+      if (sectName === oldName) {
+        updatedExistingChairsMap.set(chairId, newName);
+      }
+    });
+    setChairsWithSections(updatedChairsMap);
+    setExistingChairsWithSections(updatedExistingChairsMap);
   };
 
   const handlePurchaseSeats = async () => {
@@ -1381,11 +2015,16 @@ const FloorPlanDesignerInner = () => {
             </button>
             <button
               onClick={() => {
-                setIsSectionCreationMode(!isSectionCreationMode);
-                if (!isSectionCreationMode) {
+                const newMode = !isSectionCreationMode;
+                setIsSectionCreationMode(newMode);
+                if (!newMode) {
+                  // Al desactivar el modo, limpiar selecciones pero mantener las sillas de secciones existentes
                   setSelectedChairsForSection(new Set());
                   setSelectedSeatPositionsForSection(new Set());
+                  // NO recargar las secciones existentes automáticamente para evitar sobrescribir
+                  // las asignaciones de sillas a secciones nuevas que aún no están guardadas
                 } else {
+                  // Al activar el modo, limpiar selecciones previas
                   setSelectedChairsForSection(new Set());
                   setSelectedSeatPositionsForSection(new Set());
                 }
@@ -1394,13 +2033,303 @@ const FloorPlanDesignerInner = () => {
             >
               🎯 Seleccionar Sillas
             </button>
+            <button
+              onClick={() => setShowSectionsPanel(!showSectionsPanel)}
+              className={`px-3 py-1 text-sm rounded border ${showSectionsPanel ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-700 border-gray-300'}`}
+            >
+              📋 Secciones ({elements.filter(el => el.type === 'section' && !el.meta?.markedForDeletion).length}{elements.filter(el => el.type === 'section' && el.meta?.markedForDeletion).length > 0 ? ` + ${elements.filter(el => el.type === 'section' && el.meta?.markedForDeletion).length} eliminadas` : ''})
+            </button>
             {isSectionCreationMode && (selectedChairsForSection.size > 0 || selectedSeatPositionsForSection.size > 0) && (
-              <button
-                onClick={() => setShowSectionCreationModal(true)}
-                className="px-4 py-2 text-sm rounded border bg-green-500 text-white border-green-500 hover:bg-green-600"
-              >
-                ✅ Crear Sección ({selectedChairsForSection.size + selectedSeatPositionsForSection.size} sillas)
-              </button>
+              (() => {
+                // Determinar qué botones mostrar basado en las sillas seleccionadas
+                const selectedFromSection = new Set();
+                const selectedNotFromSection = new Set();
+
+                selectedChairsForSection.forEach(chairId => {
+                  if (chairsWithSections.get(chairId) === editingSection?.meta?.label) {
+                    selectedFromSection.add(chairId);
+                  } else {
+                    selectedNotFromSection.add(chairId);
+                  }
+                });
+
+                selectedSeatPositionsForSection.forEach(posKey => {
+                  if (chairsWithSections.get(posKey) === editingSection?.meta?.label) {
+                    selectedFromSection.add(posKey);
+                  } else {
+                    selectedNotFromSection.add(posKey);
+                  }
+                });
+
+                const showAddButton = selectedNotFromSection.size > 0;
+                const showRemoveButton = selectedFromSection.size > 0;
+
+                return editingSection ? (
+                  // Modo edición: botones dinámicos
+                  <div className="flex gap-2">
+                    {showAddButton && (
+                      <button
+                        onClick={() => {
+                          // Agregar sillas seleccionadas a la sección existente
+                          if (selectedChairsForSection.size + selectedSeatPositionsForSection.size === 0) {
+                            alert('No hay sillas seleccionadas para agregar');
+                            return;
+                          }
+
+                          // Verificar que no se estén intentando agregar sillas que ya pertenecen a otras secciones
+                          const conflictingChairs = [];
+                          selectedChairsForSection.forEach(chairId => {
+                            const sectionName = chairsWithSections.get(chairId);
+                            if (sectionName && sectionName !== editingSection.meta?.label) {
+                              conflictingChairs.push(`${sectionName} (silla)`);
+                            }
+                          });
+                          selectedSeatPositionsForSection.forEach(posKey => {
+                            const sectionName = chairsWithSections.get(posKey);
+                            if (sectionName && sectionName !== editingSection.meta?.label) {
+                              conflictingChairs.push(`${sectionName} (posición)`);
+                            }
+                          });
+
+                          if (conflictingChairs.length > 0) {
+                            alert(`No se pueden agregar sillas que pertenecen a otras secciones: ${conflictingChairs.join(', ')}`);
+                            return;
+                          }
+
+                          // Calcular nuevo bounding box con todas las sillas (existentes + nuevas)
+                          const allChairElements = [];
+                          const sectionName = editingSection.meta?.label;
+
+                          // Agregar sillas existentes de la sección
+                          const currentChairs = editingSection.meta?.selectedChairs || [];
+                          const currentPositions = editingSection.meta?.selectedSeatPositions || [];
+
+                          currentChairs.forEach(chairId => {
+                            const chairEl = elements.find(el => el.id === chairId);
+                            if (chairEl) allChairElements.push(chairEl);
+                          });
+
+                          currentPositions.forEach(posKey => {
+                            const [seatRowId, seatIndex] = posKey.split('-');
+                            const seatRow = elements.find(el => el.id === seatRowId);
+                            if (seatRow && seatRow.seatPositions && seatRow.seatPositions[seatIndex]) {
+                              allChairElements.push({
+                                x: seatRow.seatPositions[seatIndex].x,
+                                y: seatRow.seatPositions[seatIndex].y
+                              });
+                            }
+                          });
+
+                          // Agregar sillas nuevas seleccionadas
+                          selectedChairsForSection.forEach(chairId => {
+                            const chairEl = elements.find(el => el.id === chairId);
+                            if (chairEl) allChairElements.push(chairEl);
+                          });
+
+                          selectedSeatPositionsForSection.forEach(posKey => {
+                            const [seatRowId, seatIndex] = posKey.split('-');
+                            const seatRow = elements.find(el => el.id === seatRowId);
+                            if (seatRow && seatRow.seatPositions && seatRow.seatPositions[seatIndex]) {
+                              allChairElements.push({
+                                x: seatRow.seatPositions[seatIndex].x,
+                                y: seatRow.seatPositions[seatIndex].y
+                              });
+                            }
+                          });
+
+                          // Calcular nuevo bounding box
+                          const newBoundingBox = {
+                            x: (Math.min(...allChairElements.map(c => c.x)) + Math.max(...allChairElements.map(c => c.x))) / 2,
+                            y: (Math.min(...allChairElements.map(c => c.y)) + Math.max(...allChairElements.map(c => c.y))) / 2,
+                            width: Math.max(...allChairElements.map(c => c.x)) - Math.min(...allChairElements.map(c => c.x)) + 100,
+                            height: Math.max(...allChairElements.map(c => c.y)) - Math.min(...allChairElements.map(c => c.y)) + 100
+                          };
+
+                          // Agregar las sillas a la sección y actualizar bounding box
+                          const updatedElements = elements.map(el => {
+                            if (el.id === editingSection.id) {
+                              const newChairs = Array.from(selectedChairsForSection);
+                              const newPositions = Array.from(selectedSeatPositionsForSection);
+
+                              return {
+                                ...el,
+                                x: newBoundingBox.x,
+                                y: newBoundingBox.y,
+                                width: newBoundingBox.width,
+                                height: newBoundingBox.height,
+                                meta: {
+                                  ...el.meta,
+                                  selectedChairs: [...new Set([...currentChairs, ...newChairs])],
+                                  selectedSeatPositions: [...new Set([...currentPositions, ...newPositions])],
+                                  isModified: true
+                                }
+                              };
+                            }
+                            return el;
+                          });
+
+                          pushSnapshot(updatedElements);
+
+                          // Actualizar mapas de sillas
+                          const updatedChairsMap = new Map(chairsWithSections);
+                          selectedChairsForSection.forEach(chairId => {
+                            updatedChairsMap.set(chairId, sectionName);
+                          });
+                          selectedSeatPositionsForSection.forEach(posKey => {
+                            updatedChairsMap.set(posKey, sectionName);
+                          });
+                          setChairsWithSections(updatedChairsMap);
+
+                          // Limpiar selecciones y salir del modo edición
+                          setSelectedChairsForSection(new Set());
+                          setSelectedSeatPositionsForSection(new Set());
+                          setEditingSection(null);
+                          setIsSectionCreationMode(false);
+
+                          alert(`✅ Agregadas ${selectedChairsForSection.size + selectedSeatPositionsForSection.size} sillas a la sección "${sectionName}"`);
+                        }}
+                        className="px-4 py-2 text-sm rounded border bg-green-500 text-white border-green-500 hover:bg-green-600"
+                        title="Agregar sillas seleccionadas a la sección"
+                      >
+                        ➕ Agregar ({selectedNotFromSection.size})
+                      </button>
+                    )}
+
+                    {showRemoveButton && (
+                      <button
+                        onClick={() => {
+                          // Quitar sillas seleccionadas de la sección existente
+                          const sectionName = editingSection.meta?.label;
+
+                          if (selectedChairsForSection.size + selectedSeatPositionsForSection.size === 0) {
+                            alert('No hay sillas seleccionadas para quitar. Selecciona las sillas que quieres quitar de la sección.');
+                            return;
+                          }
+
+                          // Verificar que las sillas seleccionadas pertenezcan a esta sección
+                          const validChairsToRemove = [];
+                          const validPositionsToRemove = [];
+
+                          selectedChairsForSection.forEach(chairId => {
+                            if (chairsWithSections.get(chairId) === sectionName) {
+                              validChairsToRemove.push(chairId);
+                            }
+                          });
+                          selectedSeatPositionsForSection.forEach(posKey => {
+                            if (chairsWithSections.get(posKey) === sectionName) {
+                              validPositionsToRemove.push(posKey);
+                            }
+                          });
+
+                          if (validChairsToRemove.length + validPositionsToRemove.length === 0) {
+                            alert('Las sillas seleccionadas no pertenecen a esta sección. Solo puedes quitar sillas que ya están en la sección que estás editando.');
+                            return;
+                          }
+
+                          // Verificar que queden al menos algunas sillas en la sección
+                          const currentChairs = editingSection.meta?.selectedChairs || [];
+                          const currentPositions = editingSection.meta?.selectedSeatPositions || [];
+                          const remainingChairs = currentChairs.filter(id => !validChairsToRemove.includes(id));
+                          const remainingPositions = currentPositions.filter(key => !validPositionsToRemove.includes(key));
+
+                          if (remainingChairs.length + remainingPositions.length === 0) {
+                            alert('No puedes quitar todas las sillas de la sección. Debe quedar al menos una silla.');
+                            return;
+                          }
+
+                          // Calcular nuevo bounding box con las sillas restantes
+                          const remainingChairElements = [];
+
+                          // Agregar sillas restantes
+                          remainingChairs.forEach(chairId => {
+                            const chairEl = elements.find(el => el.id === chairId);
+                            if (chairEl) remainingChairElements.push(chairEl);
+                          });
+
+                          remainingPositions.forEach(posKey => {
+                            const [seatRowId, seatIndex] = posKey.split('-');
+                            const seatRow = elements.find(el => el.id === seatRowId);
+                            if (seatRow && seatRow.seatPositions && seatRow.seatPositions[seatIndex]) {
+                              remainingChairElements.push({
+                                x: seatRow.seatPositions[seatIndex].x,
+                                y: seatRow.seatPositions[seatIndex].y
+                              });
+                            }
+                          });
+
+                          // Calcular nuevo bounding box
+                          let newBoundingBox = null;
+                          if (remainingChairElements.length > 0) {
+                            newBoundingBox = {
+                              x: (Math.min(...remainingChairElements.map(c => c.x)) + Math.max(...remainingChairElements.map(c => c.x))) / 2,
+                              y: (Math.min(...remainingChairElements.map(c => c.y)) + Math.max(...remainingChairElements.map(c => c.y))) / 2,
+                              width: Math.max(...remainingChairElements.map(c => c.x)) - Math.min(...remainingChairElements.map(c => c.x)) + 100,
+                              height: Math.max(...remainingChairElements.map(c => c.y)) - Math.min(...remainingChairElements.map(c => c.y)) + 100
+                            };
+                          }
+
+                          // Quitar las sillas de la sección y actualizar bounding box
+                          const updatedElements = elements.map(el => {
+                            if (el.id === editingSection.id) {
+                              const updateData = {
+                                meta: {
+                                  ...el.meta,
+                                  selectedChairs: remainingChairs,
+                                  selectedSeatPositions: remainingPositions,
+                                  isModified: true
+                                }
+                              };
+
+                              // Actualizar bounding box si hay sillas restantes
+                              if (newBoundingBox) {
+                                updateData.x = newBoundingBox.x;
+                                updateData.y = newBoundingBox.y;
+                                updateData.width = newBoundingBox.width;
+                                updateData.height = newBoundingBox.height;
+                              }
+
+                              return { ...el, ...updateData };
+                            }
+                            return el;
+                          });
+
+                          pushSnapshot(updatedElements);
+
+                          // Actualizar mapas de sillas (liberar las sillas quitadas)
+                          const updatedChairsMap = new Map(chairsWithSections);
+                          validChairsToRemove.forEach(chairId => {
+                            updatedChairsMap.delete(chairId);
+                          });
+                          validPositionsToRemove.forEach(posKey => {
+                            updatedChairsMap.delete(posKey);
+                          });
+                          setChairsWithSections(updatedChairsMap);
+
+                          // Limpiar selecciones y salir del modo edición
+                          setSelectedChairsForSection(new Set());
+                          setSelectedSeatPositionsForSection(new Set());
+                          setEditingSection(null);
+                          setIsSectionCreationMode(false);
+
+                          alert(`✅ Quitadas ${validChairsToRemove.length + validPositionsToRemove.length} sillas de la sección "${sectionName}"`);
+                        }}
+                        className="px-4 py-2 text-sm rounded border bg-red-500 text-white border-red-500 hover:bg-red-600"
+                        title="Quitar sillas seleccionadas de la sección"
+                      >
+                        ➖ Quitar ({selectedFromSection.size})
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  // Modo creación: botón normal
+                  <button
+                    onClick={() => setShowSectionCreationModal(true)}
+                    className="px-4 py-2 text-sm rounded border bg-green-500 text-white border-green-500 hover:bg-green-600"
+                  >
+                    ✅ Crear Sección ({selectedChairsForSection.size + selectedSeatPositionsForSection.size} sillas)
+                  </button>
+                );
+              })()
             )}
             {isSectionCreationMode && (
               <button
@@ -1418,7 +2347,7 @@ const FloorPlanDesignerInner = () => {
         </div>
 
         <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <span>Elementos: {elements?.length || 0}</span>
+          <span>Elementos: {(elements?.filter(el => !(el.type === 'section' && el.meta?.markedForDeletion)) || []).length}</span>
           <span>•</span>
           <span>Herramienta: {activeTool}</span>
           <span>•</span>
@@ -1471,18 +2400,25 @@ const FloorPlanDesignerInner = () => {
       {showSectionCreationModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Crear Nueva Sección</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {editingSection ? `Editar Sección "${editingSection.meta?.label || 'Sin nombre'}"` : 'Crear Nueva Sección'}
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Sección</label>
-                <input
-                  type="text"
-                  value={newSectionData.name}
-                  onChange={(e) => setNewSectionData(prev => ({ ...prev, name: e.target.value }))}
+                <select
+                  value={newSectionData.sectionNameId}
+                  onChange={(e) => setNewSectionData(prev => ({ ...prev, sectionNameId: e.target.value }))}
                   className="w-full p-2 border border-gray-300 rounded"
-                  placeholder="Ej: VIP, General"
                   autoFocus
-                />
+                >
+                  <option value="">Selecciona un nombre de sección</option>
+                  {availableSectionNames.map(sectionName => (
+                    <option key={sectionName.sectionNameID} value={sectionName.sectionNameID}>
+                      {sectionName.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
@@ -1497,134 +2433,112 @@ const FloorPlanDesignerInner = () => {
                 />
               </div>
               <div className="text-sm text-gray-600">
-                Sillas seleccionadas: {selectedChairsForSection.size + selectedSeatPositionsForSection.size}
+                {editingSection ? (
+                  <>
+                    Sillas actuales: {selectedChairsForSection.size + selectedSeatPositionsForSection.size}
+                    <br />
+                    <span className="text-blue-600">Selecciona sillas adicionales para agregar a la sección</span>
+                  </>
+                ) : (
+                  `Sillas seleccionadas: ${selectedChairsForSection.size + selectedSeatPositionsForSection.size}`
+                )}
               </div>
             </div>
             <div className="flex gap-2 mt-6">
               <button
-                disabled={isCreatingSection}
-                onClick={async () => {
-                  if (!newSectionData.name.trim()) {
-                    alert('Por favor ingrese un nombre para la sección');
-                    return;
-                  }
-
-                  // Check for duplicate section names in current layout
-                  const existingSectionNamesInLayout = elements
-                    .filter(el => el.type === 'section')
-                    .map(el => el.meta?.label || 'Sección');
-
-                  if (existingSectionNamesInLayout.includes(newSectionData.name.trim())) {
-                    alert('Ya existe una sección con este nombre en el diseño actual. Por favor elija un nombre diferente.');
-                    return;
-                  }
-
-                  // Additional validation will be handled by backend
-
-                  setIsCreatingSection(true);
-
-                  try {
-                    // Verificar token de autenticación
-                    const token = localStorage.getItem('token');
-                    console.log('Token disponible:', !!token);
-
-                    // Crear la sección
-                    const sectionData = {
-                      eventId: parseInt(eventId),
-                      sectionName: newSectionData.name.trim(),
-                      price: newSectionData.price
-                    };
-                    console.log('Datos a enviar para crear sección:', sectionData);
-
-                    const sectionResult = await createSection(sectionData);
-                    console.log('Respuesta completa de createSection:', sectionResult);
-
-                    // Check for validation errors from backend
-                    if (!sectionResult || !sectionResult.success) {
-                      const errorMessage = sectionResult?.message || 'Error desconocido al crear la sección';
-                      alert('Error: ' + errorMessage);
+                onClick={() => {
+                  if (editingSection) {
+                    // Modo edición: actualizar la sección existente con las nuevas sillas
+                    if (selectedChairsForSection.size + selectedSeatPositionsForSection.size === 0) {
+                      alert('La sección debe tener al menos una silla');
                       return;
                     }
 
-                    // Verificar diferentes estructuras de respuesta posibles
-                    let newSection = null;
-                    if (sectionResult.data) {
-                      newSection = sectionResult.data;
-                    } else if (typeof sectionResult === 'object' && sectionResult.sectionID) {
-                      newSection = sectionResult;
-                    }
-
-                    console.log('Nueva sección extraída:', newSection);
-
-                    if (!newSection) {
-                      alert('Error: No se recibió datos de la sección creada. Respuesta: ' + JSON.stringify(sectionResult));
-                      return;
-                    }
-
-                    // Obtener o crear eventLayoutID
-                    let eventLayoutID = 1; // Valor por defecto
-                    try {
-                      const hasLayoutResult = await hasEventLayout(eventId);
-                      if (hasLayoutResult.success && hasLayoutResult.data) {
-                        const existingLayoutResult = await getEventLayoutByEventId(eventId);
-                        if (existingLayoutResult.success && existingLayoutResult.data) {
-                          eventLayoutID = existingLayoutResult.data.eventLayoutID;
-                        }
-                      }
-                    } catch (error) {
-                      console.warn('No se pudo obtener eventLayoutID, usando valor por defecto:', error);
-                    }
-
-                    // Crear asientos para la sección
-                    let seatCounter = 1;
-
-                    // Procesar sillas individuales
-                    const selectedChairElements = elements.filter(el => selectedChairsForSection.has(el.id));
-                    for (let i = 0; i < selectedChairElements.length; i++) {
-                      const chair = selectedChairElements[i];
-                      const seatData = {
-                        sectionID: newSection.sectionID || newSection.id || newSection,
-                        eventLayoutID: eventLayoutID,
-                        seatNumber: seatCounter++,
-                        row: 'A', // Por ahora fila fija
-                        x: Math.round(chair.x),
-                        y: Math.round(chair.y),
-                        status: false
-                      };
-
-                      const seatResult = await createSeat(seatData);
-                      if (!seatResult.success) {
-                        console.error('Error creando asiento:', seatResult.message);
-                      }
-                    }
-
-                    // Procesar posiciones de asiento en filas
-                    for (const positionKey of selectedSeatPositionsForSection) {
-                      const [seatRowId, seatIndex] = positionKey.split('-');
-                      const seatRow = elements.find(el => el.id === seatRowId);
-                      if (seatRow && seatRow.seatPositions && seatRow.seatPositions[seatIndex]) {
-                        const seatPos = seatRow.seatPositions[seatIndex];
-                        const seatData = {
-                          sectionID: newSection.sectionID || newSection.id,
-                          eventLayoutID: eventLayoutID,
-                          seatNumber: seatCounter++,
-                          row: seatPos.row || 'A',
-                          x: Math.round(seatPos.x),
-                          y: Math.round(seatPos.y),
-                          status: false
+                    // Actualizar el elemento de sección existente
+                    const updatedElements = elements.map(el => {
+                      if (el.id === editingSection.id) {
+                        return {
+                          ...el,
+                          meta: {
+                            ...el.meta,
+                            selectedChairs: Array.from(selectedChairsForSection),
+                            selectedSeatPositions: Array.from(selectedSeatPositionsForSection),
+                            // Marcar como modificada para usar PUT al guardar
+                            isModified: true
+                          }
                         };
-
-                        const seatResult = await createSeat(seatData);
-                        if (!seatResult.success) {
-                          console.error('Error creando asiento:', seatResult.message);
-                        }
                       }
+                      return el;
+                    });
+
+                    pushSnapshot(updatedElements);
+
+                    // Actualizar el mapa de sillas
+                    const updatedChairsMap = new Map(chairsWithSections);
+                    const updatedExistingChairsMap = new Map(existingChairsWithSections);
+                    const sectionName = editingSection.meta?.label || 'Sección';
+
+                    // Agregar sillas nuevas (esto incluye sillas "robadas" de otras secciones)
+                    selectedChairsForSection.forEach(chairId => {
+                      updatedChairsMap.set(chairId, sectionName);
+                      // Si era una silla existente de otra sección, marcar que necesita ser actualizada
+                      if (existingChairsWithSections.has(chairId) && existingChairsWithSections.get(chairId) !== sectionName) {
+                        updatedExistingChairsMap.set(chairId, sectionName);
+                      }
+                    });
+                    selectedSeatPositionsForSection.forEach(positionKey => {
+                      updatedChairsMap.set(positionKey, sectionName);
+                      // Si era una silla existente de otra sección, marcar que necesita ser actualizada
+                      if (existingChairsWithSections.has(positionKey) && existingChairsWithSections.get(positionKey) !== sectionName) {
+                        updatedExistingChairsMap.set(positionKey, sectionName);
+                      }
+                    });
+
+                    setChairsWithSections(updatedChairsMap);
+                    setExistingChairsWithSections(updatedExistingChairsMap);
+
+                    // Limpiar estado
+                    setShowSectionCreationModal(false);
+                    setEditingSection(null);
+                    setSelectedChairsForSection(new Set());
+                    setSelectedSeatPositionsForSection(new Set());
+
+                    alert(`✅ Sección "${sectionName}" actualizada con ${selectedChairsForSection.size + selectedSeatPositionsForSection.size} asientos.\n\nLos cambios se guardarán cuando guardes el layout.`);
+
+                    // Resetear modo
+                    setIsSectionCreationMode(false);
+
+                  } else {
+                    // Modo creación: crear nueva sección
+                    if (!newSectionData.sectionNameId) {
+                      alert('Por favor selecciona un nombre para la sección');
+                      return;
+                    }
+
+                    if (!newSectionData.price || newSectionData.price <= 0) {
+                      alert('El precio de la sección debe ser mayor a 0');
+                      return;
+                    }
+
+                    // Obtener el nombre del SectionName seleccionado
+                    const selectedSectionName = availableSectionNames.find(sn => sn.sectionNameID === parseInt(newSectionData.sectionNameId));
+                    const sectionNameLabel = selectedSectionName ? selectedSectionName.name : 'Sección';
+
+                    // Verificar si ya existe una sección con este nombre en el diseño actual
+                    const existingSectionWithSameName = elements
+                      .filter(el => el.type === 'section' && !el.meta?.markedForDeletion)
+                      .find(section => section.meta?.label === sectionNameLabel);
+
+                    if (existingSectionWithSameName) {
+                      alert(`Ya existe una sección con el nombre "${sectionNameLabel}" en el diseño actual.\n\nPor favor selecciona un nombre diferente o elimina la sección existente primero.`);
+                      return;
                     }
 
                     // Calcular bounding box de todas las sillas seleccionadas
                     const allSelectedElements = [];
 
                     // Agregar sillas individuales
+                    const selectedChairElements = elements.filter(el => selectedChairsForSection.has(el.id));
                     selectedChairElements.forEach(chair => allSelectedElements.push(chair));
 
                     // Agregar posiciones de asiento
@@ -1639,51 +2553,91 @@ const FloorPlanDesignerInner = () => {
                       }
                     }
 
-                    // Crear elemento visual de sección
+                    if (allSelectedElements.length === 0) {
+                      alert('Por favor selecciona al menos una silla para la sección');
+                      return;
+                    }
+
+                    // Calcular el rectángulo de la nueva sección
+                    const newSectionRect = {
+                      x: (Math.min(...allSelectedElements.map(c => c.x)) + Math.max(...allSelectedElements.map(c => c.x))) / 2,
+                      y: (Math.min(...allSelectedElements.map(c => c.y)) + Math.max(...allSelectedElements.map(c => c.y))) / 2,
+                      width: Math.max(...allSelectedElements.map(c => c.x)) - Math.min(...allSelectedElements.map(c => c.x)) + 100,
+                      height: Math.max(...allSelectedElements.map(c => c.y)) - Math.min(...allSelectedElements.map(c => c.y)) + 100
+                    };
+
+                    // Verificar solapamiento con secciones existentes
+                    if (checkSectionOverlap(newSectionRect)) {
+                      alert('❌ No se puede crear la sección aquí porque se solapa con una sección existente.\n\nPor favor, selecciona sillas en un área sin secciones o elimina la sección existente primero.');
+                      return;
+                    }
+
+                    // Crear elemento visual de sección con información completa para guardar después
                     const sectionElement = {
                       id: nanoid(),
                       type: 'section',
-                      x: Math.min(...allSelectedElements.map(c => c.x)) - 50,
-                      y: Math.min(...allSelectedElements.map(c => c.y)) - 50,
-                      width: Math.max(...allSelectedElements.map(c => c.x)) - Math.min(...allSelectedElements.map(c => c.x)) + 100,
-                      height: Math.max(...allSelectedElements.map(c => c.y)) - Math.min(...allSelectedElements.map(c => c.y)) + 100,
+                      x: newSectionRect.x,
+                      y: newSectionRect.y,
+                      width: newSectionRect.width,
+                      height: newSectionRect.height,
                       meta: {
-                        label: newSectionData.name.trim(),
+                        label: sectionNameLabel,
                         price: newSectionData.price,
-                        category: 'General'
+                        sectionNameId: parseInt(newSectionData.sectionNameId),
+                        category: 'General',
+                        // Guardar referencias a las sillas seleccionadas para crear en backend después
+                        selectedChairs: Array.from(selectedChairsForSection),
+                        selectedSeatPositions: Array.from(selectedSeatPositionsForSection)
                       }
                     };
 
                     pushSnapshot([...elements, sectionElement]);
 
+                    // Actualizar el mapa de sillas asociadas con la nueva sección
+                    // Esto incluye "robar" sillas de otras secciones si es necesario
+                    const updatedChairsMap = new Map(chairsWithSections);
+                    const updatedExistingChairsMap = new Map(existingChairsWithSections);
+
+                    selectedChairElements.forEach(chair => {
+                      updatedChairsMap.set(chair.id, sectionNameLabel);
+                      // Si era una silla existente, marcar que necesita ser actualizada
+                      if (existingChairsWithSections.has(chair.id)) {
+                        updatedExistingChairsMap.set(chair.id, sectionNameLabel);
+                      }
+                    });
+                    selectedSeatPositionsForSection.forEach(positionKey => {
+                      updatedChairsMap.set(positionKey, sectionNameLabel);
+                      // Si era una silla existente, marcar que necesita ser actualizada
+                      if (existingChairsWithSections.has(positionKey)) {
+                        updatedExistingChairsMap.set(positionKey, sectionNameLabel);
+                      }
+                    });
+
+                    setChairsWithSections(updatedChairsMap);
+                    setExistingChairsWithSections(updatedExistingChairsMap);
+
                     // Limpiar estado
                     setShowSectionCreationModal(false);
-                    setNewSectionData({ name: '', price: 0 });
+                    setNewSectionData({ sectionNameId: '', price: 0 });
                     setSelectedChairsForSection(new Set());
                     setSelectedSeatPositionsForSection(new Set());
-                    setIsSectionCreationMode(false);
 
-                    // Mostrar notificación de éxito más prominente
-                    const successMessage = `✅ Sección "${newSectionData.name}" creada exitosamente con ${selectedChairElements.length} asientos`;
+                    // Mostrar notificación de éxito
+                    const successMessage = `✅ Sección "${sectionNameLabel}" agregada al diseño con ${allSelectedElements.length} asientos.\n\nIMPORTANTE: Las secciones y asientos se crearán en el sistema solo cuando guardes el layout.`;
                     alert(successMessage);
 
                     // Resetear automáticamente el modo de selección
                     setIsSectionCreationMode(false);
-                  } catch (error) {
-                    console.error('Error creando sección:', error);
-                    alert('Error al crear la sección');
-                  } finally {
-                    setIsCreatingSection(false);
                   }
                 }}
                 className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
               >
-                {isCreatingSection ? '⏳ Creando...' : 'Crear Sección'}
+                {editingSection ? 'Actualizar Sección' : 'Agregar al Diseño'}
               </button>
               <button
                 onClick={() => {
                   setShowSectionCreationModal(false);
-                  setNewSectionData({ name: '', price: 0 });
+                  setNewSectionData({ sectionNameId: '', price: 0 });
                 }}
                 className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
               >
@@ -1697,7 +2651,7 @@ const FloorPlanDesignerInner = () => {
       <div className="flex-1 flex">
         <ToolPanel activeTool={activeTool} setActiveTool={setActiveTool} onUndo={undo} onRedo={redo} canUndo={canUndo} canRedo={canRedo} onAddSample={addSample} />
           <DrawingCanvas
-            elements={elements || []}
+            elements={(elements || []).filter(el => !(el.type === 'section' && el.meta?.markedForDeletion))}
             selectedElementId={selectedId}
             selectedIds={selectedIds}
             onSelect={(id) => {
@@ -1743,7 +2697,30 @@ const FloorPlanDesignerInner = () => {
             isSectionCreationMode={isSectionCreationMode}
             selectedChairsForSection={selectedChairsForSection}
             selectedSeatPositionsForSection={selectedSeatPositionsForSection}
+            chairsWithSections={chairsWithSections}
+            existingChairsWithSections={existingChairsWithSections}
             onChairSelectForSection={(chairId) => {
+              // Verificar si la silla ya pertenece a alguna sección
+              if (chairsWithSections.has(chairId)) {
+                const sectionName = chairsWithSections.get(chairId);
+                const isExisting = existingChairsWithSections.has(chairId);
+
+                // Si la silla pertenece a otra sección (no la que estamos editando), permitir "robarla" pero con confirmación
+                if (!editingSection || sectionName !== editingSection.meta?.label) {
+                  const message = isExisting
+                    ? `(ya guardada en el sistema)`
+                    : `(pendiente de guardar)`;
+
+                  const confirmMessage = `Esta silla ya pertenece a la sección "${sectionName}" ${message}.\n\n¿Quieres mover esta silla a la nueva sección? La silla será removida de "${sectionName}" y agregada a la sección actual.`;
+
+                  if (!window.confirm(confirmMessage)) {
+                    return;
+                  }
+
+                  // Si confirma, proceder con la selección (la silla será movida)
+                }
+              }
+
               const newSelected = new Set(selectedChairsForSection);
               if (newSelected.has(chairId)) {
                 newSelected.delete(chairId);
@@ -1753,6 +2730,27 @@ const FloorPlanDesignerInner = () => {
               setSelectedChairsForSection(newSelected);
             }}
             onSeatPositionSelectForSection={(positionKey) => {
+              // Verificar si la posición ya pertenece a alguna sección
+              if (chairsWithSections.has(positionKey)) {
+                const sectionName = chairsWithSections.get(positionKey);
+                const isExisting = existingChairsWithSections.has(positionKey);
+
+                // Si la silla pertenece a otra sección (no la que estamos editando), permitir "robarla" pero con confirmación
+                if (!editingSection || sectionName !== editingSection.meta?.label) {
+                  const message = isExisting
+                    ? `(ya guardada en el sistema)`
+                    : `(pendiente de guardar)`;
+
+                  const confirmMessage = `Esta silla ya pertenece a la sección "${sectionName}" ${message}.\n\n¿Quieres mover esta silla a la nueva sección? La silla será removida de "${sectionName}" y agregada a la sección actual.`;
+
+                  if (!window.confirm(confirmMessage)) {
+                    return;
+                  }
+
+                  // Si confirma, proceder con la selección (la silla será movida)
+                }
+              }
+
               const newSelected = new Set(selectedSeatPositionsForSection);
               if (newSelected.has(positionKey)) {
                 newSelected.delete(positionKey);
@@ -1776,7 +2774,336 @@ const FloorPlanDesignerInner = () => {
           onDelete={handleDelete}
           units={units}
           setUnits={setUnits}
+          availableSectionNames={availableSectionNames}
+          onSectionNameChange={handleSectionNameChange}
         />
+
+        {/* Panel de Secciones */}
+        {showSectionsPanel && (
+          <div className="w-80 bg-white border-l border-gray-200 p-4 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Secciones del Diseño</h3>
+              <button
+                onClick={() => setShowSectionsPanel(false)}
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {(() => {
+                const allSections = elements.filter(el => el.type === 'section');
+                const visibleSections = allSections.filter(el => !el.meta?.markedForDeletion);
+                const markedForDeletionSections = allSections.filter(el => el.meta?.markedForDeletion);
+
+                if (allSections.length === 0) {
+                  return (
+                    <p className="text-gray-500 text-sm text-center py-8">
+                      No hay secciones en el diseño actual
+                    </p>
+                  );
+                }
+
+                return (
+                  <>
+                    {/* Secciones visibles */}
+                    {visibleSections.map(section => {
+                      const isExistingSection = section.meta?.isExistingSection;
+                      const sectionName = section.meta?.label || 'Sin nombre';
+                      const price = section.meta?.price || 0;
+                      const selectedChairs = section.meta?.selectedChairs?.length || 0;
+                      const selectedPositions = section.meta?.selectedSeatPositions?.length || 0;
+                      const totalSeats = selectedChairs + selectedPositions;
+
+                      return (
+                        <div
+                          key={section.id}
+                          className={`border rounded-lg p-3 ${
+                            isExistingSection
+                              ? 'border-green-300 bg-green-50'
+                              : 'border-purple-300 bg-purple-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-gray-800">{sectionName}</h4>
+                            <span className={`px-2 py-1 text-xs rounded ${
+                              isExistingSection
+                                ? 'bg-green-600 text-white'
+                                : 'bg-purple-600 text-white'
+                            }`}>
+                              {isExistingSection ? 'Guardada' : 'Pendiente'}
+                            </span>
+                          </div>
+
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <div>Precio: ${price}</div>
+                            <div>Asientos: {totalSeats}</div>
+                            <div>Categoría: {section.meta?.category || 'General'}</div>
+                          </div>
+
+                          <div className="flex gap-2 mt-3">
+                            <button
+                              onClick={() => {
+                                // Centrar la vista en la sección Y entrar en modo edición
+                                const centerX = section.x;
+                                const centerY = section.y;
+                                // Usar dimensiones aproximadas del canvas (ajustar según necesidad)
+                                const canvasWidth = 800; // Ancho aproximado del canvas
+                                const canvasHeight = 600; // Alto aproximado del canvas
+                                setOffset({
+                                  x: centerX - (canvasWidth / zoom) / 2,
+                                  y: centerY - (canvasHeight / zoom) / 2
+                                });
+                                dispatch({ type: 'SET_SELECTED', payload: section.id });
+
+                                // Entrar en modo edición para esta sección
+                                setEditingSection(section);
+                                setIsSectionCreationMode(true);
+
+                                // NO preseleccionar sillas automáticamente - el usuario seleccionará cuáles quitar
+                                // Las sillas de la sección estarán visibles pero no seleccionadas
+                                setSelectedChairsForSection(new Set());
+                                setSelectedSeatPositionsForSection(new Set());
+                              }}
+                              className="flex-1 px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                            >
+                              Ver/Editar
+                            </button>
+
+                            {isExistingSection ? (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    // Entrar en modo edición para agregar más sillas
+                                    setEditingSection(section);
+                                    setIsSectionCreationMode(true);
+                                    // Pre-seleccionar las sillas existentes de esta sección
+                                    const existingChairs = new Set();
+                                    const existingPositions = new Set();
+
+                                    // Buscar sillas que pertenecen a esta sección
+                                    const targetSectionName = section.meta?.label;
+                                    chairsWithSections.forEach((sectName, chairId) => {
+                                      if (sectName === targetSectionName) {
+                                        if (chairId.includes('-')) {
+                                          existingPositions.add(chairId);
+                                        } else {
+                                          existingChairs.add(chairId);
+                                        }
+                                      }
+                                    });
+
+                                    setSelectedChairsForSection(existingChairs);
+                                    setSelectedSeatPositionsForSection(existingPositions);
+                                  }}
+                                  className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                                  title="Agregar más sillas a esta sección"
+                                >
+                                  ➕
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm(`¿Estás seguro de que quieres eliminar la sección "${sectionName}" del diseño?\n\nLas sillas de esta sección quedarán disponibles inmediatamente. La eliminación se completará cuando guardes el layout.`)) {
+                                      console.log('Marking section for deletion:', section);
+
+                                      // Marcar la sección como eliminada en el JSON del layout
+                                      const updatedElements = elements.map(el => {
+                                        if (el.id === section.id) {
+                                          console.log('Section meta before marking:', el.meta);
+                                          return {
+                                            ...el,
+                                            meta: {
+                                              ...el.meta,
+                                              markedForDeletion: true
+                                            }
+                                          };
+                                        }
+                                        return el;
+                                      });
+
+                                      // Liberar inmediatamente las sillas de esta sección
+                                      const updatedChairsMap = new Map(chairsWithSections);
+                                      const updatedExistingChairsMap = new Map(existingChairsWithSections);
+
+                                      // Buscar y liberar todas las sillas que pertenecían a esta sección
+                                      chairsWithSections.forEach((sectName, chairId) => {
+                                        if (sectName === sectionName) {
+                                          updatedChairsMap.delete(chairId);
+                                          updatedExistingChairsMap.delete(chairId);
+                                        }
+                                      });
+
+                                      // También liberar sillas que podrían estar en existingChairsWithSections
+                                      // con el mismo nombre de sección (por si hay inconsistencias)
+                                      existingChairsWithSections.forEach((sectName, chairId) => {
+                                        if (sectName === sectionName) {
+                                          updatedChairsMap.delete(chairId);
+                                          updatedExistingChairsMap.delete(chairId);
+                                        }
+                                      });
+
+                                      setChairsWithSections(updatedChairsMap);
+                                      setExistingChairsWithSections(updatedExistingChairsMap);
+
+                                      pushSnapshot(updatedElements);
+                                      dispatch({ type: 'SET_SELECTED', payload: null });
+
+                                      alert(`✅ Sección "${sectionName}" marcada para eliminar.\n\nLas sillas están ahora disponibles. Recuerda guardar el layout para completar la eliminación.`);
+                                    }
+                                  }}
+                                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                                  title="Marcar sección para eliminar (se completará al guardar)"
+                                >
+                                  🗑️
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  if (window.confirm(`¿Estás seguro de que quieres eliminar la sección "${sectionName}" del diseño?\n\nEsta acción no se puede deshacer.`)) {
+                                    // Eliminar la sección del diseño inmediatamente (sección pendiente)
+                                    const updatedElements = elements.filter(el => el.id !== section.id);
+
+                                    // Limpiar las referencias de sillas asociadas a esta sección
+                                    const updatedChairsMap = new Map(chairsWithSections);
+                                    if (section.meta?.selectedChairs) {
+                                      section.meta.selectedChairs.forEach(chairId => {
+                                        updatedChairsMap.delete(chairId);
+                                      });
+                                    }
+                                    if (section.meta?.selectedSeatPositions) {
+                                      section.meta.selectedSeatPositions.forEach(positionKey => {
+                                        updatedChairsMap.delete(positionKey);
+                                      });
+                                    }
+                                    setChairsWithSections(updatedChairsMap);
+
+                                    pushSnapshot(updatedElements);
+                                    dispatch({ type: 'SET_SELECTED', payload: null });
+                                  }
+                                }}
+                                className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                              >
+                                🗑️
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Secciones marcadas para eliminación */}
+                    {markedForDeletionSections.length > 0 && (
+                      <div className="mt-6">
+                        <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                          <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                          Secciones marcadas para eliminar
+                        </h4>
+                        {markedForDeletionSections.map(section => {
+                          const sectionName = section.meta?.label || 'Sin nombre';
+                          const price = section.meta?.price || 0;
+
+                          return (
+                            <div
+                              key={section.id}
+                              className="border border-red-300 bg-red-50 rounded-lg p-3 mb-2"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-medium text-gray-800">{sectionName}</h4>
+                                <span className="px-2 py-1 text-xs rounded bg-red-600 text-white">
+                                  Para eliminar
+                                </span>
+                              </div>
+
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div>Precio: ${price}</div>
+                                <div className="text-red-600 font-medium">
+                                  Se eliminará al guardar el layout
+                                </div>
+                              </div>
+
+                              <div className="flex gap-2 mt-3">
+                                <button
+                                  onClick={() => {
+                                    // Restaurar la sección (quitar marca de eliminación)
+                                    const updatedElements = elements.map(el => {
+                                      if (el.id === section.id) {
+                                        const { markedForDeletion, ...cleanMeta } = el.meta;
+                                        return {
+                                          ...el,
+                                          meta: cleanMeta
+                                        };
+                                      }
+                                      return el;
+                                    });
+
+                                    // Restaurar las referencias de sillas
+                                    const updatedChairsMap = new Map(chairsWithSections);
+                                    const updatedExistingChairsMap = new Map(existingChairsWithSections);
+
+                                    // Buscar y restaurar todas las sillas que pertenecían a esta sección
+                                    // (esto requiere que guardemos las referencias antes de marcar para eliminación)
+                                    // Por simplicidad, recargamos las secciones existentes
+                                    loadExistingSections();
+
+                                    pushSnapshot(updatedElements);
+                                    dispatch({ type: 'SET_SELECTED', payload: null });
+
+                                    alert(`✅ Sección "${sectionName}" restaurada.\n\nLas sillas volverán a estar asociadas a esta sección.`);
+                                  }}
+                                  className="flex-1 px-2 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                                  title="Restaurar sección"
+                                >
+                                  ↶ Restaurar
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                <div className="flex justify-between">
+                  <span>Total secciones:</span>
+                  <span className="font-medium">{elements.filter(el => el.type === 'section').length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Visibles:</span>
+                  <span className="font-medium text-blue-600">
+                    {elements.filter(el => el.type === 'section' && !el.meta?.markedForDeletion).length}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Guardadas:</span>
+                  <span className="font-medium text-green-600">
+                    {elements.filter(el => el.type === 'section' && el.meta?.isExistingSection && !el.meta?.markedForDeletion).length}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Pendientes:</span>
+                  <span className="font-medium text-purple-600">
+                    {elements.filter(el => el.type === 'section' && !el.meta?.isExistingSection && !el.meta?.markedForDeletion).length}
+                  </span>
+                </div>
+                {elements.filter(el => el.type === 'section' && el.meta?.markedForDeletion).length > 0 && (
+                  <div className="flex justify-between">
+                    <span>Para eliminar:</span>
+                    <span className="font-medium text-red-600">
+                      {elements.filter(el => el.type === 'section' && el.meta?.markedForDeletion).length}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {showGuide && (

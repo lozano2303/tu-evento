@@ -58,6 +58,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/eventRating/**").permitAll()
                 .requestMatchers("/api/v1/organizer-petitions/**").permitAll()
                 .requestMatchers("/api/v1/sections/**").permitAll()
+                .requestMatchers("/api/v1/section-names/**").permitAll()
                 .requestMatchers("/api/v1/tickets/**").permitAll()
                 .requestMatchers("/api/v1/notifications/**").permitAll()
                 .requestMatchers("/api/v1/seats/**").permitAll()

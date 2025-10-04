@@ -289,7 +289,7 @@ const SeatManagement = () => {
           >
             {sections.map(section => (
               <option key={section.id} value={section.id}>
-                {section.name} - {section.event?.name || 'Evento sin nombre'}
+                {section.sectionName?.name || section.name || 'Sección sin nombre'} - {section.event?.name || 'Evento sin nombre'}
               </option>
             ))}
           </select>
@@ -302,7 +302,7 @@ const SeatManagement = () => {
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-purple-400" />
                 <h2 className="text-xl font-semibold">
-                  Asientos de {selectedSection.name}
+                  Asientos de {selectedSection.sectionName?.name || selectedSection.name || 'Sección sin nombre'}
                 </h2>
               </div>
               <div className="flex items-center gap-2 text-gray-400">

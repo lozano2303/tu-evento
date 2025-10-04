@@ -33,7 +33,15 @@ class SecurityConfig {
     - AuthenticationProvider authProvider
     - jwtAuthenticationFilter jwtAuthenticationFilter
     - customOauht2UserService customOAuth2UserService
+    - OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler
     + SecurityFilterChain securityFilterChain(HttpSecurity)
+}
+
+class StorageConfig {
+    - String accessKey
+    - String secretKey
+    - String region
+    + S3Client s3Client()
 }
 
 class SwaggerConfig {

@@ -81,6 +81,9 @@ interface SeatTicketRepository {
 interface SectionRepository {
 }
 
+interface SectionNameRepository {
+}
+
 interface TicketRepository {
     + List<Ticket> findByEventId(Event)
     + List<Ticket> findByUserId(User)
@@ -90,6 +93,12 @@ interface TicketRepository {
 interface UserRepository {
     + List<User> findByFullNameContainingIgnoreCase(String)
     + List<User> findByFullName(String)
+}
+
+interface EventImgRepository {
+    + List<EventImg> findByEventId(int)
+    + List<EventImg> findAllByEventIdOrderByOrderAsc(int)
+    + void deleteByEventId(int)
 }
 
 @enduml

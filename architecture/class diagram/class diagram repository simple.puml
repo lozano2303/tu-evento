@@ -54,10 +54,16 @@ interface SeatTicketRepository {
 interface SectionRepository {
 }
 
+interface SectionNameRepository {
+}
+
 interface TicketRepository {
 }
 
 interface UserRepository {
+}
+
+interface EventImgRepository {
 }
 
 @enduml

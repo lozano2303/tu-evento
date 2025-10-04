@@ -60,9 +60,13 @@ class EventController {
     - EventService eventService
     + ResponseDto<EventDto> Event(EventDto)
     + ResponseDto<EventDto> updateEvent(ResponseEvent, EventDto)
-    + ResponseDto<EventDto> deleteEvent(EventDto)
+    + ResponseDto<EventDto> deleteEvent(int, HttpServletRequest)
+    + ResponseDto<EventDto> publishEvent(int)
     + ResponseDto<EventDto> getEvent(int)
+    + ResponseDto<List<EventDto>> getAllEvent(HttpServletRequest)
     + ResponseDto<List<EventDto>> getAllEvent()
+    + ResponseDto<List<EventDto>> filterEvents(String, LocalDate, boolean, Integer)
+    + ResponseDto<EventDto> completeEvent(int)
 }
 
 class EventLayoutController {
@@ -165,6 +169,25 @@ class UserController {
     + ResponseDto<UserDto> getUserById(int)
     + ResponseDto<List<UserDto>> getUsersByName(String)
     + ResponseDto<List<UserDto>> getAllUsers()
+}
+
+class EventImgController {
+    - EventImgService eventImgService
+    + ResponseEntity<?> uploadEventImg(int, MultipartFile, int)
+    + ResponseEntity<?> getEventImgs(int)
+    + ResponseEntity<String> deleteEventImg(int)
+}
+
+class StorageController {
+    - StorageService service
+    + ResponseEntity<String> uploadFile(MultipartFile)
+    + ResponseEntity<ByteArrayResource> downloadFile(String)
+    + ResponseEntity<String> deleteFile(String)
+}
+
+class AccountActivationEmailController {
+    - AccountActivationService accountActivationService
+    + ResponseEntity<?> sendActivationCodeEmail(int)
 }
 
 @enduml

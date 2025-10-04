@@ -16,9 +16,12 @@ import TuEvento.Backend.dto.responses.ResponseDto;
 
 import TuEvento.Backend.model.Section;
 import TuEvento.Backend.model.Event;
+import TuEvento.Backend.model.SectionName;
 import TuEvento.Backend.repository.SectionRepository;
 import TuEvento.Backend.repository.EventRepository;
+import TuEvento.Backend.repository.SectionNameRepository;
 import TuEvento.Backend.service.SectionService;
+import TuEvento.Backend.service.SeatService;
 
 
 @Service
@@ -30,19 +33,25 @@ public class SectionServiceImpl implements SectionService {
     @Autowired
     private EventRepository eventRepository;
 
+    @Autowired
+    private SectionNameRepository sectionNameRepository;
+
+    @Autowired
+    private SeatService seatService;
+
     @Override
     @Transactional
     public ResponseDto<SectionDto> insertSection(SectionDto sectionDto) {
         try {
-            // Check if section with same name already exists for this event
-            Optional<Section> existingSection = sectionRepository.findByEventID_IdAndSectionName(sectionDto.getEventId(), sectionDto.getSectionName());
+            // Check if section with same sectionNameID already exists for this event
+            Optional<Section> existingSection = sectionRepository.findByEventID_IdAndSectionNameID_SectionNameID(sectionDto.getEventId(), sectionDto.getSectionNameID());
             if (existingSection.isPresent()) {
                 return ResponseDto.error("Ya existe una sección con este nombre para este evento");
             }
 
             Section entity = new Section();
             entity.setEventID(eventRepository.findById(sectionDto.getEventId()).orElseThrow(() -> new RuntimeException("Event not found")));
-            entity.setSectionName(sectionDto.getSectionName());
+            entity.setSectionNameID(sectionNameRepository.findById(sectionDto.getSectionNameID()).orElseThrow(() -> new RuntimeException("SectionName not found")));
             entity.setPrice(BigDecimal.valueOf(sectionDto.getPrice()));
             Section savedEntity = sectionRepository.save(entity);
 
@@ -68,7 +77,7 @@ public class SectionServiceImpl implements SectionService {
         SectionDto dto = new SectionDto();
         dto.setSectionID(section.getSectionID());
         dto.setEventId(section.getEventID().getId());
-        dto.setSectionName(section.getSectionName());
+        dto.setSectionNameID(section.getSectionNameID().getSectionNameID());
         dto.setPrice(section.getPrice().doubleValue());
         return dto;
     }
@@ -79,7 +88,7 @@ public class SectionServiceImpl implements SectionService {
             Optional<Section> section = sectionRepository.findById(sectionDto.getSectionID());
             if (section.isPresent()) {
                 Section entity = section.get();
-                entity.setSectionName(sectionDto.getSectionName());
+                entity.setSectionNameID(sectionNameRepository.findById(sectionDto.getSectionNameID()).orElseThrow(() -> new RuntimeException("SectionName not found")));
                 entity.setPrice(BigDecimal.valueOf(sectionDto.getPrice()));
                 sectionRepository.save(entity);
 
@@ -101,8 +110,15 @@ public class SectionServiceImpl implements SectionService {
             return ResponseDto.error("Section no encontrada");
         }
         try {
+            // First delete all seats associated with this section
+            ResponseDto<String> seatDeleteResult = seatService.deleteSeatsBySection(id);
+            if (!seatDeleteResult.isSuccess()) {
+                return ResponseDto.error("Error al eliminar asientos de la sección: " + seatDeleteResult.getMessage());
+            }
+
+            // Then delete the section itself
             sectionRepository.deleteById(id);
-            return ResponseDto.ok("Section eliminada exitosamente");
+            return ResponseDto.ok("Section y sus asientos eliminados exitosamente");
         } catch (DataAccessException e) {
             return ResponseDto.error("Error de la base de datos");
         } catch (Exception e) {
