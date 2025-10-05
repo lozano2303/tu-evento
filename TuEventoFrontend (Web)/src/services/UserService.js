@@ -90,6 +90,30 @@ export const deactivateUser = async (userId) => {
   }
 };
 
+export const reactivateUser = async (userId) => {
+  try {
+    if (!userId) {
+      throw new Error('UserId es requerido para reactivar usuario');
+    }
+
+    console.log('Enviando petición de reactivación para userId:', userId);
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/v1/users/${userId}/reactivate`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
+    console.log('Respuesta de reactivación:', data);
+    return data;
+  } catch (error) {
+    console.error('Error reactivando usuario:', error);
+    throw error;
+  }
+};
+
 export const deleteUserAccount = async (userId) => {
   try {
     const token = localStorage.getItem('token');

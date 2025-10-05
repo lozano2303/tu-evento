@@ -90,7 +90,7 @@ export default function UserProfile() {
   };
 
   const handleDeactivate = async () => {
-    if (window.confirm("¿Estás seguro de que quieres desactivar tu cuenta? Podrás reactivarla iniciando sesión nuevamente.")) {
+    if (window.confirm("¿Estás seguro de que quieres desactivar tu cuenta? Solo un administrador puede reactivarla.")) {
       try {
         const result = await deactivateUser(userId);
         if (result.success) {
@@ -406,41 +406,45 @@ export default function UserProfile() {
           </div>
 
           <div className="p-8 space-y-6">
-            <button
-              onClick={handleDeactivate}
-              className="w-full flex items-center justify-between p-6 bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300 rounded-xl hover:from-yellow-100 hover:to-yellow-200 hover:border-yellow-400 transition-all duration-300 hover:shadow-lg group"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  <User className="w-7 h-7 text-white" />
+            {userData.role !== 'ADMIN' && (
+              <button
+                onClick={handleDeactivate}
+                className="w-full flex items-center justify-between p-6 bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-300 rounded-xl hover:from-yellow-100 hover:to-yellow-200 hover:border-yellow-400 transition-all duration-300 hover:shadow-lg group"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                    <User className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-lg font-bold text-yellow-900">Desactivar Cuenta</p>
+                    <p className="text-sm text-yellow-700 mt-1">Tu cuenta será desactivada temporalmente</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="text-lg font-bold text-yellow-900">Desactivar Cuenta</p>
-                  <p className="text-sm text-yellow-700 mt-1">Tu cuenta será desactivada temporalmente</p>
+                <div className="text-yellow-600 group-hover:text-yellow-700 transition-colors">
+                  <AlertCircle className="w-6 h-6" />
                 </div>
-              </div>
-              <div className="text-yellow-600 group-hover:text-yellow-700 transition-colors">
-                <AlertCircle className="w-6 h-6" />
-              </div>
-            </button>
+              </button>
+            )}
 
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="w-full flex items-center justify-between p-6 bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-300 rounded-xl hover:from-red-100 hover:to-red-200 hover:border-red-400 transition-all duration-300 hover:shadow-lg group"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-                  <Trash2 className="w-7 h-7 text-white" />
+            {userData.role !== 'ADMIN' && (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full flex items-center justify-between p-6 bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-300 rounded-xl hover:from-red-100 hover:to-red-200 hover:border-red-400 transition-all duration-300 hover:shadow-lg group"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                    <Trash2 className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-lg font-bold text-red-900">Eliminar Cuenta</p>
+                    <p className="text-sm text-red-700 mt-1">Esta acción no se puede deshacer</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="text-lg font-bold text-red-900">Eliminar Cuenta</p>
-                  <p className="text-sm text-red-700 mt-1">Esta acción no se puede deshacer</p>
+                <div className="text-red-600 group-hover:text-red-700 transition-colors">
+                  <AlertCircle className="w-6 h-6" />
                 </div>
-              </div>
-              <div className="text-red-600 group-hover:text-red-700 transition-colors">
-                <AlertCircle className="w-6 h-6" />
-              </div>
-            </button>
+              </button>
+            )}
           </div>
         </div>
 

@@ -603,6 +603,7 @@ const FloorPlanDesignerInner = () => {
   const [existingChairsWithSections, setExistingChairsWithSections] = useState(new Map()); // Mapa solo de sillas en secciones existentes (BD)
   const [editingSection, setEditingSection] = useState(null); // Sección que se está editando
   const [existingSectionsLoaded, setExistingSectionsLoaded] = useState(false); // Para saber si ya se cargaron las secciones existentes
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Load existing layout for the event when component mounts
   useEffect(() => {
