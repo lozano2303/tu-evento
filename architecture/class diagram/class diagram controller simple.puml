@@ -60,7 +60,7 @@ class EventImgController {
 class StorageController {
 }
 
-class AccountActivationEmailController {
+class SectionNameController {
 }
 
 @enduml

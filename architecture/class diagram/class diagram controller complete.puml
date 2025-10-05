@@ -2,9 +2,9 @@
 
 class AccountActivationController {
     - AccountActivationService activationService
-    + String createActivationCode(AccountActivationDto)
-    + String resendActivationCode(AccountActivationDto)
-    + ResponseDto<String> verifyActivationCode(AccountActivationDto)
+    + ResponseEntity<String> createActivationCode(AccountActivationDto)
+    + ResponseEntity<String> resendActivationCode(AccountActivationDto)
+    + ResponseEntity<ResponseDto<String>> verifyActivationCode(AccountActivationDto)
 }
 
 class AddressController {
@@ -45,6 +45,7 @@ class CityController {
     + ResponseEntity<ResponseDto<String>> deleteCity(int)
     + ResponseEntity<ResponseDto<List<CityDto>>> getAllCities()
     + ResponseEntity<ResponseDto<CityDto>> getCityById(int)
+    + ResponseEntity<ResponseDto<List<CityDto>>> getCitiesByDepartment(int)
 }
 
 class DepartmentController {
@@ -71,10 +72,12 @@ class EventController {
 
 class EventLayoutController {
     - EventLayoutService eventLayoutService
-    + ResponseDto<EventLayoutDto> Event(EventLayoutDto)
-    + ResponseDto<EventLayoutDto> updateEvent(String, EventLayoutDto)
-    + ResponseDto<EventLayoutDto> deleteEvent(EventLayoutDto)
-    + ResponseDto<EventLayoutDto> getEvent(String, EventLayoutDto)
+    + ResponseDto<EventLayoutDto> createEventLayout(EventLayoutDto)
+    + ResponseDto<EventLayoutDto> updateEventLayout(String, EventLayoutDto)
+    + ResponseDto<EventLayoutDto> deleteEventLayout(String)
+    + ResponseDto<EventLayoutDto> getEventLayout(String)
+    + ResponseDto<EventLayoutDto> getEventLayoutByEventId(String)
+    + ResponseDto<Boolean> existsEventLayoutForEvent(String)
 }
 
 class EventRatingController {
@@ -94,6 +97,7 @@ class LocationController {
     + ResponseEntity<ResponseDto<String>> deleteLocation(int)
     + ResponseEntity<ResponseDto<List<LocationDto>>> getAllLocations()
     + ResponseEntity<ResponseDto<LocationDto>> getLocationById(int)
+    + ResponseEntity<ResponseDto<List<LocationDto>>> getLocationsByCity(int)
 }
 
 class LoginController {
@@ -138,6 +142,8 @@ class SeatController {
     + ResponseEntity<ResponseDto<String>> deleteSeat(int)
     + ResponseEntity<ResponseDto<List<SeatDto>>> getAllSeats()
     + ResponseEntity<ResponseDto<SeatDto>> getSeatById(int)
+    + ResponseEntity<ResponseDto<List<SeatDto>>> getSeatsBySection(int)
+    + ResponseEntity<ResponseDto<String>> releaseExpiredSeats()
 }
 
 class SectionController {
@@ -147,6 +153,16 @@ class SectionController {
     + ResponseDto<SectionDto> updateSection(SectionDto)
     + ResponseDto<SectionDto> deleteSection(int)
     + ResponseDto<SectionDto> getSectionById(int)
+}
+
+class SectionNameController {
+    - SectionNameService sectionNameService
+    + ResponseEntity<ResponseDto<SectionNameDto>> insertSectionName(SectionNameDto)
+    + ResponseEntity<ResponseDto<String>> updateSectionName(Integer, SectionNameDto)
+    + ResponseEntity<ResponseDto<String>> deleteSectionName(Integer)
+    + ResponseEntity<ResponseDto<List<SectionNameDto>>> getAllSectionNames()
+    + ResponseEntity<ResponseDto<SectionNameDto>> getSectionNameById(Integer)
+    + ResponseEntity<ResponseDto<List<SectionNameDto>>> searchSectionNamesByName(String)
 }
 
 class TicketController {
@@ -183,11 +199,6 @@ class StorageController {
     + ResponseEntity<String> uploadFile(MultipartFile)
     + ResponseEntity<ByteArrayResource> downloadFile(String)
     + ResponseEntity<String> deleteFile(String)
-}
-
-class AccountActivationEmailController {
-    - AccountActivationService accountActivationService
-    + ResponseEntity<?> sendActivationCodeEmail(int)
 }
 
 @enduml
