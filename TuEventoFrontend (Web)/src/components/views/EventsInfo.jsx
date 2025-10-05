@@ -419,11 +419,11 @@ const handleSubmitRating = async () => {
             };
           }
 
-          // If no matching seat in database, mark as unavailable
+          // If no matching seat in database, mark as available (new seat from layout)
           console.log(`No matching seat found for position row=${pos.row}, seatNumber=${pos.seatNumber}`);
           return {
             ...pos,
-            status: "UNAVAILABLE"
+            status: "AVAILABLE"
           };
         });
         return { ...element, seatPositions: updatedPositions };
@@ -692,11 +692,11 @@ const handleSubmitRating = async () => {
             const existingSeat = existingSeatsData.find(seat => Math.round(seat.x) === x && Math.round(seat.y) === y);
 
             if (existingSeat) {
-          
+
               const updateData = {
                 seatNumber: seatNumber,
                 row: rowLetter,
-                status: existingSeat.status, 
+                status: existingSeat.status ? "AVAILABLE" : "OCCUPIED",
                 sectionID: selectedSection.sectionID,
                 eventLayoutID: layoutId,
                 x: x,

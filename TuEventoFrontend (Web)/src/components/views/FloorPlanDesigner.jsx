@@ -361,7 +361,7 @@ const PropertiesPanel = ({ selectedElement, selectedIds, elements, onUpdate, onD
                       y: selectedElement.y,
                       seatNumber: i + 1,
                       row: selectedElement.seatPositions?.[0]?.row || 'A',
-                      status: 'AVAILABLE'
+                      status: true
                     });
                   }
 
@@ -686,7 +686,7 @@ const FloorPlanDesignerInner = () => {
           stroke: '#6b7280',
           row: String.fromCharCode(65 + row), // A, B, C, etc.
           seatNumber: col + 1,
-          status: 'AVAILABLE',
+          status: true,
           meta: {
             label: sectionName ?
               `${sectionName} F${row + 1} A${col + 1}` :
@@ -1240,7 +1240,7 @@ const FloorPlanDesignerInner = () => {
           row: chair.row || 'A',
           x: Math.round(chair.x),
           y: Math.round(chair.y),
-          status: false
+          status: (chair.status === 'AVAILABLE' || chair.status === true) ? "AVAILABLE" : "OCCUPIED"
         };
 
         const seatResult = await createSeat(seatData);
@@ -1275,7 +1275,7 @@ const FloorPlanDesignerInner = () => {
                 row: chairElement.row || 'A',
                 x: Math.round(chairElement.x),
                 y: Math.round(chairElement.y),
-                status: false
+                status: (chairElement.status === 'AVAILABLE' || chairElement.status === true) ? "AVAILABLE" : "OCCUPIED"
               };
 
               const updateResult = await updateSeat(existingSeat.id, updateData);
@@ -1295,7 +1295,7 @@ const FloorPlanDesignerInner = () => {
                 row: chairElement.row || 'A',
                 x: Math.round(chairElement.x),
                 y: Math.round(chairElement.y),
-                status: false
+                status: (chairElement.status === 'AVAILABLE' || chairElement.status === true) ? "AVAILABLE" : "OCCUPIED"
               };
 
               const seatResult = await createSeat(seatData);
@@ -1332,7 +1332,7 @@ const FloorPlanDesignerInner = () => {
                 row: seatPos.row || 'A',
                 x: Math.round(seatPos.x),
                 y: Math.round(seatPos.y),
-                status: false
+                status: seatPos.status === 'AVAILABLE' || seatPos.status === true
               };
 
               const updateResult = await updateSeat(existingSeat.id, updateData);
@@ -1353,7 +1353,7 @@ const FloorPlanDesignerInner = () => {
                 row: seatPos.row || 'A',
                 x: Math.round(seatPos.x),
                 y: Math.round(seatPos.y),
-                status: false
+                status: (seatPos.status === 'AVAILABLE' || seatPos.status === true) ? "AVAILABLE" : "OCCUPIED"
               };
 
               const seatResult = await createSeat(seatData);
