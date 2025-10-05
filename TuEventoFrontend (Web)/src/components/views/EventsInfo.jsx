@@ -7,6 +7,7 @@ import { getEventLayoutByEventId } from '../../services/EventLayoutService.js';
 import { getTicketsByEvent, createTicketWithSeats } from '../../services/TicketService.js';
 import { getSeatsBySection, updateSeatStatus, createSeat, releaseExpiredReservations } from '../../services/SeatService.js';
 import { getAllSections, createSection } from '../../services/SectionService.js';
+import { getAllSectionNames } from '../../services/SectionNameService.js';
 import { insertEventRating, getEventRatingByEvent, deleteEventRating, updateEventRating } from '../../services/EventRatingService.js';
 import { getUserById } from '../../services/UserService.js';
 import { getEventImages } from '../../services/EventImgService.js';
@@ -257,18 +258,7 @@ const handleSubmitRating = async () => {
     }
   }, [showMapModal]);
 
-  // Real-time seat status updates
-  useEffect(() => {
-    if (!showMapModal || !selectedSection) return;
-
-    const interval = setInterval(async () => {
-      await loadSeatsForSection(selectedSection.sectionID);
-      await loadEventLayout();
-      setUpdateKey(prev => prev + 1);
-    }, 2000); // Update every 2 seconds
-
-    return () => clearInterval(interval);
-  }, [showMapModal, selectedSection]);
+  // Removed polling to avoid excessive requests
 
 
 
@@ -279,11 +269,10 @@ const handleSubmitRating = async () => {
     setModalError(null);
     setLoadingLayout(true);
     try {
-      await releaseExpiredReservations();
-
       // Load sections and seats FIRST
       const loadedSeats = await loadSectionsAndSeats();
-      await loadEventLayout();
+      // Load layout and match with seats
+      await loadEventLayout(loadedSeats);
       // Generate seats from layout if layout exists
       if (selectedSection && layoutElements.some(el => el.type === 'seatRow')) {
         await generateSeatsFromLayout(layoutElements);
@@ -392,19 +381,23 @@ const handleSubmitRating = async () => {
   };
 
   // Function to match seats with layout elements
-  const matchSeatsWithLayout = (layoutElements, seats) => {
-    console.log("Matching layout with seats:", { layoutElementsCount: layoutElements.length, seatsCount: seats.length });
+  const matchSeatsWithLayout = (layoutElements, seatsToMatch) => {
+    console.log("Matching layout with seats:", { layoutElementsCount: layoutElements.length, seatsCount: seatsToMatch.length });
+    console.log("Layout elements types:", layoutElements.map(el => ({ type: el.type, id: el.id, hasSeatPositions: el.seatPositions ? el.seatPositions.length : 0 })));
+    console.log("Full layout elements:", JSON.stringify(layoutElements, null, 2));
     return layoutElements.map(element => {
       if (element.type === 'seatRow' && element.seatPositions) {
+        console.log("Processing seatRow:", element.id, "with", element.seatPositions.length, "positions");
         const updatedPositions = element.seatPositions.map(pos => {
-          const matchingSeat = seats.find(seat =>
-            seat.row === pos.row && seat.seatNumber === pos.seatNumber.toString()
+          console.log(`Checking position: row=${pos.row}, seatNumber=${pos.seatNumber}, current status=${pos.status}`);
+          const matchingSeat = seatsToMatch.find(seat =>
+            seat.row === pos.row && seat.seatNumber === pos.seatNumber
           );
 
           if (matchingSeat) {
             // CRITICAL: Always use the REAL database status - never override with layout status
             let realStatus;
-            console.log(`Seat ${matchingSeat.id}: row=${matchingSeat.row}, seatNumber=${matchingSeat.seatNumber}, status=${matchingSeat.status}, type=${typeof matchingSeat.status}`);
+            console.log(`Found matching seat ${matchingSeat.id}: row=${matchingSeat.row}, seatNumber=${matchingSeat.seatNumber}, status=${matchingSeat.status}, type=${typeof matchingSeat.status}`);
 
             if (typeof matchingSeat.status === 'boolean') {
               // Boolean status from backend: true = available, false = occupied
@@ -448,12 +441,19 @@ const handleSubmitRating = async () => {
       if (result.success && result.data && result.data.layoutData && result.data.layoutData.elements) {
         let elements = result.data.layoutData.elements;
         console.log("Layout elements cargados:", elements);
+        console.log("Element types:", elements.map(el => ({ type: el.type, id: el.id, hasSeatPositions: el.seatPositions ? el.seatPositions.length : 0 })));
 
-        // Use provided seats or fall back to state
-        const seatsToMatch = currentSeats || seats;
+        // Use provided seats or load them
+        let seatsToMatch = currentSeats;
+        if (!seatsToMatch) {
+          seatsToMatch = await loadSectionsAndSeats();
+        }
         console.log("Matching with seats:", seatsToMatch);
 
+        console.log("Before matchSeatsWithLayout - Layout elements:", elements);
+        console.log("Seats to match:", seatsToMatch);
         elements = matchSeatsWithLayout(elements, seatsToMatch);
+        console.log("After matchSeatsWithLayout - Layout elements:", elements);
         setLayoutElements(elements);
         setLayoutId(result.data.id);
       } else {
@@ -496,6 +496,7 @@ const handleSubmitRating = async () => {
       if (sectionsResult.success) {
         let eventSections = sectionsResult.data.filter(section => section.eventId === parseInt(eventId));
 
+        console.log("Loaded sections:", eventSections);
         setSections(eventSections);
         if (eventSections.length > 0 && !selectedSection) {
           setSelectedSection(eventSections[0]);
@@ -596,23 +597,48 @@ const handleSubmitRating = async () => {
 
 
   const loadSectionsAndSeats = async () => {
+    console.log("loadSectionsAndSeats called for eventId:", eventId);
     if (!eventId) return [];
 
     try {
+      // Load section names first
+      const sectionNamesResult = await getAllSectionNames();
+      const sectionNamesMap = {};
+      if (sectionNamesResult.success) {
+        sectionNamesResult.data.forEach(sn => {
+          sectionNamesMap[sn.sectionNameID] = sn.name;
+        });
+        console.log("Section names loaded:", sectionNamesMap);
+      }
+
       const sectionsResult = await getAllSections();
       if (sectionsResult.success) {
         let eventSections = sectionsResult.data.filter(section => section.eventId === parseInt(eventId));
 
-    
+        console.log("Raw sections:", eventSections);
+        // Map section names
+        eventSections = eventSections.map(section => {
+          const displayName = sectionNamesMap[section.sectionNameID] || section.sectionName || 'Sección';
+          console.log(`Section ${section.sectionID}: sectionNameID=${section.sectionNameID}, displayName=${displayName}`);
+          return {
+            ...section,
+            displayName: displayName
+          };
+        });
+
         if (eventSections.length === 0) {
           const defaultSection = {
             eventId: parseInt(eventId),
             sectionName: 'General',
-            price: DEFAULT_SEAT_PRICE
+            price: DEFAULT_SEAT_PRICE,
+            displayName: 'General'
           };
           const createResult = await createSection(defaultSection);
           if (createResult.success && createResult.data) {
-            eventSections = [createResult.data];
+            eventSections = [{
+              ...createResult.data,
+              displayName: sectionNamesMap[createResult.data.sectionNameID] || createResult.data.sectionName || 'General'
+            }];
           } else {
             console.error('Failed to create default section');
             return [];
@@ -623,8 +649,13 @@ const handleSubmitRating = async () => {
         if (eventSections.length > 0) {
           setSelectedSection(eventSections[0]);
 
-          const loadedSeats = await loadSeatsForSection(eventSections[0].sectionID);
-          return loadedSeats;
+          // Load seats for all sections to show all seats in the map
+          const allSeatsPromises = eventSections.map(section => loadSeatsForSection(section.sectionID));
+          const allSeatsResults = await Promise.all(allSeatsPromises);
+          const allSeats = allSeatsResults.flat();
+          setSeats(allSeats);
+          setLastUpdate(Date.now());
+          return allSeats;
         }
       }
     } catch (error) {
@@ -731,6 +762,11 @@ const handleSubmitRating = async () => {
     }
     if (seat.status !== "AVAILABLE") {
       console.log("Asiento no disponible:", seatId);
+      return;
+    }
+    // Only allow selecting seats from the currently selected section
+    if (seat.sectionID !== selectedSection?.sectionID) {
+      console.log("Asiento no pertenece a la sección seleccionada:", seatId);
       return;
     }
     setSelectedSeats(prev => {
@@ -1614,7 +1650,7 @@ const handleSubmitRating = async () => {
                   >
                     {sections.map(sec => (
                       <option key={sec.sectionID} value={sec.sectionID}>
-                        {sec.sectionName} - ${sec.price}
+                        {sec.displayName || sec.sectionName || 'Sección'} - ${sec.price || DEFAULT_SEAT_PRICE}
                       </option>
                     ))}
                   </select>

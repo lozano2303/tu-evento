@@ -119,6 +119,11 @@ public class TicketServiceImpl implements TicketService {
         //     return ResponseDto.error("Cuenta no activada. No puedes comprar tickets.");
         // }
 
+        // Check if user is the organizer of the event
+        if (user.getUserID() == eventOpt.get().getUserID().getUserID()) {
+            return ResponseDto.error("El organizador no puede comprar tickets en su propio evento.");
+        }
+
         BigDecimal totalPrice = seats.stream()
                 .map(seat -> seat.getSectionID().getPrice())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -137,11 +142,12 @@ public class TicketServiceImpl implements TicketService {
         System.out.println("Ticket saved with ID: " + ticket.getTicketID());
 
         for (Seat seat : seats) {
-            System.out.println("Processing seat " + seat.getSeatID());
+            System.out.println("Processing seat " + seat.getSeatID() + ", current status: " + seat.isStatus());
             SeatTicket relation = new SeatTicket(seat, ticket);
             seatTicketRepository.save(relation);
             seat.setStatus(false);
-            seatRepository.save(seat);
+            Seat savedSeat = seatRepository.saveAndFlush(seat); // Save and flush immediately
+            System.out.println("Saved seat " + savedSeat.getSeatID() + " with status: " + savedSeat.isStatus());
             System.out.println("Associated seat " + seat.getSeatID() + " to ticket " + ticket.getTicketID());
         }
 
@@ -150,25 +156,36 @@ public class TicketServiceImpl implements TicketService {
             System.out.println("Updating event layout...");
             Optional<EventLayout> layoutOpt = eventLayoutRepository.findByEventID(eventOpt.get());
             System.out.println("Layout found: " + layoutOpt.isPresent());
+            if (!layoutOpt.isPresent()) {
+                System.out.println("No layout found for event " + eventOpt.get().getId() + ", skipping layout update");
+            }
             if (layoutOpt.isPresent()) {
                 EventLayout layout = layoutOpt.get();
                 JsonNode data = layout.getLayoutData();
-                System.out.println("Layout data: " + data);
+                System.out.println("Layout data before update: " + data);
                 if (data != null && data.isObject()) {
                     if (data.has("elements")) {
                         System.out.println("Has elements");
                         for (Seat selectedSeat : seats) {
-                            String row = selectedSeat.getRow();
-                            int seatNumber = selectedSeat.getSeatNumber();
-                            data.get("elements").forEach(element -> {
-                                if ("chair".equals(element.get("type").asText()) &&
-                                    row.equals(element.get("row").asText()) &&
-                                    seatNumber == element.get("seatNumber").asInt()) {
-                                    ((ObjectNode) element).put("status", "OCCUPIED");
-                                    System.out.println("Updated layout status for seat " + selectedSeat.getSeatID() + " (row " + row + ", seat " + seatNumber + ") to OCCUPIED");
-                                }
-                            });
-                        }
+                             String row = selectedSeat.getRow();
+                             int seatNumber = selectedSeat.getSeatNumber();
+                             data.get("elements").forEach(element -> {
+                                 if ("chair".equals(element.get("type").asText()) &&
+                                     row.equals(element.get("row").asText()) &&
+                                     seatNumber == element.get("seatNumber").asInt()) {
+                                     ((ObjectNode) element).put("status", "OCCUPIED");
+                                     System.out.println("Updated layout status for seat " + selectedSeat.getSeatID() + " (row " + row + ", seat " + seatNumber + ") to OCCUPIED");
+                                 } else if ("seatRow".equals(element.get("type").asText()) && element.has("seatPositions")) {
+                                     element.get("seatPositions").forEach(pos -> {
+                                         if (row.equals(pos.get("row").asText()) &&
+                                             seatNumber == pos.get("seatNumber").asInt()) {
+                                             ((ObjectNode) pos).put("status", "OCCUPIED");
+                                             System.out.println("Updated layout status for seatRow position " + selectedSeat.getSeatID() + " (row " + row + ", seat " + seatNumber + ") to OCCUPIED");
+                                         }
+                                     });
+                                 }
+                             });
+                         }
                     } else {
                         System.out.println("No elements in layout");
                     }
@@ -176,8 +193,11 @@ public class TicketServiceImpl implements TicketService {
                     System.out.println("Layout data is not an object or null");
                 }
                 layout.setLayoutData(data);
-                eventLayoutRepository.save(layout);
+                EventLayout savedLayout = eventLayoutRepository.save(layout);
                 System.out.println("Event layout updated for selected seats");
+                System.out.println("Layout data after update: " + data);
+                System.out.println("Saved layout ID: " + savedLayout.getId() + ", Event ID: " + savedLayout.getEventID().getId());
+                System.out.println("Layout data after update: " + data);
             }
         } catch (Exception e) {
             System.err.println("Error updating event layout: " + e.getMessage());
@@ -252,10 +272,11 @@ public class TicketServiceImpl implements TicketService {
 
         for (SeatTicket relation : relations) {
             Seat seat = relation.getSeat();
+            System.out.println("Releasing seat " + seat.getSeatID() + ", current status: " + seat.isStatus());
             seat.setStatus(true);
-            seatRepository.save(seat);
+            Seat savedSeat = seatRepository.saveAndFlush(seat);
+            System.out.println("Released seat " + savedSeat.getSeatID() + " with status: " + savedSeat.isStatus());
             seatTicketRepository.delete(relation);
-            System.out.println("Released seat " + seat.getSeatID() + " for cancelled ticket");
         }
 
         // Actualizar el layout del evento para liberar asientos
@@ -266,18 +287,26 @@ public class TicketServiceImpl implements TicketService {
                 JsonNode data = layout.getLayoutData();
                 if (data != null && data.isObject() && data.has("elements")) {
                     for (SeatTicket relation : relations) {
-                        Seat seat = relation.getSeat();
-                        String row = seat.getRow();
-                        int seatNumber = seat.getSeatNumber();
-                        data.get("elements").forEach(element -> {
-                            if ("chair".equals(element.get("type").asText()) &&
-                                row.equals(element.get("row").asText()) &&
-                                seatNumber == element.get("seatNumber").asInt()) {
-                                ((ObjectNode) element).put("status", "AVAILABLE");
-                                System.out.println("Updated layout status for seat " + seat.getSeatID() + " (row " + row + ", seat " + seatNumber + ") to AVAILABLE");
-                            }
-                        });
-                    }
+                         Seat seat = relation.getSeat();
+                         String row = seat.getRow();
+                         int seatNumber = seat.getSeatNumber();
+                         data.get("elements").forEach(element -> {
+                             if ("chair".equals(element.get("type").asText()) &&
+                                 row.equals(element.get("row").asText()) &&
+                                 seatNumber == element.get("seatNumber").asInt()) {
+                                 ((ObjectNode) element).put("status", "AVAILABLE");
+                                 System.out.println("Updated layout status for seat " + seat.getSeatID() + " (row " + row + ", seat " + seatNumber + ") to AVAILABLE");
+                             } else if ("seatRow".equals(element.get("type").asText()) && element.has("seatPositions")) {
+                                 element.get("seatPositions").forEach(pos -> {
+                                     if (row.equals(pos.get("row").asText()) &&
+                                         seatNumber == pos.get("seatNumber").asInt()) {
+                                         ((ObjectNode) pos).put("status", "AVAILABLE");
+                                         System.out.println("Updated layout status for seatRow position " + seat.getSeatID() + " (row " + row + ", seat " + seatNumber + ") to AVAILABLE");
+                                     }
+                                 });
+                             }
+                         });
+                     }
                 }
                 layout.setLayoutData(data);
                 eventLayoutRepository.save(layout);
@@ -307,10 +336,11 @@ public class TicketServiceImpl implements TicketService {
 
                 for (SeatTicket relation : relations) {
                     Seat seat = relation.getSeat();
+                    System.out.println("Releasing expired seat " + seat.getSeatID() + ", current status: " + seat.isStatus());
                     seat.setStatus(true);
-                    seatRepository.save(seat);
+                    Seat savedSeat = seatRepository.saveAndFlush(seat);
+                    System.out.println("Released expired seat " + savedSeat.getSeatID() + " with status: " + savedSeat.isStatus());
                     seatTicketRepository.delete(relation);
-                    System.out.println("Released seat " + seat.getSeatID());
                 }
 
                 // Actualizar el layout del evento para liberar asientos expirados
@@ -321,18 +351,26 @@ public class TicketServiceImpl implements TicketService {
                         JsonNode data = layout.getLayoutData();
                         if (data != null && data.isObject() && data.has("elements")) {
                             for (SeatTicket relation : relations) {
-                                Seat seat = relation.getSeat();
-                                String row = seat.getRow();
-                                int seatNumber = seat.getSeatNumber();
-                                data.get("elements").forEach(element -> {
-                                    if ("chair".equals(element.get("type").asText()) &&
-                                        row.equals(element.get("row").asText()) &&
-                                        seatNumber == element.get("seatNumber").asInt()) {
-                                        ((ObjectNode) element).put("status", "AVAILABLE");
-                                        System.out.println("Updated layout status for expired seat " + seat.getSeatID() + " (row " + row + ", seat " + seatNumber + ") to AVAILABLE");
-                                    }
-                                });
-                            }
+                                 Seat seat = relation.getSeat();
+                                 String row = seat.getRow();
+                                 int seatNumber = seat.getSeatNumber();
+                                 data.get("elements").forEach(element -> {
+                                     if ("chair".equals(element.get("type").asText()) &&
+                                         row.equals(element.get("row").asText()) &&
+                                         seatNumber == element.get("seatNumber").asInt()) {
+                                         ((ObjectNode) element).put("status", "AVAILABLE");
+                                         System.out.println("Updated layout status for expired seat " + seat.getSeatID() + " (row " + row + ", seat " + seatNumber + ") to AVAILABLE");
+                                     } else if ("seatRow".equals(element.get("type").asText()) && element.has("seatPositions")) {
+                                         element.get("seatPositions").forEach(pos -> {
+                                             if (row.equals(pos.get("row").asText()) &&
+                                                 seatNumber == pos.get("seatNumber").asInt()) {
+                                                 ((ObjectNode) pos).put("status", "AVAILABLE");
+                                                 System.out.println("Updated layout status for expired seatRow position " + seat.getSeatID() + " (row " + row + ", seat " + seatNumber + ") to AVAILABLE");
+                                             }
+                                         });
+                                     }
+                                 });
+                             }
                         }
                         layout.setLayoutData(data);
                         eventLayoutRepository.save(layout);

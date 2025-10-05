@@ -603,6 +603,8 @@ const FloorPlanDesignerInner = () => {
   const [existingChairsWithSections, setExistingChairsWithSections] = useState(new Map()); // Mapa solo de sillas en secciones existentes (BD)
   const [editingSection, setEditingSection] = useState(null); // Sección que se está editando
   const [existingSectionsLoaded, setExistingSectionsLoaded] = useState(false); // Para saber si ya se cargaron las secciones existentes
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Load existing layout for the event when component mounts
   useEffect(() => {
@@ -1130,6 +1132,8 @@ const FloorPlanDesignerInner = () => {
         eventLayoutID = layoutResult.data.eventLayoutID;
       }
 
+      console.log('Saving layout with elements:', elements.map(el => ({ type: el.type, id: el.id })));
+
       // Process sections from elements
       const sectionElements = elements.filter(el => el.type === 'section');
       const createdSections = [];
@@ -1594,14 +1598,12 @@ const FloorPlanDesignerInner = () => {
           }
         }
 
+        // Match loaded seats with elements to identify seats by backend ID
+        elements = matchSeatsWithLayout(elements, seatsFromBD);
+
         dispatch({ type: 'SET_ELEMENTS', payload: elements });
         historyWrapper.pushState(elements);
         console.log('Layout cargado exitosamente desde el backend para evento:', eventIdParam);
-
-        // Match loaded seats with elements to identify seats by backend ID
-        elements = matchSeatsWithLayout(elements);
-        dispatch({ type: 'SET_ELEMENTS', payload: elements });
-        historyWrapper.pushState(elements);
       } else {
         console.log('No se encontró layout existente para el evento:', eventIdParam, '- Esto es normal para eventos nuevos');
         // For new events, still load existing sections if any (shouldn't happen but safety check)
@@ -1906,17 +1908,17 @@ const FloorPlanDesignerInner = () => {
     return [];
   };
 
-  const matchSeatsWithLayout = (elements) => {
+  const matchSeatsWithLayout = (elements, seatsToMatch) => {
     const updatedElements = elements.map(element => {
       if (element.type === 'seatRow' && element.seatPositions) {
         const updatedPositions = element.seatPositions.map(position => {
           // Find matching seat by position (x, y) and seatNumber (ignore row as it may be outdated)
-          const matchingSeat = seats.find(seat =>
+          const matchingSeat = seatsToMatch.find(seat =>
             Math.abs(seat.x - position.x) < 5 && // Tolerance for position matching
             Math.abs(seat.y - position.y) < 5 &&
             seat.seatNumber === position.seatNumber
           );
-  
+
           if (matchingSeat) {
             return {
               ...position,
@@ -1988,17 +1990,7 @@ const FloorPlanDesignerInner = () => {
   }, [isSeatSelectionMode, eventId]);
 
   // Polling para actualizaciones en tiempo real
-  useEffect(() => {
-    let interval;
-    if (isSeatSelectionMode) {
-      interval = setInterval(() => {
-        loadSeatsForEvent();
-      }, 5000); // Actualizar cada 5 segundos
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isSeatSelectionMode, eventId]);
+  // Removed polling to avoid excessive requests
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
