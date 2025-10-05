@@ -606,6 +606,7 @@ const FloorPlanDesignerInner = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+
   // Load existing layout for the event when component mounts
   useEffect(() => {
     if (eventId && !isNaN(parseInt(eventId))) {

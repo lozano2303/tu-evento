@@ -68,18 +68,25 @@ public class LoginServiceImpl implements LoginService {
     @Override
     public ResponseDto<ResponseLogin> login(LoginDto loginDto) {
         try {
+            System.out.println("Intentando login para email: " + loginDto.getEmail());
             Optional<Login> optionalLogin = findByEmail(loginDto.getEmail());
             if (optionalLogin.isEmpty()) {
+                System.out.println("Email no registrado: " + loginDto.getEmail());
                 return ResponseDto.error("Email no registrado");
             }
 
             Login login = optionalLogin.get();
+            System.out.println("Usuario encontrado. UserID: " + login.getUserID().getUserID() +
+                             ", Activated: " + login.getUserID().isActivated() +
+                             ", Status: " + login.getUserID().isStatus());
 
             if (!login.getUserID().isActivated()) {
+                System.out.println("Cuenta no activada para userID: " + login.getUserID().getUserID());
                 return ResponseDto.error("Cuenta no activada. Revisa tu correo para activar la cuenta.");
             }
 
             if (!login.getUserID().isStatus()) {
+                System.out.println("Cuenta desactivada para userID: " + login.getUserID().getUserID());
                 return ResponseDto.error("Cuenta desactivada. No puedes iniciar sesión.");
             }
 

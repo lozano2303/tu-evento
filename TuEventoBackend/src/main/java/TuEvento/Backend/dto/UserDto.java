@@ -4,11 +4,13 @@ import java.sql.Date;
 
 public class UserDto {
 
+    private int userID;
     private String fullName;
     private String telephone;
     private Date birthDate;
     private Integer address;
     private boolean activated;
+    private boolean status;
     private boolean organizer;
     private String role;
     private String email;
@@ -16,12 +18,14 @@ public class UserDto {
     public UserDto() {
     }
 
-    public UserDto(String fullName, String telephone, Date birthDate, Integer address, boolean activated, boolean organizer, String role, String email) {
+    public UserDto(int userID, String fullName, String telephone, Date birthDate, Integer address, boolean activated, boolean status, boolean organizer, String role, String email) {
+        this.userID = userID;
         this.fullName = fullName;
         this.telephone = telephone;
         this.birthDate = birthDate;
         this.address = address;
         this.activated = activated;
+        this.status = status;
         this.organizer = organizer;
         this.role = role;
         this.email = email;
@@ -67,6 +71,14 @@ public class UserDto {
         this.activated = activated;
     }
 
+    public boolean isStatus() {
+        return status;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
+    }
+
     public boolean isOrganizer() {
         return organizer;
     }
@@ -81,6 +93,14 @@ public class UserDto {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public int getUserID() {
+        return userID;
+    }
+
+    public void setUserID(int userID) {
+        this.userID = userID;
     }
 
     public String getEmail() {

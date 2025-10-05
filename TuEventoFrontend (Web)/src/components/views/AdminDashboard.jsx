@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { User, FileText, Eye, Check, X, LogOut, Trash2, Download, Home, Users, Shield, Calendar, Tag, Ticket, BarChart } from 'lucide-react';
 import { getAllPetitions, updatePetitionStatus, downloadPetitionDocument } from '../../services/AdminPetitionService.js';
 import { getUserById } from '../../services/Login.js';
-import { getAllUsers } from '../../services/UserService.js';
+import { getAllUsers, reactivateUser } from '../../services/UserService.js';
 import { getAllEvents, cancelEvent } from '../../services/EventService.js';
 import { getAllCategories } from '../../services/CategoryService.js';
 import { getTicketsByEvent } from '../../services/TicketService.js';
 
 const AdminDashboard = () => {
-  const [paginaActiva, setPaginaActiva] = useState('vigilancia'); // 'vigilancia', 'bandeja', 'perfil', 'usuarios', 'eventos'
+  const [paginaActiva, setPaginaActiva] = useState('vigilancia'); // 'vigilancia', 'bandeja', 'perfil', 'usuarios', 'usuarios-desactivados', 'eventos'
   const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -234,6 +234,42 @@ const AdminDashboard = () => {
     } catch (err) {
       setError('Error de conexión');
       console.error('Error canceling event:', err);
+    }
+  };
+
+  const handleReactivateUser = async (userId) => {
+    if (!userId) {
+      alert('Error: ID de usuario no válido');
+      console.error('UserId es undefined:', userId);
+      return;
+    }
+
+    if (!confirm('¿Estás seguro de que quieres reactivar esta cuenta de usuario?')) return;
+    try {
+      console.log('Reactivando usuario con ID:', userId);
+      const result = await reactivateUser(userId);
+      console.log('Resultado de reactivación:', result);
+      if (result.success) {
+        // Actualizar directamente el estado del usuario en la lista local
+        setUsuarios(prev => prev.map(u => {
+          if (u.userID === userId) {
+            console.log('Actualizando usuario:', u.userID, 'estado anterior:', u.status, 'nuevo estado: true');
+            return { ...u, status: true };
+          }
+          return u;
+        }));
+
+        // Cambiar automáticamente a la pestaña de usuarios activos para mostrar el usuario reactivado
+        setPaginaActiva('usuarios');
+
+        alert('Usuario reactivado exitosamente. El usuario ahora puede iniciar sesión.');
+      } else {
+        setError(result.message || 'Error reactivando usuario');
+        console.error('Error en respuesta del backend:', result);
+      }
+    } catch (err) {
+      setError('Error de conexión');
+      console.error('Error reactivating user:', err);
     }
   };
 
@@ -486,8 +522,8 @@ const AdminDashboard = () => {
         <h1 className="text-white text-2xl font-bold mb-8">Gestión de Categorías</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categorias.map((categoria) => (
-            <div key={categoria.categoryID} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          {categorias.map((categoria, index) => (
+            <div key={`categoria-${categoria.categoryID}-${index}`} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
@@ -585,8 +621,8 @@ const AdminDashboard = () => {
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              {ticketsData.map((eventData) => (
-                <div key={eventData.eventId} className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+              {ticketsData.map((eventData, index) => (
+                <div key={`ticket-${eventData.eventId}-${index}`} className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
                   <div className="flex-1">
                     <h4 className="text-white font-medium">{eventData.eventName}</h4>
                     <div className="flex items-center gap-4 mt-2 text-sm">
@@ -773,9 +809,9 @@ const AdminDashboard = () => {
               <div className="flex justify-between">
                 <span className="text-gray-400">Estado:</span>
                 <span className={`px-2 py-1 rounded-full text-xs ${
-                  adminData?.activated ? 'bg-green-600 text-green-100' : 'bg-red-600 text-red-100'
+                  adminData?.status ? 'bg-green-600 text-green-100' : 'bg-red-600 text-red-100'
                 }`}>
-                  {adminData?.activated ? 'Activo' : 'Inactivo'}
+                  {adminData?.status ? 'Activo' : 'Desactivado'}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -815,109 +851,33 @@ const AdminDashboard = () => {
         <div className="w-64" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="p-4">
             <nav className="space-y-2">
-              <div
-                onClick={() => setPaginaActiva('vigilancia')}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  paginaActiva === 'vigilancia'
-                    ? 'bg-purple-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                <Shield className="w-5 h-5" />
-                <span className="text-sm">Vigilancia</span>
-              </div>
-              <div
-                onClick={() => setPaginaActiva('bandeja')}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  paginaActiva === 'bandeja'
-                    ? 'bg-purple-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                <FileText className="w-5 h-5" />
-                <span className="text-sm">Bandeja de entrada</span>
-              </div>
-              <div
-                onClick={() => setPaginaActiva('perfil')}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  paginaActiva === 'perfil'
-                    ? 'bg-purple-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                <User className="w-5 h-5" />
-                <span className="text-sm">Perfil</span>
-              </div>
-              <div
-                onClick={() => {
-                  setPaginaActiva('usuarios');
-                  loadUsers();
-                }}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  paginaActiva === 'usuarios'
-                    ? 'bg-purple-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                <Users className="w-5 h-5" />
-                <span className="text-sm">Usuarios</span>
-              </div>
-              <div
-                onClick={() => {
-                  setPaginaActiva('eventos');
-                  loadEvents();
-                }}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  paginaActiva === 'eventos'
-                    ? 'bg-purple-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                <Calendar className="w-5 h-5" />
-                <span className="text-sm">Eventos</span>
-              </div>
-              <div
-                onClick={() => {
-                  setPaginaActiva('categorias');
-                  loadCategories();
-                }}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  paginaActiva === 'categorias'
-                    ? 'bg-purple-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                <Tag className="w-5 h-5" />
-                <span className="text-sm">Categorías</span>
-              </div>
-              <div
-                onClick={() => {
-                  setPaginaActiva('tickets');
-                  loadTicketsData();
-                }}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  paginaActiva === 'tickets'
-                    ? 'bg-purple-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                <Ticket className="w-5 h-5" />
-                <span className="text-sm">Tickets y Ventas</span>
-              </div>
-              <div
-                onClick={() => {
-                  setPaginaActiva('reportes');
-                  generateReportes();
-                }}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  paginaActiva === 'reportes'
-                    ? 'bg-purple-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                <BarChart className="w-5 h-5" />
-                <span className="text-sm">Reportes</span>
-              </div>
+              {[
+                { id: 'vigilancia', label: 'Vigilancia', icon: Shield, action: () => setPaginaActiva('vigilancia') },
+                { id: 'bandeja', label: 'Bandeja de entrada', icon: FileText, action: () => setPaginaActiva('bandeja') },
+                { id: 'perfil', label: 'Perfil', icon: User, action: () => setPaginaActiva('perfil') },
+                { id: 'usuarios', label: 'Usuarios', icon: Users, action: () => { setPaginaActiva('usuarios'); loadUsers(); } },
+                { id: 'usuarios-desactivados', label: 'Usuarios Desactivados', icon: User, action: () => { setPaginaActiva('usuarios-desactivados'); loadUsers(); } },
+                { id: 'eventos', label: 'Eventos', icon: Calendar, action: () => { setPaginaActiva('eventos'); loadEvents(); } },
+                { id: 'categorias', label: 'Categorías', icon: Tag, action: () => { setPaginaActiva('categorias'); loadCategories(); } },
+                { id: 'tickets', label: 'Tickets y Ventas', icon: Ticket, action: () => { setPaginaActiva('tickets'); loadTicketsData(); } },
+                { id: 'reportes', label: 'Reportes', icon: BarChart, action: () => { setPaginaActiva('reportes'); generateReportes(); } }
+              ].map((item) => {
+                const IconComponent = item.icon;
+                return (
+                  <div
+                    key={`nav-${item.id}`}
+                    onClick={item.action}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                      paginaActiva === item.id
+                        ? 'bg-purple-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    <IconComponent className="w-5 h-5" />
+                    <span className="text-sm">{item.label}</span>
+                  </div>
+                );
+              })}
             </nav>
           </div>
         </div>
@@ -950,8 +910,8 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {usuarios.map((usuario) => (
-                    <div key={usuario.userID} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  {usuarios.map((usuario, index) => (
+                    <div key={`usuario-${usuario.userID}-${index}`} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
@@ -969,9 +929,9 @@ const AdminDashboard = () => {
                                  usuario.organizer ? 'Organizador' : 'Usuario'}
                               </span>
                               <span className={`px-2 py-1 rounded-full text-xs ${
-                                usuario.activated ? 'bg-green-600 text-green-100' : 'bg-red-600 text-red-100'
+                                usuario.status ? 'bg-green-600 text-green-100' : 'bg-red-600 text-red-100'
                               }`}>
-                                {usuario.activated ? 'Activo' : 'Inactivo'}
+                                {usuario.status ? 'Activo' : 'Desactivado'}
                               </span>
                             </div>
                           </div>
@@ -987,6 +947,19 @@ const AdminDashboard = () => {
                             <Eye className="w-4 h-4" />
                             Ver
                           </button>
+                          {!usuario.status && usuario.role !== 'ADMIN' && (
+                            <button
+                              onClick={() => {
+                                console.log('Usuario a reactivar:', usuario);
+                                console.log('UserID:', usuario.userID);
+                                handleReactivateUser(usuario.userID);
+                              }}
+                              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
+                            >
+                              <Check className="w-4 h-4" />
+                              Reactivar
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -997,6 +970,69 @@ const AdminDashboard = () => {
                       <Users className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                       <div className="text-gray-400 text-lg mb-2">No hay usuarios registrados</div>
                       <div className="text-gray-500 text-sm">Los usuarios aparecerán aquí</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : paginaActiva === 'usuarios-desactivados' ? (
+            <>
+              <h1 className="text-white text-2xl font-bold mb-8">Usuarios Desactivados</h1>
+
+              {loadingUsuarios ? (
+                <div className="text-center py-12">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                    <span className="ml-2 text-gray-400">Cargando usuarios...</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {usuarios.filter(u => !u.status && u.role !== 'ADMIN').map((usuario, index) => (
+                    <div key={`usuario-desactivado-${usuario.userID}-${index}`} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+                            <User className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-white font-semibold text-lg">{usuario.fullName}</h3>
+                            <p className="text-gray-400 text-sm">{usuario.email}</p>
+                            <div className="flex items-center space-x-4 mt-2">
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-600 text-white">
+                                Desactivado
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => {
+                              setUsuarioSeleccionado(usuario);
+                              setMostrarDetalleUsuario(true);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Ver
+                          </button>
+                          <button
+                            onClick={() => handleReactivateUser(usuario.userID)}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
+                          >
+                            <Check className="w-4 h-4" />
+                            Reactivar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {usuarios.filter(u => !u.status && u.role !== 'ADMIN').length === 0 && (
+                    <div className="text-center py-12">
+                      <User className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                      <div className="text-gray-400 text-lg mb-2">No hay usuarios desactivados</div>
+                      <div className="text-gray-500 text-sm">Todos los usuarios están activos</div>
                     </div>
                   )}
                 </div>
@@ -1015,8 +1051,8 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {eventos.map((evento) => (
-                    <div key={evento.id} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  {eventos.map((evento, index) => (
+                    <div key={`evento-${evento.id}-${index}`} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
@@ -1100,8 +1136,8 @@ const AdminDashboard = () => {
                     ) : (
                       <>
                         <div className="space-y-4">
-                          {solicitudesActivas.map((solicitud) => (
-                            <div key={solicitud.id} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                          {solicitudesActivas.map((solicitud, index) => (
+                            <div key={`solicitud-${solicitud.id}-${index}`} className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                               <div className="mb-4">
                                 <h3 className="text-white font-semibold text-lg mb-2">Empresa: {solicitud.empresa}</h3>
                                 <div className="text-gray-300 text-sm space-y-1">
@@ -1115,8 +1151,8 @@ const AdminDashboard = () => {
                               <div className="mb-4">
                                 <h4 className="text-gray-400 text-sm mb-2">Archivos adjuntos:</h4>
                                 <div className="flex gap-2">
-                                  {solicitud.archivos?.map((archivo, index) => (
-                                    <div key={index} className="flex items-center gap-2 bg-gray-700 px-3 py-1 rounded-full text-xs">
+                                  {solicitud.archivos?.map((archivo, archivoIndex) => (
+                                    <div key={`archivo-${solicitud.id}-${archivoIndex}`} className="flex items-center gap-2 bg-gray-700 px-3 py-1 rounded-full text-xs">
                                       <FileText className="w-3 h-3 text-blue-400" />
                                       <span className="text-gray-300">{archivo.tipo}</span>
                                       <button
@@ -1241,8 +1277,8 @@ const AdminDashboard = () => {
                     <div className="mt-6">
                       <h3 className="text-white text-lg font-semibold mb-3">Documentos de la Empresa</h3>
                       <div className="grid md:grid-cols-2 gap-4">
-                        {solicitudSeleccionada?.archivos?.map((archivo, index) => (
-                          <div key={index} className="bg-gray-700 p-4 rounded-lg">
+                        {solicitudSeleccionada?.archivos?.map((archivo, archivoIndex) => (
+                          <div key={`archivo-detalle-${solicitudSeleccionada.id}-${archivoIndex}`} className="bg-gray-700 p-4 rounded-lg">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <FileText className="w-5 h-5 text-blue-400" />
@@ -1361,9 +1397,9 @@ const AdminDashboard = () => {
                     <label className="block text-sm font-medium text-gray-300 mb-2">Estado</label>
                     <div className="bg-gray-700 p-3 rounded-lg">
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        usuarioSeleccionado.activated ? 'bg-green-600 text-green-100' : 'bg-red-600 text-red-100'
+                        usuarioSeleccionado.status ? 'bg-green-600 text-green-100' : 'bg-red-600 text-red-100'
                       }`}>
-                        {usuarioSeleccionado.activated ? 'Activo' : 'Inactivo'}
+                        {usuarioSeleccionado.status ? 'Activo' : 'Desactivado'}
                       </span>
                     </div>
                   </div>
@@ -1408,7 +1444,7 @@ const AdminDashboard = () => {
                     </div>
                     <div>
                       <span className="text-gray-400">Estado de Cuenta:</span>
-                      <p className="text-white">{usuarioSeleccionado.activated ? 'Activada' : 'Desactivada'}</p>
+                      <p className="text-white">{usuarioSeleccionado.status ? 'Activada' : 'Desactivada'}</p>
                     </div>
                     <div>
                       <span className="text-gray-400">Rol del Sistema:</span>

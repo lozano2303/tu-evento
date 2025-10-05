@@ -140,7 +140,21 @@ public class UserServiceImpl implements UserService {
             user.setActivated(true);
             userRepository.save(user);
 
-            return ResponseDto.ok("Usuario creado exitosamente");
+            // Crear el UserDto con el ID generado
+            UserDto createdUserDto = new UserDto(
+                user.getUserID(),
+                user.getFullName(),
+                user.getTelephone(),
+                user.getBirthDate(),
+                address != null ? address.getAddressID() : null,
+                user.isActivated(),
+                user.isStatus(),
+                user.isOrganicer(),
+                user.getRole() != null ? user.getRole().name() : null,
+                userDto.getEmail()
+            );
+
+            return ResponseDto.ok("Usuario creado exitosamente", createdUserDto);
         } catch (DataAccessException e) {
             return ResponseDto.error("Error de base de datos al crear el usuario");
         } catch (Exception e) {
@@ -338,12 +352,23 @@ public class UserServiceImpl implements UserService {
 
         try {
             User user = userOpt.get();
+            System.out.println("Reactivando usuario " + userId + " - Estado actual: " + user.isStatus());
             user.setStatus(true);
-            userRepository.save(user);
+            User savedUser = userRepository.save(user);
+            System.out.println("Usuario " + userId + " reactivado exitosamente - Nuevo estado guardado: " + savedUser.isStatus());
+
+            // Verificar que el cambio se haya guardado consultando nuevamente
+            Optional<User> verifyUser = userRepository.findById(userId);
+            if (verifyUser.isPresent()) {
+                System.out.println("Verificación: Usuario " + userId + " estado en BD: " + verifyUser.get().isStatus());
+            }
+
             return ResponseDto.ok("Usuario reactivado correctamente");
         } catch (DataAccessException e) {
+            System.err.println("Error de BD al reactivar usuario " + userId + ": " + e.getMessage());
             return ResponseDto.error("Error de base de datos al reactivar el usuario");
         } catch (Exception e) {
+            System.err.println("Error inesperado al reactivar usuario " + userId + ": " + e.getMessage());
             return ResponseDto.error("Error inesperado al reactivar el usuario");
         }
     }
@@ -394,11 +419,13 @@ public class UserServiceImpl implements UserService {
         }
 
         return new UserDto(
+            user.getUserID(),
             user.getFullName(),
             user.getTelephone(),
             user.getBirthDate(),
             addressId,
             user.isActivated(),
+            user.isStatus(),
             user.isOrganicer(),
             user.getRole() != null ? user.getRole().name() : null,
             email
