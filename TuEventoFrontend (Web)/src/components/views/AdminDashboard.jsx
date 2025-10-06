@@ -44,6 +44,15 @@ const AdminDashboard = () => {
   const [reportesData, setReportesData] = useState(null);
   const [loadingReportes, setLoadingReportes] = useState(false);
 
+  // Estados para modal de cancelar evento
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [eventToCancel, setEventToCancel] = useState(null);
+
+  // Estados para modal de reactivar usuario
+  const [showReactivateModal, setShowReactivateModal] = useState(false);
+  const [userToReactivate, setUserToReactivate] = useState(null);
+  const [showReactivateSuccess, setShowReactivateSuccess] = useState(false);
+
   useEffect(() => {
     loadPetitions();
     loadAdminProfile();
@@ -222,12 +231,21 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleCancelEvent = async (eventId) => {
-    if (!confirm('¿Estás seguro de que quieres cancelar este evento?')) return;
+  const handleCancelEvent = (eventId) => {
+    const event = eventos.find(e => e.id === eventId);
+    setEventToCancel(event);
+    setShowCancelModal(true);
+  };
+
+  const confirmCancelEvent = async () => {
+    if (!eventToCancel) return;
+
     try {
-      const result = await cancelEvent(eventId);
+      const result = await cancelEvent(eventToCancel.id);
       if (result.success) {
-        setEventos(prev => prev.map(e => e.id === eventId ? { ...e, status: 2 } : e));
+        setEventos(prev => prev.map(e => e.id === eventToCancel.id ? { ...e, status: 2 } : e));
+        setShowCancelModal(false);
+        setEventToCancel(null);
       } else {
         setError(result.message || 'Error cancelando evento');
       }
@@ -237,22 +255,29 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleReactivateUser = async (userId) => {
+  const handleReactivateUser = (userId) => {
     if (!userId) {
       alert('Error: ID de usuario no válido');
       console.error('UserId es undefined:', userId);
       return;
     }
 
-    if (!confirm('¿Estás seguro de que quieres reactivar esta cuenta de usuario?')) return;
+    const user = usuarios.find(u => u.userID === userId);
+    setUserToReactivate(user);
+    setShowReactivateModal(true);
+  };
+
+  const confirmReactivateUser = async () => {
+    if (!userToReactivate) return;
+
     try {
-      console.log('Reactivando usuario con ID:', userId);
-      const result = await reactivateUser(userId);
+      console.log('Reactivando usuario con ID:', userToReactivate.userID);
+      const result = await reactivateUser(userToReactivate.userID);
       console.log('Resultado de reactivación:', result);
       if (result.success) {
         // Actualizar directamente el estado del usuario en la lista local
         setUsuarios(prev => prev.map(u => {
-          if (u.userID === userId) {
+          if (u.userID === userToReactivate.userID) {
             console.log('Actualizando usuario:', u.userID, 'estado anterior:', u.status, 'nuevo estado: true');
             return { ...u, status: true };
           }
@@ -262,7 +287,9 @@ const AdminDashboard = () => {
         // Cambiar automáticamente a la pestaña de usuarios activos para mostrar el usuario reactivado
         setPaginaActiva('usuarios');
 
-        alert('Usuario reactivado exitosamente. El usuario ahora puede iniciar sesión.');
+        setShowReactivateModal(false);
+        setUserToReactivate(null);
+        setShowReactivateSuccess(true);
       } else {
         setError(result.message || 'Error reactivando usuario');
         console.error('Error en respuesta del backend:', result);
@@ -270,7 +297,13 @@ const AdminDashboard = () => {
     } catch (err) {
       setError('Error de conexión');
       console.error('Error reactivating user:', err);
+    } finally {
+      setShowReactivateModal(false);
     }
+  };
+
+  const handleReactivateSuccess = () => {
+    setShowReactivateSuccess(false);
   };
 
   const handleVerSolicitud = (solicitud) => {
@@ -1666,6 +1699,156 @@ const AdminDashboard = () => {
                   Cerrar Detalles
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para cancelar evento */}
+      {showCancelModal && eventToCancel && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente rojo */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <X className="w-8 h-8 text-red-500" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">¿Estás seguro de que quieres cancelar este evento?</h3>
+              <p className="text-red-100 text-sm">Esta acción no se puede deshacer</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <Calendar className="w-6 h-6 text-red-600 mx-auto mb-2" />
+                  <p className="text-gray-700 text-sm font-medium mb-1">Evento a cancelar</p>
+                  <p className="text-gray-500 text-xs">{eventToCancel.eventName}</p>
+                </div>
+
+                <div className="text-gray-600 text-sm space-y-2">
+                  <p className="mb-2">📅 <span className="font-medium">{eventToCancel.eventName}</span></p>
+                  <p className="text-xs text-gray-500">Esta acción cancelará el evento permanentemente</p>
+                </div>
+              </div>
+
+              {/* Botones */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowCancelModal(false);
+                    setEventToCancel(null);
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmCancelEvent}
+                  className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm"
+                >
+                  Confirmar Cancelación
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para reactivar usuario */}
+      {showReactivateModal && userToReactivate && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente morado */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <Check className="w-8 h-8 text-purple-500" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">¿Estás seguro de que quieres reactivar esta cuenta de usuario?</h3>
+              <p className="text-purple-100 text-sm">El usuario podrá iniciar sesión nuevamente</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="bg-purple-50 rounded-lg p-4 mb-4">
+                  <User className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                  <p className="text-purple-700 text-sm font-medium mb-1">Usuario a reactivar</p>
+                  <p className="text-purple-600 text-xs">{userToReactivate.fullName}</p>
+                  <p className="text-purple-600 text-xs">{userToReactivate.email}</p>
+                </div>
+
+                <div className="text-gray-600 text-sm">
+                  <p className="mb-2">🔓 <span className="font-medium">Reactivación de cuenta</span></p>
+                  <p className="text-xs text-gray-500">El usuario podrá acceder nuevamente a todas las funcionalidades de la plataforma.</p>
+                </div>
+              </div>
+
+              {/* Botones */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowReactivateModal(false);
+                    setUserToReactivate(null);
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmReactivateUser}
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm"
+                >
+                  Confirmar Reactivación
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de éxito de reactivación */}
+      {showReactivateSuccess && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente morado */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <Check className="w-8 h-8 text-white" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Usuario reactivado exitosamente</h3>
+              <p className="text-purple-100 text-sm">El usuario ahora puede iniciar sesión</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="bg-purple-50 rounded-lg p-4 mb-4">
+                  <User className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                  <p className="text-purple-700 text-sm font-medium mb-1">Reactivación completada</p>
+                  <p className="text-purple-600 text-xs">El usuario ha sido activado exitosamente</p>
+                </div>
+
+                <div className="text-gray-600 text-sm">
+                  <p className="mb-2">✅ <span className="font-medium">Cuenta activada</span></p>
+                  <p className="text-xs text-gray-500">El usuario puede acceder nuevamente a todas las funcionalidades de la plataforma.</p>
+                </div>
+              </div>
+
+              {/* Botón para continuar */}
+              <button
+                onClick={handleReactivateSuccess}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+              >
+                <Check className="w-4 h-4" />
+                <span>Aceptar</span>
+              </button>
             </div>
           </div>
         </div>

@@ -18,6 +18,8 @@ export default function UserProfile() {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+  const [showDeactivateSuccess, setShowDeactivateSuccess] = useState(false);
 
   const userId = localStorage.getItem('userID');
 
@@ -89,20 +91,34 @@ export default function UserProfile() {
     }
   };
 
-  const handleDeactivate = async () => {
-    if (window.confirm("¿Estás seguro de que quieres desactivar tu cuenta? Solo un administrador puede reactivarla.")) {
-      try {
-        const result = await deactivateUser(userId);
-        if (result.success) {
-          alert("Cuenta desactivada exitosamente");
-          onLogout();
-        } else {
-          setMessage(result.message || "Error desactivando cuenta");
-        }
-      } catch (error) {
-        setMessage("Error de conexión");
+  const handleDeactivate = () => {
+    setShowDeactivateConfirm(true);
+  };
+
+  const confirmDeactivate = async () => {
+    try {
+      const result = await deactivateUser(userId);
+      if (result.success) {
+        setShowDeactivateConfirm(false);
+        setShowDeactivateSuccess(true);
+        // Logout functionality will be handled after the modal
+      } else {
+        setMessage(result.message || "Error desactivando cuenta");
       }
+    } catch (error) {
+      setMessage("Error de conexión");
+    } finally {
+      setShowDeactivateConfirm(false);
     }
+  };
+
+  const handleDeactivateSuccess = () => {
+    setShowDeactivateSuccess(false);
+    // Logout functionality
+    localStorage.removeItem('token');
+    localStorage.removeItem('userID');
+    localStorage.removeItem('role');
+    window.location.href = '/';
   };
 
   const handleDelete = async () => {
@@ -501,6 +517,100 @@ export default function UserProfile() {
                     Eliminar Cuenta
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de confirmación de desactivación */}
+        {showDeactivateConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+              {/* Header con gradiente amarillo */}
+              <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-6 text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-white rounded-full p-3">
+                    <AlertCircle className="w-8 h-8 text-yellow-500" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">¿Estás seguro de que quieres desactivar tu cuenta?</h3>
+                <p className="text-yellow-100 text-sm">Solo un administrador puede reactivarla</p>
+              </div>
+
+              {/* Contenido */}
+              <div className="p-6">
+                <div className="mb-6">
+                  <div className="bg-yellow-50 rounded-lg p-4 mb-4">
+                    <User className="w-6 h-6 text-yellow-600 mx-auto mb-2" />
+                    <p className="text-yellow-700 text-sm font-medium mb-1">Desactivación de cuenta</p>
+                    <p className="text-yellow-600 text-xs">Tu cuenta será desactivada temporalmente</p>
+                  </div>
+
+                  <div className="text-gray-600 text-sm">
+                    <p className="mb-2">⚠️ <span className="font-medium">Advertencia importante</span></p>
+                    <p className="text-xs text-gray-500">Solo un administrador podrá reactivar tu cuenta después de esta acción.</p>
+                  </div>
+                </div>
+
+                {/* Botones */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeactivateConfirm(false)}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={confirmDeactivate}
+                    className="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm"
+                  >
+                    Confirmar Desactivación
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de éxito de desactivación */}
+        {showDeactivateSuccess && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+              {/* Header con gradiente amarillo */}
+              <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-6 text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-white rounded-full p-3">
+                    <CheckCircle className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Cuenta desactivada exitosamente</h3>
+                <p className="text-yellow-100 text-sm">Tu cuenta ha sido desactivada temporalmente</p>
+              </div>
+
+              {/* Contenido */}
+              <div className="p-6">
+                <div className="mb-6">
+                  <div className="bg-yellow-50 rounded-lg p-4 mb-4">
+                    <User className="w-6 h-6 text-yellow-600 mx-auto mb-2" />
+                    <p className="text-yellow-700 text-sm font-medium mb-1">Desactivación completada</p>
+                    <p className="text-yellow-600 text-xs">Serás redirigido a la página principal</p>
+                  </div>
+
+                  <div className="text-gray-600 text-sm">
+                    <p className="mb-2">🔒 <span className="font-medium">Cuenta desactivada</span></p>
+                    <p className="text-xs text-gray-500 mb-2">Para reactivar tu cuenta, contacta al administrador:</p>
+                    <p className="text-yellow-600 font-medium text-sm">📧 atuevento72@gmail.com</p>
+                  </div>
+                </div>
+
+                {/* Botón para continuar */}
+                <button
+                  onClick={handleDeactivateSuccess}
+                  className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Aceptar</span>
+                </button>
               </div>
             </div>
           </div>
