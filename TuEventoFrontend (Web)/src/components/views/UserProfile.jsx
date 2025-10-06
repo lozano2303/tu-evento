@@ -114,10 +114,12 @@ export default function UserProfile() {
 
   const handleDeactivateSuccess = () => {
     setShowDeactivateSuccess(false);
-    // Logout functionality
+    // Logout functionality - Limpiar todos los datos de autenticación
     localStorage.removeItem('token');
     localStorage.removeItem('userID');
     localStorage.removeItem('role');
+    localStorage.removeItem('pendingActivationUserID');
+    localStorage.removeItem('adminLoggedIn');
     window.location.href = '/';
   };
 

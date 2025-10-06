@@ -25,14 +25,20 @@ export default function LadingPage() {
         if (result.success) {
           setUserData(result.data);
         } else {
+          // Limpiar todos los datos de autenticación del localStorage
           localStorage.removeItem('token');
           localStorage.removeItem('userID');
           localStorage.removeItem('role');
+          localStorage.removeItem('pendingActivationUserID');
+          localStorage.removeItem('adminLoggedIn');
         }
       }).catch(() => {
+        // Limpiar todos los datos de autenticación del localStorage
         localStorage.removeItem('token');
         localStorage.removeItem('userID');
         localStorage.removeItem('role');
+        localStorage.removeItem('pendingActivationUserID');
+        localStorage.removeItem('adminLoggedIn');
       });
     } else {
       const token = localStorage.getItem('token');
@@ -42,14 +48,20 @@ export default function LadingPage() {
           if (result.success) {
             setUserData(result.data);
           } else {
+            // Limpiar todos los datos de autenticación del localStorage
             localStorage.removeItem('token');
             localStorage.removeItem('userID');
             localStorage.removeItem('role');
+            localStorage.removeItem('pendingActivationUserID');
+            localStorage.removeItem('adminLoggedIn');
           }
         }).catch(() => {
+          // Limpiar todos los datos de autenticación del localStorage
           localStorage.removeItem('token');
           localStorage.removeItem('userID');
           localStorage.removeItem('role');
+          localStorage.removeItem('pendingActivationUserID');
+          localStorage.removeItem('adminLoggedIn');
         });
       }
     }

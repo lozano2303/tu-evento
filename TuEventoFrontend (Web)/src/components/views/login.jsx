@@ -49,14 +49,20 @@ export default function Login() {
           setUserData(result.data);
           setView('profile');
         } else {
+          // Limpiar todos los datos de autenticación del localStorage
           localStorage.removeItem('token');
           localStorage.removeItem('userID');
           localStorage.removeItem('role');
+          localStorage.removeItem('pendingActivationUserID');
+          localStorage.removeItem('adminLoggedIn');
         }
       }).catch(() => {
+        // Limpiar todos los datos de autenticación del localStorage
         localStorage.removeItem('token');
         localStorage.removeItem('userID');
         localStorage.removeItem('role');
+        localStorage.removeItem('pendingActivationUserID');
+        localStorage.removeItem('adminLoggedIn');
       });
     }
   }, []);
@@ -192,9 +198,12 @@ export default function Login() {
   };
 
   const handleLogout = () => {
+    // Limpiar todos los datos de autenticación del localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('userID');
     localStorage.removeItem('role');
+    localStorage.removeItem('pendingActivationUserID');
+    localStorage.removeItem('adminLoggedIn');
     setUserData(null);
     setView('login');
   };

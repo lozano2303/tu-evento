@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 
 import MainLayout from "./components/layout/MainLayout.jsx";
+import ProtectedRoute from "./components/layout/ProtectedRoute.jsx";
 
 import LadingPage from "./components/views/ladingPage.jsx";
 import Login from "./components/views/login.jsx";
@@ -60,7 +61,11 @@ const App = () => {
         }
       />
       <Route path="/admin-login" element={<AdminLogin />} />
-      <Route path="/admin-dashboard" element={<AdminDashboard />} />
+      <Route path="/admin-dashboard" element={
+        <ProtectedRoute requiredRole="ADMIN">
+          <AdminDashboard />
+        </ProtectedRoute>
+      } />
       <Route path="/seat-management" element={<SeatManagement />} />
       <Route path="/event-management" element={<EventManagement />} />
       <Route path="/create-event" element={<EventForm />} />

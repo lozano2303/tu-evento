@@ -22,14 +22,20 @@ export default function Navbar() {
           console.log('Email from backend:', result.data.email);
           setUserData(result.data);
         } else {
+          // Limpiar todos los datos de autenticación del localStorage
           localStorage.removeItem('token');
           localStorage.removeItem('userID');
           localStorage.removeItem('role');
+          localStorage.removeItem('pendingActivationUserID');
+          localStorage.removeItem('adminLoggedIn');
         }
       }).catch(() => {
+        // Limpiar todos los datos de autenticación del localStorage
         localStorage.removeItem('token');
         localStorage.removeItem('userID');
         localStorage.removeItem('role');
+        localStorage.removeItem('pendingActivationUserID');
+        localStorage.removeItem('adminLoggedIn');
       });
     }
   }, []);
@@ -45,9 +51,12 @@ export default function Navbar() {
   }, [isModalOpen]);
 
   const handleLogout = () => {
+    // Limpiar todos los datos de autenticación del localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('userID');
     localStorage.removeItem('role');
+    localStorage.removeItem('pendingActivationUserID');
+    localStorage.removeItem('adminLoggedIn');
     setUserData(null);
     setIsModalOpen(false);
     window.location.reload(); // Recargar para actualizar estado

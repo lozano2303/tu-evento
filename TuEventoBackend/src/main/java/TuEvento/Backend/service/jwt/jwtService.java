@@ -30,12 +30,11 @@ public class jwtService {
         User user = login.getUserID();
         extraClaims.put("userID", user.getUserID());
         extraClaims.put("fullName", user.getFullName());
-        extraClaims.put("email", login.getEmail());
         extraClaims.put("role", user.getRole().name()); // Guardamos el nombre del enum como string
         return generateToken(extraClaims, login);
     }
 
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {  
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
