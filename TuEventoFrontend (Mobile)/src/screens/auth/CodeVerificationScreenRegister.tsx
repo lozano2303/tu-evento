@@ -75,7 +75,7 @@ export default function CodeVerificationScreenRegister() {
       console.error('Error en verificación:', error);
       Alert.alert(
         'Error de Verificación',
-        error.message || 'El código ingresado es incorrecto. Intenta nuevamente.'
+        'codigo invalido'
       );
     } finally {
       setIsLoading(false);
