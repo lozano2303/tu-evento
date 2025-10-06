@@ -17,7 +17,8 @@ import {
   Sofa,
   Grid3x3,
   Save,
-  CheckCircle
+  CheckCircle,
+  X
 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 
@@ -605,6 +606,8 @@ const FloorPlanDesignerInner = () => {
   const [existingSectionsLoaded, setExistingSectionsLoaded] = useState(false); // Para saber si ya se cargaron las secciones existentes
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
 
   // Load existing layout for the event when component mounts
@@ -2548,7 +2551,8 @@ const FloorPlanDesignerInner = () => {
                     }
 
                     if (allSelectedElements.length === 0) {
-                      alert('Por favor selecciona al menos una silla para la sección');
+                      setErrorMessage('Por favor selecciona al menos una silla para la sección');
+                      setShowErrorModal(true);
                       return;
                     }
 
@@ -2618,7 +2622,8 @@ const FloorPlanDesignerInner = () => {
 
                     // Mostrar notificación de éxito
                     const successMessage = `✅ Sección "${sectionNameLabel}" agregada al diseño con ${allSelectedElements.length} asientos.\n\nIMPORTANTE: Las secciones y asientos se crearán en el sistema solo cuando guardes el layout.`;
-                    alert(successMessage);
+                    setSuccessMessage(successMessage);
+                    setShowSuccessModal(true);
 
                     // Resetear automáticamente el modo de selección
                     setIsSectionCreationMode(false);
@@ -3130,6 +3135,42 @@ const FloorPlanDesignerInner = () => {
               >
                 <CheckCircle className="w-4 h-4" />
                 <span>Continuar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de error */}
+      {showErrorModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            {/* Header con gradiente morado */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="bg-white rounded-full p-3">
+                  <X className="w-8 h-8 text-purple-500" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Error</h3>
+              <p className="text-purple-100 text-sm">No se puede completar la acción</p>
+            </div>
+
+            {/* Contenido */}
+            <div className="p-6 text-center">
+              <div className="mb-6">
+                <div className="bg-red-50 rounded-lg p-4 mb-4">
+                  <span className="text-red-800 text-sm">{errorMessage}</span>
+                </div>
+              </div>
+
+              {/* Botón para continuar */}
+              <button
+                onClick={() => setShowErrorModal(false)}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 text-sm flex items-center justify-center space-x-2"
+              >
+                <X className="w-4 h-4" />
+                <span>Entendido</span>
               </button>
             </div>
           </div>
