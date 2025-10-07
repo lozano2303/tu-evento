@@ -265,7 +265,7 @@ public class TicketServiceImpl implements TicketService {
             return ResponseDto.error("Ticket no encontrado");
 
         if (ticketOpt.get().getStatus() != 0)
-            return ResponseDto.error("Ticket ya cancelado");
+            return ResponseDto.error("Ticket ya pagado");
         Ticket ticket = ticketOpt.get();
         System.out.println("Cancelling ticket: " + ticketID);
         List<SeatTicket> relations = seatTicketRepository.findByTicket(ticket);
@@ -319,7 +319,7 @@ public class TicketServiceImpl implements TicketService {
         ticket.setStatus(1); // Cancelado
         ticketRepository.save(ticket);
 
-        return ResponseDto.ok("Ticket cancelado");
+        return ResponseDto.ok("Ticket pagado con éxito");
     }
 
     // Scheduler: liberar asientos si el ticket no se paga en 30 minutos
