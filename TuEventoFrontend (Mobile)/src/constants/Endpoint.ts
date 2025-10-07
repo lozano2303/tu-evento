@@ -32,6 +32,8 @@ export const GET_EVENT_IMAGES_ENDPOINT = `${API_BASE_URL}/event-img`; // Get eve
 
 export const BUY_TICKET_ENDPOINT = `${API_BASE_URL}/tickets/cancel`; // Cancel ticket endpoint
 
+export const GET_TICKET_BY_ID_ENDPOINT = `${API_BASE_URL}/tickets`; // Get ticket by ID endpoint
+
 export const EVENT_RATING_ENDPOINT = `${API_BASE_URL}/eventRating`; // Event rating endpoint
 
 export const FILTER_EVENTS_ENDPOINT = `${API_BASE_URL}/event/filter`; // Filter events endpoint

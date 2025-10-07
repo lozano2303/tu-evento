@@ -2,7 +2,9 @@ import { View, Text, StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
 import { CameraView, Camera } from "expo-camera";
 import Button from "../../components/common/Button";
-import {cancelTicket } from "../../api/services/ticket";
+import { cancelTicket, getTicketById } from "../../api/services/ticket";
+import { getEventById } from "../../api/services/EventApi";
+import { getUserIdFromToken } from "../../api/services/Token";
 import { useNavigation } from "@react-navigation/native";
 
 export default function QrScannerScreen() {
@@ -10,6 +12,8 @@ export default function QrScannerScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
   const [dataQR, setDataQR] = useState<string | null>(null);
+  const [canCancel, setCanCancel] = useState(false);
+  const [checkingPermission, setCheckingPermission] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -18,10 +22,33 @@ export default function QrScannerScreen() {
     })();
   }, []);
 
-  const handleBarCodeScanned = ({ data }: { type: string; data: string }) => {
+  const handleBarCodeScanned = async ({ data }: { type: string; data: string }) => {
     setScanned(true);
-    const tikect = data.split(":")[1];  
-    setDataQR(tikect);
+    const ticketId = data.split(":")[1];
+    setDataQR(ticketId);
+
+    // Check if user can cancel this ticket
+    setCheckingPermission(true);
+    try {
+      const ticketResult = await getTicketById(ticketId);
+      if (ticketResult.success && ticketResult.data) {
+        const eventResult = await getEventById(ticketResult.data.eventId);
+        if (eventResult) {
+          const currentUserId = await getUserIdFromToken();
+          const eventCreatorId = eventResult.userID.userID;
+          setCanCancel(currentUserId === eventCreatorId);
+        } else {
+          setCanCancel(false);
+        }
+      } else {
+        setCanCancel(false);
+      }
+    } catch (error) {
+      console.log('Error checking ticket permission:', error);
+      setCanCancel(false);
+    } finally {
+      setCheckingPermission(false);
+    }
   };
   
 
@@ -52,23 +79,24 @@ export default function QrScannerScreen() {
       {/* Overlay transparente */}
       <View style={styles.overlay}>
         <Text style={styles.text}>
-          {scanned ? `Si el pago está completado, oprime el botón para confirmar` : "Asegúrate de ubicar bien la cámara"}
+          {scanned ? (checkingPermission ? "Verificando permisos..." : canCancel ? "Si el pago está completado, oprime el botón para confirmar" : "No tienes permiso para cancelar este ticket") : "Asegúrate de ubicar bien la cámara"}
         </Text>
-        {scanned && (
+        {scanned && !checkingPermission && (
           <View style={{ marginTop: 20, width: "80%" }}>
-            <Button label="Escanear de nuevo" onPress={() => setScanned(false)} />
-            <Button label="Confirmar pago" onPress={async () => {
-              if (dataQR) {
-                const result = await cancelTicket(dataQR);
-                if (result.success) {
-                  alert("✅ Ticket cancelado con éxito");
-                  navigation.goBack();
-                } else {
-                  alert("❌ " + result.message);
+            <Button label="Escanear de nuevo" onPress={() => { setScanned(false); setCanCancel(false); setDataQR(null); setCheckingPermission(false); }} />
+            {canCancel && (
+              <Button label="Confirmar pago" onPress={async () => {
+                if (dataQR) {
+                  const result = await cancelTicket(dataQR);
+                  if (result.success) {
+                    alert("✅ Ticket cancelado con éxito");
+                    navigation.goBack();
+                  } else {
+                    alert("❌ " + result.message);
+                  }
                 }
-              }
-        }} 
-      />
+              }} />
+            )}
           </View>
         )}
       </View>
