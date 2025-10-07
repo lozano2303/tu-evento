@@ -1,4 +1,4 @@
-import { Calendar, Users, Gift, Smartphone, Globe, CheckCircle } from 'lucide-react';
+import { Calendar, Users, Gift, Smartphone, Globe, CheckCircle, X, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getUserById } from '../../services/Login.js';
@@ -6,6 +6,7 @@ import { getUserById } from '../../services/Login.js';
 export default function LadingPage() {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
+  const [showApkModal, setShowApkModal] = useState(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -270,13 +271,56 @@ export default function LadingPage() {
                 <Smartphone className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-xl font-semibold">ANDROID</h3>
+              <button
+                onClick={() => setShowApkModal(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+              >
+                Descargar APK
+              </button>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      
+
+
+      {/* Modal de descarga APK */}
+      {showApkModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            {/* Header del modal */}
+            <div className="flex justify-between items-center p-6 border-b">
+              <h2 className="text-2xl font-bold text-gray-800">Descargar APK</h2>
+              <button onClick={() => setShowApkModal(false)}>
+                <X className="w-8 h-8 text-gray-500 hover:text-gray-700" />
+              </button>
+            </div>
+
+            {/* Contenido del modal */}
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Download className="w-8 h-8 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Aplicación Móvil TuEvento</h3>
+              <p className="text-gray-600 mb-6">
+                Descarga la aplicación móvil para acceder a todas las funciones de TuEvento desde tu dispositivo Android.
+              </p>
+              <a
+                href="https://drive.google.com/file/d/1VeECC-bj0F9i-5uczP3Si0FP5c6N8LE8/view?usp=drivesdk"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowApkModal(false)}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center space-x-2"
+              >
+                <Download className="w-5 h-5" />
+                <span>Descargar APK</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
