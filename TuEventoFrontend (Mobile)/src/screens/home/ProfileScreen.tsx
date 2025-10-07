@@ -404,7 +404,7 @@ export default function ProfileScreen() {
               <Button label="Guardar Cambios" onPress={handleSave} />
               <TouchableOpacity
                 onPress={handleDeactivateAccount}
-                className="bg-orange-600/20 border border-orange-600/50 py-3 rounded-lg"
+                className="bg-orange-600/20 border border-orange-600/50 py-3 rounded-lg mt-2 mb-2"
                 style={{ borderRadius: 25 }}
               >
                 <Text className="text-orange-400 text-center font-semibold text-base">

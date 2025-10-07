@@ -323,13 +323,13 @@ const EventDetail: React.FC = () => {
               <View>
                 <Text className="text-gray-400 text-sm">Inicio</Text>
                 <Text className="text-white font-medium">
-                  {formatDate(event.startDate)} a las {formatTime(event.startDate)}
+                  {formatDate(event.startDate)} 
                 </Text>
               </View>
               <View>
                 <Text className="text-gray-400 text-sm">Finalización</Text>
                 <Text className="text-white font-medium">
-                  {formatDate(event.finishDate)} a las {formatTime(event.finishDate)}
+                  {formatDate(event.finishDate)} 
                 </Text>
               </View>
             </View>
