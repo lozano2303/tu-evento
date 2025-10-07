@@ -1509,7 +1509,9 @@ const FloorPlanDesignerInner = () => {
 
       const updateResult = await updateEventLayout(eventLayoutID, updateData);
       if (updateResult.success) {
-        alert(`Layout guardado exitosamente!\nSecciones creadas: ${createdSections.length}\nSecciones eliminadas: ${deletedSectionsCount}\nAsientos creados: ${createdSeats.length}\nAsientos actualizados: ${updatedSeats.length}`);
+        const successMessage = `Layout guardado exitosamente!\nSecciones creadas: ${createdSections.length}\nSecciones eliminadas: ${deletedSectionsCount}\nAsientos creados: ${createdSeats.length}\nAsientos actualizados: ${updatedSeats.length}`;
+        setSuccessMessage(successMessage);
+        setShowSuccessModal(true);
 
         // Update local state with backend IDs (excluding deleted sections)
         pushSnapshot(updatedElementsWithExisting);
