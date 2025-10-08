@@ -5,9 +5,6 @@ import Button from "../../components/common/Button";
 
 import { useNavigation } from "@react-navigation/native";
 import { login } from "../../api/services/LoginApi";
-import { getUserIdFromToken } from "../../api/services/Token";
-import { getUserProfile } from "../../api/services/UserApi";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LoginScreen() {
   const navigation = useNavigation();
@@ -29,19 +26,6 @@ export default function LoginScreen() {
       const result = await login({ email, password });
       if (result.token) {
         console.log('Token:', result.token);
-        // Get user profile to check if organizer
-        const userId = await getUserIdFromToken();
-        if (userId) {
-          try {
-            const profileResult = await getUserProfile(userId);
-            if (profileResult.success && profileResult.data) {
-              await AsyncStorage.setItem('isOrganizer', profileResult.data.organizer.toString());
-            }
-          } catch (profileError) {
-            console.log('Error fetching profile:', profileError);
-            // Continue without organizer status
-          }
-        }
         navigation.navigate("MainTabs" as never);
       } else {
         Alert.alert("Error", result.message);

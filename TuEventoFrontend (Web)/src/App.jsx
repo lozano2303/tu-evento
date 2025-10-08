@@ -1,24 +1,24 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 
-import MainLayout from "./components/layout/MainLayout.jsx";
-import ProtectedRoute from "./components/layout/ProtectedRoute.jsx";
+import MainLayout from "./layout/MainLayout.jsx";
+import ProtectedRoute from "./layout/ProtectedRoute.jsx";
 
-import LadingPage from "./components/views/ladingPage.jsx";
-import Login from "./components/views/login.jsx";
-import Maquetation from "./components/views/FloorPlanDesigner.jsx";
-import Events from "./components/views/Events.jsx";
-import EventsInfo from "./components/views/EventsInfo.jsx";
-import AdminLogin from "./components/views/AdminLogin.jsx";
-import AdminDashboard from "./components/views/AdminDashboard.jsx";
-import SeatManagement from "./components/views/SeatManagement.jsx";
-import EventManagement from "./components/views/EventManagement.jsx";
-import EventForm from "./components/views/EventForm.jsx";
-import CompleteEvent from "./components/views/CompleteEvent.jsx";
-import OrganizerPetitionForm from "./components/views/OrganizerPetitionForm.jsx";
-import AboutUs from "./components/views/AboutUs.jsx";
+import LadingPage from "./pages/ladingPage.jsx";
+import Login from "./pages/login.jsx";
+import Maquetation from "./pages/FloorPlanDesigner.jsx";
+import Events from "./pages/Events.jsx";
+import EventsInfo from "./pages/EventsInfo.jsx";
+import AdminLogin from "./pages/AdminLogin.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import SeatManagement from "./pages/SeatManagement.jsx";
+import EventManagement from "./pages/EventManagement.jsx";
+import EventForm from "./pages/EventForm.jsx";
+import CompleteEvent from "./pages/CompleteEvent.jsx";
+import OrganizerPetitionForm from "./pages/OrganizerPetitionForm.jsx";
+import AboutUs from "./pages/AboutUs.jsx";
 import EventImagesView from "./test/EventImagesView.jsx";
-import UserProfile from "./components/views/UserProfile.jsx";
+import UserProfile from "./pages/UserProfile.jsx";
 
 const App = () => {
   return (

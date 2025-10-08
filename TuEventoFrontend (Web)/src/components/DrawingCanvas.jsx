@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react"
 import CanvasElement from "./CanvasElement"
-import useDragAndDrop from "../components/views/Hooks/useDragAndDrop.js"
+import useDragAndDrop from "../hooks/useDragAndDrop.js"
 
 const ELEMENT_CONSTANTS = {
   CHAIR_RADIUS: 15

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { EventImgService } from './EventImgService';
-import { getAllEvents } from '../services/EventService';
+import { getAllEvents } from '../services/EventService.js';
 
 const EventImagesView = () => {
   const [images, setImages] = useState([]);

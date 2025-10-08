@@ -2,8 +2,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
@@ -29,20 +27,6 @@ function HomeStack() {
 }
 
 function MainTabs() {
-  const [isOrganizer, setIsOrganizer] = useState(false);
-
-  useEffect(() => {
-    const loadOrganizerStatus = async () => {
-      try {
-        const organizerStatus = await AsyncStorage.getItem('isOrganizer');
-        setIsOrganizer(organizerStatus === 'true');
-      } catch (error) {
-        console.log('Error loading organizer status:', error);
-      }
-    };
-    loadOrganizerStatus();
-  }, []);
-
   return (
     <Tab.Navigator
       screenOptions={{
@@ -70,17 +54,15 @@ function MainTabs() {
           ),
         }}
       />
-      {isOrganizer && (
-        <Tab.Screen
-          name="Lector Qr"
-          component={ReaderQr}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="qr-code-outline" size={size} color={color} />
-            ),
-          }}
-        />
-      )}
+      <Tab.Screen
+        name="Lector Qr"
+        component={ReaderQr}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="qr-code-outline" size={size} color={color} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }
