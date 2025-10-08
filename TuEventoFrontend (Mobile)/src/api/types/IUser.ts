@@ -17,6 +17,7 @@ export interface IUserProfile {
   birthDate: string | null;
   address: number | null;
   activated: boolean;
+  organizer: boolean;
 }
 
 export interface IUserProfileResponse {
