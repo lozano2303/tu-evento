@@ -1,0 +1,12 @@
+@startuml Complete Controller Email Class Diagram
+
+class AccountActivationEmailController {
+    - AccountActivationService activationService
+    + ResponseEntity<String> sendActivationEmail(AccountActivationDto)
+    + ResponseEntity<String> resendActivationEmail(AccountActivationDto)
+}
+
+' Relationships
+AccountActivationEmailController --> AccountActivationService : activationService
+
+@enduml

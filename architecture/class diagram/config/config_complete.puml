@@ -48,4 +48,22 @@ class SwaggerConfig {
     + OpenAPI customOpenAPI()
 }
 
+class customOauht2UserService {
+    - RegisterWithOAuth2EmailService oauth2EmailService
+    - UserServiceImpl userService
+    - LoginServiceImpl loginService
+    - UserRepository userRepository
+    + OAuth2User loadUser(OAuth2UserRequest)
+    + String getSaltString()
+}
+
+' Relationships
+OAuth2LoginSuccessHandler --> LoginServiceImpl : userService
+SecurityConfig --> jwtAuthenticationFilter : jwtAuthenticationFilter
+SecurityConfig --> customOauht2UserService : customOAuth2UserService
+SecurityConfig --> OAuth2LoginSuccessHandler : oAuth2LoginSuccessHandler
+customOauht2UserService --> RegisterWithOAuth2EmailService : oauth2EmailService
+customOauht2UserService --> UserServiceImpl : userService
+customOauht2UserService --> LoginServiceImpl : loginService
+
 @enduml

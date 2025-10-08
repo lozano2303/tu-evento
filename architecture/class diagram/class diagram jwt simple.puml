@@ -1,6 +1,0 @@
-@startuml Simple JWT Class Diagram
-
-class jwtAuthenticationFilter {
-}
-
-@enduml

@@ -1,0 +1,30 @@
+@startuml Complete Service Email Class Diagram
+
+abstract class BaseEmailService {
+    # JavaMailSender mailSender
+    # boolean emailSender(String, String, String)
+}
+
+class ActivationEmailService extends BaseEmailService {
+    + void sendActivationCodeEmail(ActivationCodeEmailDto)
+}
+
+class ForgotPasswordEmailService extends BaseEmailService {
+    + void sendForgotPasswordEmail(String, String)
+}
+
+class RegisterWithOAuth2EmailService extends BaseEmailService {
+    + void sendWelcomeEmail(String, String, String)
+}
+
+class TicketReservationEmailService extends BaseEmailService {
+    + void sendTicketReservationEmail(String, String, String)
+}
+
+' Relationships
+BaseEmailService <|-- ActivationEmailService
+BaseEmailService <|-- ForgotPasswordEmailService
+BaseEmailService <|-- RegisterWithOAuth2EmailService
+BaseEmailService <|-- TicketReservationEmailService
+
+@enduml

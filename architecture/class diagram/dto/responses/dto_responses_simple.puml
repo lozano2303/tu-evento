@@ -1,0 +1,15 @@
+@startuml Simple DTO Responses Class Diagram
+
+class ResponseDto<T> {
+}
+
+class ResponseEvent {
+}
+
+class ResponseEventSearch {
+}
+
+class ResponseLogin {
+}
+
+@enduml

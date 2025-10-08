@@ -1,0 +1,18 @@
+@startuml Complete Service Notification Class Diagram
+
+class SendNotification {
+    - NotificationUserRepository notificationUserRepository
+    - NotificationRepository notificationRepository
+    - LoginRepository loginRepository
+    - JavaMailSender mailSender
+    + void sendNotificationsTwoDaysBeforeEvent()
+    + void sendNotificationForUser(NotificationUser)
+    - void sendEmail(String, String, String)
+}
+
+' Relationships
+SendNotification --> NotificationUserRepository : notificationUserRepository
+SendNotification --> NotificationRepository : notificationRepository
+SendNotification --> LoginRepository : loginRepository
+
+@enduml

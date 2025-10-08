@@ -1,0 +1,28 @@
+@startuml Simple Data Class Diagram
+
+class AddressLocationInitializer {
+}
+
+class AdminDataInitializer {
+}
+
+class CategoryDataInitializer {
+}
+
+class GeoDataInitializer {
+}
+
+class SectionNameDataInitializer {
+}
+
+' Relationships
+AddressLocationInitializer --> AddressRepository : addressRepository
+AddressLocationInitializer --> LocationRepository : locationRepository
+AdminDataInitializer --> UserRepository : userRepository
+AdminDataInitializer --> LoginRepository : loginRepository
+CategoryDataInitializer --> CategoryRepository : categoryRepository
+GeoDataInitializer --> DepartmentRepository : departmentRepository
+GeoDataInitializer --> CityRepository : cityRepository
+SectionNameDataInitializer --> SectionNameRepository : sectionNameRepository
+
+@enduml

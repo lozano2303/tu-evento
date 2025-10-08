@@ -1,0 +1,18 @@
+@startuml Complete Service OAuth Class Diagram
+
+class customOauht2UserService {
+    - RegisterWithOAuth2EmailService oauth2EmailService
+    - UserServiceImpl userService
+    - LoginServiceImpl loginService
+    - UserRepository userRepository
+    + OAuth2User loadUser(OAuth2UserRequest)
+    + String getSaltString()
+}
+
+' Relationships
+customOauht2UserService --> RegisterWithOAuth2EmailService : oauth2EmailService
+customOauht2UserService --> UserServiceImpl : userService
+customOauht2UserService --> LoginServiceImpl : loginService
+customOauht2UserService --> UserRepository : userRepository
+
+@enduml

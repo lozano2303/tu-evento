@@ -72,10 +72,41 @@ class EventImgRequestDto {
 class EventImgResponseDto {
 }
 
+class ActivationCodeEmailDto {
+}
+
+class ChangePasswordDto {
+}
+
+class ForgotPasswordDto {
+}
+
+class RequestLoginDTO {
+}
+
+class ResetPasswordDTO {
+}
+
+class TokenInfo {
+}
+
+class ResponseDto<T> {
+}
+
+class ResponseEvent {
+}
+
+class ResponseEventSearch {
+}
+
+class ResponseLogin {
+}
+
 ' Relationships
 EventDto --> User : userID
 EventDto --> Location : locationID
 EventLayoutDto --> Event : eventID
 RecoverPasswordDto --> User : userID
+RequestLoginDTO --> User : userID
 
 @enduml

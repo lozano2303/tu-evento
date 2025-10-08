@@ -1,0 +1,9 @@
+@startuml Simple Controller Email Class Diagram
+
+class AccountActivationEmailController {
+}
+
+' Relationships
+AccountActivationEmailController --> AccountActivationService : activationService
+
+@enduml

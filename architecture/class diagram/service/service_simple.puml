@@ -119,10 +119,41 @@ class UserServiceImpl implements UserService {
 interface EventImgService {
 }
 
+class EventImgServiceImpl implements EventImgService {
+}
+
 interface SectionNameService {
 }
 
 class SectionNameServiceImpl implements SectionNameService {
 }
+
+class StorageService {
+}
+
+abstract class BaseEmailService {
+}
+
+class ActivationEmailService extends BaseEmailService {
+}
+
+class ForgotPasswordEmailService extends BaseEmailService {
+}
+
+class RegisterWithOAuth2EmailService extends BaseEmailService {
+}
+
+class TicketReservationEmailService extends BaseEmailService {
+}
+
+class SendNotification {
+}
+
+' Relationships
+EventImgServiceImpl --> StorageService : storageService
+BaseEmailService <|-- ActivationEmailService
+BaseEmailService <|-- ForgotPasswordEmailService
+BaseEmailService <|-- RegisterWithOAuth2EmailService
+BaseEmailService <|-- TicketReservationEmailService
 
 @enduml

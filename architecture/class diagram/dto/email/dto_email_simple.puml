@@ -1,0 +1,6 @@
+@startuml Simple DTO Email Class Diagram
+
+class ActivationCodeEmailDto {
+}
+
+@enduml

@@ -1,0 +1,47 @@
+@startuml Complete Data Class Diagram
+
+class AddressLocationInitializer {
+    - AddressRepository addressRepository
+    - LocationRepository locationRepository
+    + void run(ApplicationArguments)
+    - void initializeAddressesAndLocations()
+}
+
+class AdminDataInitializer {
+    - UserRepository userRepository
+    - LoginRepository loginRepository
+    - PasswordEncoder passwordEncoder
+    + void run(ApplicationArguments)
+    - void createAdminUser()
+}
+
+class CategoryDataInitializer {
+    - CategoryRepository categoryRepository
+    + void run(ApplicationArguments)
+    - void initializeCategories()
+}
+
+class GeoDataInitializer {
+    - DepartmentRepository departmentRepository
+    - CityRepository cityRepository
+    + void run(ApplicationArguments)
+    - void initializeGeoData()
+}
+
+class SectionNameDataInitializer {
+    - SectionNameRepository sectionNameRepository
+    + void run(ApplicationArguments)
+    - void initializeSectionNames()
+}
+
+' Relationships
+AddressLocationInitializer --> AddressRepository : addressRepository
+AddressLocationInitializer --> LocationRepository : locationRepository
+AdminDataInitializer --> UserRepository : userRepository
+AdminDataInitializer --> LoginRepository : loginRepository
+CategoryDataInitializer --> CategoryRepository : categoryRepository
+GeoDataInitializer --> DepartmentRepository : departmentRepository
+GeoDataInitializer --> CityRepository : cityRepository
+SectionNameDataInitializer --> SectionNameRepository : sectionNameRepository
+
+@enduml

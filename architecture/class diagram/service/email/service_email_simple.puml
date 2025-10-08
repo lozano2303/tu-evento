@@ -1,0 +1,24 @@
+@startuml Simple Service Email Class Diagram
+
+abstract class BaseEmailService {
+}
+
+class ActivationEmailService extends BaseEmailService {
+}
+
+class ForgotPasswordEmailService extends BaseEmailService {
+}
+
+class RegisterWithOAuth2EmailService extends BaseEmailService {
+}
+
+class TicketReservationEmailService extends BaseEmailService {
+}
+
+' Relationships
+BaseEmailService <|-- ActivationEmailService
+BaseEmailService <|-- ForgotPasswordEmailService
+BaseEmailService <|-- RegisterWithOAuth2EmailService
+BaseEmailService <|-- TicketReservationEmailService
+
+@enduml

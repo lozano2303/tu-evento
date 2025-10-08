@@ -1,0 +1,12 @@
+@startuml Simple JWT Class Diagram
+
+class jwtAuthenticationFilter {
+}
+
+class jwtService {
+}
+
+' Relationships
+jwtAuthenticationFilter --> jwtService : jwtService
+
+@enduml

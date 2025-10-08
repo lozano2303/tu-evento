@@ -1,0 +1,6 @@
+@startuml Simple Service Notification Class Diagram
+
+class SendNotification {
+}
+
+@enduml

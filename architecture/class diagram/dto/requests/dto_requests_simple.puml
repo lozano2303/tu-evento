@@ -1,0 +1,21 @@
+@startuml Simple DTO Requests Class Diagram
+
+class ChangePasswordDto {
+}
+
+class ForgotPasswordDto {
+}
+
+class RequestLoginDTO {
+}
+
+class ResetPasswordDTO {
+}
+
+class TokenInfo {
+}
+
+' Relationships
+RequestLoginDTO --> User : userID
+
+@enduml

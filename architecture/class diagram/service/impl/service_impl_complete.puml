@@ -1,0 +1,203 @@
+@startuml Complete Service Implementation Class Diagram
+
+skinparam nodesep 50
+skinparam ranksep 30
+
+' === Authentication & User Services Implementation ===
+package "Authentication & User Services Implementation" {
+    class AccountActivationServiceImpl implements AccountActivationService {
+        + void createActivationForUser(int)
+        + void resendActivationCode(int)
+        + ResponseDto<String> verifyActivationCode(int, String)
+        + User getUserById(int)
+    }
+
+    class LoginServiceImpl implements LoginService {
+        + ResponseDto<ResponseLogin> login(LoginDto)
+        + ResponseDto<String> save(RequestLoginDTO)
+    }
+
+    class RegisterServiceImpl implements RegisterService {
+        + ResponseDto<String> register(RegisterRequestDto)
+    }
+
+    class UserServiceImpl implements UserService {
+        + ResponseDto<String> updateTelephone(int, String)
+        + ResponseDto<String> updateBirthDate(int, Date)
+        + ResponseDto<String> updateAddress(int, Integer)
+        + ResponseDto<String> deleteUserAccount(int)
+        + ResponseDto<String> deactivateUser(int)
+        + ResponseDto<String> reactivateUser(int)
+        + ResponseDto<UserDto> getUserById(int)
+        + ResponseDto<List<UserDto>> getUsersByName(String)
+        + ResponseDto<List<UserDto>> getAllUsers()
+    }
+
+    class UserDetailsServiceImpl implements UserDetailsService {
+        + UserDetails loadUserByUsername(String)
+    }
+
+    class RecoverPasswordServiceImpl implements RecoverPasswordService {
+        + ResponseDto<String> insertRecoverPassword(RecoverPasswordDto)
+        + ResponseDto<String> updateRecoverPassword(String, RecoverPasswordDto)
+    }
+}
+
+' === Event & Content Services Implementation ===
+package "Event & Content Services Implementation" {
+    class EventServiceImpl implements EventService {
+        + ResponseDto<EventDto> insertEvent(EventDto)
+        + ResponseDto<EventDto> updateEvent(ResponseEvent, EventDto)
+        + ResponseDto<EventDto> CancelEvent(EventDto)
+        + ResponseDto<List<EventDto>> getAllEvent()
+        + ResponseDto<EventDto> getEvent(ResponseEventSearch, EventDto)
+        + ResponseDto<EventDto> getEventById(int)
+    }
+
+    class EventLayoutServiceImpl implements EventLayoutService {
+        + ResponseDto<EventLayoutDto> getEventLayout(String, EventLayoutDto)
+        + ResponseDto<EventLayoutDto> createEventLayout(EventLayoutDto)
+        + ResponseDto<EventLayoutDto> updateEventLayout(String, EventLayoutDto)
+        + ResponseDto<EventLayoutDto> deleteEventLayout(EventLayoutDto)
+    }
+
+    class EventRatingServiceImpl implements EventRatingService {
+        + ResponseDto<EventRatingDto> insertEventRating(int, int, EventRatingDto)
+        + ResponseDto<EventRatingDto> updateEventRating(EventRatingDto)
+        + ResponseDto<EventRatingDto> getEventRating(EventRatingDto)
+        + ResponseDto<EventRatingDto> deleteEventRating(EventRatingDto)
+        + ResponseDto<EventRatingDto> getEventRatingByEvent(EventRatingDto)
+        + ResponseDto<EventRatingDto> getEventRatingByUser(EventRatingDto)
+    }
+
+    class EventImgServiceImpl implements EventImgService {
+        - EventImgRepository eventImgRepository
+        - EventRepository eventRepository
+        - StorageService storageService
+        - String bucketName
+        + EventImgResponseDto saveEventImg(EventImgRequestDto)
+        + List<EventImgResponseDto> getEventImgsByEventId(int)
+        + void deleteEventImg(int)
+    }
+
+    class CategoryServiceImpl implements CategoryService {
+        + ResponseDto<CategoryDto> insertCategory(CategoryDto)
+        + ResponseDto<String> updateCategory(int, CategoryDto)
+        + ResponseDto<String> deleteCategory(int)
+        + ResponseDto<List<CategoryDto>> getAllCategories()
+        + ResponseDto<CategoryDto> getCategoryById(int)
+        + ResponseDto<List<CategoryDto>> getRootCategories()
+        + ResponseDto<List<CategoryDto>> getSubCategories(int)
+        + ResponseDto<List<CategoryDto>> searchCategoriesByName(String)
+    }
+
+    class CategoryEventServiceImpl implements CategoryEventService {
+        + ResponseDto<CategoryEventDto> assignCategoryToEvent(CategoryEventDto)
+        + ResponseDto<String> removeCategoryFromEvent(int, int)
+        + ResponseDto<List<CategoryEventDto>> getCategoriesByEvent(int)
+        + ResponseDto<List<CategoryEventDto>> getEventsByCategory(int)
+        + ResponseDto<String> removeAllCategoriesFromEvent(int)
+        + ResponseDto<String> removeAllEventsFromCategory(int)
+    }
+}
+
+' === Location & Geography Services Implementation ===
+package "Location & Geography Services Implementation" {
+    class AddressServiceImpl implements AddressService {
+        + ResponseDto<AddressDto> insertAddress(AddressDto)
+        + ResponseDto<String> updateAddress(int, AddressDto)
+        + ResponseDto<String> deleteAddress(int)
+        + ResponseDto<List<AddressDto>> getAllAddresses()
+        + ResponseDto<AddressDto> getAddressById(int)
+    }
+
+    class LocationServiceImpl implements LocationService {
+        + ResponseDto<LocationDto> insertLocation(LocationDto)
+        + ResponseDto<String> updateLocation(int, LocationDto)
+        + ResponseDto<String> deleteLocation(int)
+        + ResponseDto<List<LocationDto>> getAllLocations()
+        + ResponseDto<LocationDto> getLocationById(int)
+    }
+
+    class CityServiceImpl implements CityService {
+        + ResponseDto<CityDto> insertCity(CityDto)
+        + ResponseDto<String> updateCity(int, CityDto)
+        + ResponseDto<String> deleteCity(int)
+        + ResponseDto<List<CityDto>> getAllCities()
+        + ResponseDto<CityDto> getCityById(int)
+    }
+
+    class DepartmentServiceImpl implements DepartmentService {
+        + ResponseDto<DepartmentDto> insertDepartment(DepartmentDto)
+        + ResponseDto<String> updateDepartment(int, String)
+        + ResponseDto<String> deleteDepartment(int)
+        + ResponseDto<List<DepartmentDto>> getAllDepartments()
+        + ResponseDto<DepartmentDto> getDepartmentById(int)
+    }
+}
+
+' === Ticket & Seat Services Implementation ===
+package "Ticket & Seat Services Implementation" {
+    class TicketServiceImpl implements TicketService {
+        + ResponseDto<String> createTicketWithSeats(TicketDto)
+        + ResponseDto<String> cancelTicket(int)
+        + ResponseDto<TicketDto> getTicketById(int)
+        + ResponseDto<List<TicketDto>> getTicketByEvent(int)
+        + ResponseDto<List<TicketDto>> getTicketByUser(int)
+    }
+
+    class SeatServiceImpl implements SeatService {
+        + ResponseDto<SeatDto> insertSeat(SeatDto)
+        + ResponseDto<String> updateSeat(int, SeatDto)
+        + ResponseDto<String> deleteSeat(int)
+        + ResponseDto<List<SeatDto>> getAllSeats()
+        + ResponseDto<SeatDto> getSeatById(int)
+        + ResponseDto<String> updateSeatStatus(int, boolean)
+    }
+
+    class SectionServiceImpl implements SectionService {
+        + ResponseDto<SectionDto> insertSection(SectionDto)
+        + List<SectionDto> getAllSections()
+        + ResponseDto<SectionDto> updateSection(SectionDto)
+        + ResponseDto<SectionDto> deleteSection(int)
+        + ResponseDto<SectionDto> getSectionById(int)
+    }
+
+    class SectionNameServiceImpl implements SectionNameService {
+        + ResponseDto<SectionNameDto> insertSectionName(SectionNameDto)
+        + ResponseDto<String> updateSectionName(Integer, SectionNameDto)
+        + ResponseDto<String> deleteSectionName(Integer)
+        + ResponseDto<List<SectionNameDto>> getAllSectionNames()
+        + ResponseDto<SectionNameDto> getSectionNameById(Integer)
+        + ResponseDto<List<SectionNameDto>> searchSectionNamesByName(String)
+    }
+}
+
+' === Notification Services Implementation ===
+package "Notification Services Implementation" {
+    class NotificationServiceImpl implements NotificationService {
+        + ResponseDto<NotificationDto> insertNotification(NotificationDto)
+        + ResponseDto<NotificationDto> updateNotification(NotificationDto)
+        + ResponseDto<NotificationDto> deleteNotification(int)
+        + ResponseDto<NotificationDto> getNotification(int)
+        + ResponseDto<List<NotificationDto>> getNotifications(int)
+    }
+
+    class NotificationUserServiceImpl implements NotificationUserService {
+        + ResponseDto<NotificationUserDto> deleteNotificationUser(int)
+        + ResponseDto<NotificationUserDto> insertNotificationUser(NotificationUserDto)
+        + ResponseDto<List<NotificationUserDto>> getAll()
+    }
+
+    class OrganizerPetitionServiceImpl implements OrganizerPetitionService {
+        + ResponseDto<String> submitPetition(int, MultipartFile)
+        + ResponseDto<List<OrganizerPetitionDto>> getAllPetitions()
+        + ResponseDto<OrganizerPetitionDto> getPetitionByUserID(int)
+        + ResponseDto<String> updatePetitionStatus(int, int)
+    }
+}
+
+' Relationships
+EventImgServiceImpl --> StorageService : storageService
+
+@enduml

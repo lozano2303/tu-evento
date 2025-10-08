@@ -1,0 +1,31 @@
+@startuml Complete JWT Class Diagram
+
+class jwtAuthenticationFilter {
+    - jwtService jwtService
+    - LoginRepository loginRepository
+    - UserDetailsService userDetailsService
+    + void doFilterInternal(HttpServletRequest, HttpServletResponse, FilterChain)
+}
+
+class jwtService {
+    - String SECRET_KEY
+    + String generateToken(Login)
+    + String generateToken(Map<String, Object>, UserDetails)
+    + String getUsernameFromToken(String)
+    + Integer getUserIDFromToken(String)
+    + String getFullNameFromToken(String)
+    + String getEmailFromToken(String)
+    + String getRoleFromToken(String)
+    + boolean isTokenValid(String, UserDetails)
+    + boolean isTokenExpired(String)
+    + String refreshToken(String, UserDetails)
+    - Key getKey()
+    - Date extractExpiration(String)
+    - Claims extractAllClaims(String)
+    + <T> T extractClaim(String, Function<Claims, T>)
+}
+
+' Relationships
+jwtAuthenticationFilter --> jwtService : jwtService
+
+@enduml

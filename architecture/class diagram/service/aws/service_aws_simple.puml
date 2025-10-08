@@ -1,0 +1,9 @@
+@startuml Simple Service AWS Class Diagram
+
+class StorageService {
+}
+
+' Relationships
+StorageService --> S3Client : s3Client
+
+@enduml

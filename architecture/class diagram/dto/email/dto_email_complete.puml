@@ -1,0 +1,17 @@
+@startuml Complete DTO Email Class Diagram
+
+class ActivationCodeEmailDto {
+    - String to
+    - String activationCode
+    - String userFullName
+    + ActivationCodeEmailDto()
+    + ActivationCodeEmailDto(String, String, String)
+    + String getTo()
+    + void setTo(String)
+    + String getActivationCode()
+    + void setActivationCode(String)
+    + String getUserFullName()
+    + void setUserFullName(String)
+}
+
+@enduml

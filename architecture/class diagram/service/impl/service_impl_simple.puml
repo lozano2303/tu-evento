@@ -1,0 +1,52 @@
+@startuml Simple Service Implementation Class Diagram
+
+skinparam nodesep 50
+skinparam ranksep 30
+
+' === Authentication & User Services Implementation ===
+package "Authentication & User Services Implementation" {
+    class AccountActivationServiceImpl implements AccountActivationService
+    class LoginServiceImpl implements LoginService
+    class RegisterServiceImpl implements RegisterService
+    class UserServiceImpl implements UserService
+    class UserDetailsServiceImpl implements UserDetailsService
+    class RecoverPasswordServiceImpl implements RecoverPasswordService
+}
+
+' === Event & Content Services Implementation ===
+package "Event & Content Services Implementation" {
+    class EventServiceImpl implements EventService
+    class EventLayoutServiceImpl implements EventLayoutService
+    class EventRatingServiceImpl implements EventRatingService
+    class EventImgServiceImpl implements EventImgService
+    class CategoryServiceImpl implements CategoryService
+    class CategoryEventServiceImpl implements CategoryEventService
+}
+
+' === Location & Geography Services Implementation ===
+package "Location & Geography Services Implementation" {
+    class AddressServiceImpl implements AddressService
+    class LocationServiceImpl implements LocationService
+    class CityServiceImpl implements CityService
+    class DepartmentServiceImpl implements DepartmentService
+}
+
+' === Ticket & Seat Services Implementation ===
+package "Ticket & Seat Services Implementation" {
+    class TicketServiceImpl implements TicketService
+    class SeatServiceImpl implements SeatService
+    class SectionServiceImpl implements SectionService
+    class SectionNameServiceImpl implements SectionNameService
+}
+
+' === Notification Services Implementation ===
+package "Notification Services Implementation" {
+    class NotificationServiceImpl implements NotificationService
+    class NotificationUserServiceImpl implements NotificationUserService
+    class OrganizerPetitionServiceImpl implements OrganizerPetitionService
+}
+
+' Relationships
+EventImgServiceImpl --> StorageService : storageService
+
+@enduml

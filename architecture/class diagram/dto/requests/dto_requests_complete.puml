@@ -1,0 +1,63 @@
+@startuml Complete DTO Requests Class Diagram
+
+class ChangePasswordDto {
+    - String oldPassword
+    - String newPassword
+    + ChangePasswordDto()
+    + ChangePasswordDto(String, String)
+    + String getOldPassword()
+    + void setOldPassword(String)
+    + String getNewPassword()
+    + void setNewPassword(String)
+}
+
+class ForgotPasswordDto {
+    - String email
+    + ForgotPasswordDto()
+    + String getEmail()
+    + void setEmail(String)
+}
+
+class RequestLoginDTO {
+    - String username
+    - String password
+    - String email
+    - User userID
+    + RequestLoginDTO()
+    + RequestLoginDTO(String, String, String, User)
+    + String getUsername()
+    + void setUsername(String)
+    + String getPassword()
+    + void setPassword(String)
+    + String getEmail()
+    + void setEmail(String)
+    + User getUserID()
+    + void setUserID(User)
+}
+
+class ResetPasswordDTO {
+    - String token
+    - String newPassword
+    + ResetPasswordDTO()
+    + ResetPasswordDTO(String, String)
+    + String getToken()
+    + void setToken(String)
+    + String getNewPassword()
+    + void setNewPassword(String)
+}
+
+class TokenInfo {
+    - int idRecoverPassword
+    - String token
+    + TokenInfo()
+    + TokenInfo(int, String)
+    + int getIdRecoverPassword()
+    + void setIdRecoverPassword(int)
+    + String getToken()
+    + void setToken(String)
+}
+
+' Relationships
+RequestLoginDTO --> User : userID
+
+@enduml

@@ -363,10 +363,141 @@ class EventImgResponseDto {
     + void setOrder(int)
 }
 
+class ActivationCodeEmailDto {
+    - String to
+    - String activationCode
+    - String userFullName
+    + ActivationCodeEmailDto()
+    + ActivationCodeEmailDto(String, String, String)
+    + String getTo()
+    + void setTo(String)
+    + String getActivationCode()
+    + void setActivationCode(String)
+    + String getUserFullName()
+    + void setUserFullName(String)
+}
+
+class ChangePasswordDto {
+    - String oldPassword
+    - String newPassword
+    + ChangePasswordDto()
+    + ChangePasswordDto(String, String)
+    + String getOldPassword()
+    + void setOldPassword(String)
+    + String getNewPassword()
+    + void setNewPassword(String)
+}
+
+class ForgotPasswordDto {
+    - String email
+    + ForgotPasswordDto()
+    + String getEmail()
+    + void setEmail(String)
+}
+
+class RequestLoginDTO {
+    - String username
+    - String password
+    - String email
+    - User userID
+    + RequestLoginDTO()
+    + RequestLoginDTO(String, String, String, User)
+    + String getUsername()
+    + void setUsername(String)
+    + String getPassword()
+    + void setPassword(String)
+    + String getEmail()
+    + void setEmail(String)
+    + User getUserID()
+    + void setUserID(User)
+}
+
+class ResetPasswordDTO {
+    - String token
+    - String newPassword
+    + ResetPasswordDTO()
+    + ResetPasswordDTO(String, String)
+    + String getToken()
+    + void setToken(String)
+    + String getNewPassword()
+    + void setNewPassword(String)
+}
+
+class TokenInfo {
+    - int idRecoverPassword
+    - String token
+    + TokenInfo()
+    + TokenInfo(int, String)
+    + int getIdRecoverPassword()
+    + void setIdRecoverPassword(int)
+    + String getToken()
+    + void setToken(String)
+}
+
+class ResponseDto<T> {
+    - boolean success
+    - String message
+    - T data
+    + ResponseDto()
+    + ResponseDto(boolean, String)
+    + ResponseDto(boolean, String, T)
+    + static <T> ResponseDto<T> ok(String, T)
+    + static <T> ResponseDto<T> ok(T)
+    + static <T> ResponseDto<T> ok(String)
+    + static <T> ResponseDto<T> error(String)
+    + static <T> ResponseDto<T> error(String, T)
+    + boolean isSuccess()
+    + void setSuccess(boolean)
+    + String getMessage()
+    + void setMessage(String)
+    + T getData()
+    + void setData(T)
+}
+
+class ResponseEvent {
+    - String eventNameOld
+    + ResponseEvent()
+    + ResponseEvent(String)
+    + String getEventNameOld()
+    + void setEventNameOld(String)
+}
+
+class ResponseEventSearch {
+    - String eventName
+    - LocalDate startDate
+    - LocalDate finishDate
+    - int status
+    + ResponseEventSearch()
+    + ResponseEventSearch(String, LocalDate, LocalDate, int)
+    + String getEventName()
+    + void setEventName(String)
+    + LocalDate getStartDate()
+    + void setStartDate(LocalDate)
+    + LocalDate getFinishDate()
+    + void setFinishDate(LocalDate)
+    + int getStatus()
+    + void setStatus(int)
+}
+
+class ResponseLogin {
+    - String token
+    - Integer userID
+    - String role
+    + ResponseLogin()
+    + ResponseLogin(String, Integer, String)
+    + String getToken()
+    + void setToken(String)
+    + Integer getUserID()
+    + void setUserID(Integer)
+    + String getRole()
+    + void setRole(String)
+}
+
 ' Relationships
 EventDto --> User : userID
 EventDto --> Location : locationID
 EventLayoutDto --> Event : eventID
 RecoverPasswordDto --> User : userID
+RequestLoginDTO --> User : userID
 
 @enduml

@@ -1,0 +1,21 @@
+@startuml Complete Service JWT Class Diagram
+
+class jwtService {
+    - String SECRET_KEY
+    + String generateToken(Login)
+    + String generateToken(Map<String, Object>, UserDetails)
+    + String getUsernameFromToken(String)
+    + Integer getUserIDFromToken(String)
+    + String getFullNameFromToken(String)
+    + String getEmailFromToken(String)
+    + String getRoleFromToken(String)
+    + boolean isTokenValid(String, UserDetails)
+    + boolean isTokenExpired(String)
+    + String refreshToken(String, UserDetails)
+    - Key getKey()
+    - Date extractExpiration(String)
+    - Claims extractAllClaims(String)
+    + <T> T extractClaim(String, Function<Claims, T>)
+}
+
+@enduml
