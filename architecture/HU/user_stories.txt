@@ -1,4 +1,4 @@
-# Historias de Usuario para TuEvento
+# Historias de Usuario
 
 ## Autenticación y Registro
 1. Como alguien nuevo en la plataforma, quiero crear una cuenta de manera sencilla y rápida para empezar a explorar eventos emocionantes.
