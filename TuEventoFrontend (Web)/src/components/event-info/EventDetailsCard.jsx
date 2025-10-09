@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const EventDetailsCard = ({
   event,
@@ -8,6 +8,7 @@ const EventDetailsCard = ({
   checkSession,
   handleShowMap
 }) => {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   return (
     <div className="grid md:grid-cols-2 gap-8 mb-12">
 
@@ -24,26 +25,16 @@ const EventDetailsCard = ({
           <div><strong>Descripción:</strong>
             {event?.description && event.description.length > 100 ? (
               <>
-                {event.description.substring(0, 100)}...
+                {isDescriptionExpanded ? event.description : `${event.description.substring(0, 100)}...`}
                 <button
-                  onClick={() => {/* TODO: handle expand */}}
+                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
                   className="text-purple-200 hover:text-purple-100 ml-2 underline"
                 >
-                  Ver más
+                  {isDescriptionExpanded ? 'Ver menos' : 'Ver más'}
                 </button>
               </>
             ) : (
-              <>
-                {event.description}
-                {event.description && event.description.length > 100 && (
-                  <button
-                    onClick={() => {/* TODO: handle collapse */}}
-                    className="text-purple-200 hover:text-purple-100 ml-2 underline"
-                  >
-                    Ver menos
-                  </button>
-                )}
-              </>
+              event.description
             )}
           </div>
           <div><strong>Fecha de Inicio:</strong> {event?.startDate ? new Date(event.startDate).toLocaleDateString() : 'No definida'}</div>
@@ -76,7 +67,7 @@ const EventDetailsCard = ({
               <div key={ticket.id || index} className="flex items-center justify-between bg-gray-800 p-4 rounded-lg">
                 <div className="flex items-center gap-4">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-white">${ticket.price || 'N/A'}</span>
+                  <span className="text-white">{ticket.price ? `$${ticket.price}` : ''}</span>
                 </div>
                 <span className="text-white">{ticket.time || `Horario ${index + 1}`}</span>
               </div>
