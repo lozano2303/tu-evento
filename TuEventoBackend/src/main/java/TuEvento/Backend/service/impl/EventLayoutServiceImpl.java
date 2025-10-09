@@ -8,6 +8,10 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import TuEvento.Backend.dto.EventLayoutDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
 import TuEvento.Backend.model.Event;
@@ -19,11 +23,43 @@ import TuEvento.Backend.service.EventLayoutService;
 @Service
 public class EventLayoutServiceImpl implements EventLayoutService {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Autowired
     private EventLayoutRepository eventLayoutRepository;
 
     @Autowired
     private EventRepository eventRepository;
+
+    // Función para sanitizar strings eliminando caracteres de control
+    private String sanitizeString(String str) {
+        if (str == null) return null;
+        // Reemplazar caracteres de control con espacios
+        return str.replaceAll("[\\x00-\\x1F\\x7F-\\x9F\\u2000-\\u200F\\u2028-\\u202F\\u205F-\\u206F]", " ").trim();
+    }
+
+    // Función recursiva para sanitizar JsonNode
+    private JsonNode sanitizeJsonNode(JsonNode node) {
+        if (node.isTextual()) {
+            return objectMapper.getNodeFactory().textNode(sanitizeString(node.asText()));
+        } else if (node.isObject()) {
+            ObjectNode objectNode = objectMapper.createObjectNode();
+            node.fields().forEachRemaining(entry -> {
+                String sanitizedKey = sanitizeString(entry.getKey());
+                JsonNode sanitizedValue = sanitizeJsonNode(entry.getValue());
+                objectNode.set(sanitizedKey, sanitizedValue);
+            });
+            return objectNode;
+        } else if (node.isArray()) {
+            com.fasterxml.jackson.databind.node.ArrayNode arrayNode = objectMapper.createArrayNode();
+            node.elements().forEachRemaining(element -> {
+                arrayNode.add(sanitizeJsonNode(element));
+            });
+            return arrayNode;
+        } else {
+            return node;
+        }
+    }
 
     @Override
     @Transactional
@@ -50,7 +86,9 @@ public class EventLayoutServiceImpl implements EventLayoutService {
             // Crear el nuevo layout
             EventLayout eventLayout = new EventLayout();
             eventLayout.setEventID(event);
-            eventLayout.setLayoutData(eventLayoutDto.getLayoutData());
+            // Sanitizar los datos del layout antes de guardar
+            JsonNode sanitizedLayoutData = sanitizeJsonNode(eventLayoutDto.getLayoutData());
+            eventLayout.setLayoutData(sanitizedLayoutData);
             eventLayout.setCreatedAt(eventLayoutDto.getCreatedAt() != null ?
                 eventLayoutDto.getCreatedAt() : LocalDateTime.now());
 
@@ -136,7 +174,9 @@ public class EventLayoutServiceImpl implements EventLayoutService {
 
             // Actualizar los datos
             if (eventLayoutDto.getLayoutData() != null) {
-                layout.setLayoutData(eventLayoutDto.getLayoutData());
+                // Sanitizar los datos del layout antes de guardar
+                JsonNode sanitizedLayoutData = sanitizeJsonNode(eventLayoutDto.getLayoutData());
+                layout.setLayoutData(sanitizedLayoutData);
             }
 
             // No actualizar createdAt, mantener el original
