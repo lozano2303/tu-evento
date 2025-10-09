@@ -1,3 +1,4 @@
+
 import { useRef, useState, useEffect, useCallback } from "react"
 import CanvasElement from "./CanvasElement"
 import useDragAndDrop from "../hooks/useDragAndDrop.js"
@@ -419,7 +420,7 @@ const DrawingCanvas = ({
     // Crear nuevo elemento
     setStartPoint(pos)
 
-    if (["zone", "section", "seatRow", "chair", "door", "exit", "stage", "field", "bleacher"].includes(activeTool)) {
+    if (["zone", "section", "seatRow", "chair", "courtesyChair", "door", "exit", "stage", "field", "bleacher"].includes(activeTool)) {
       const newEl = {
         id: Date.now(),
         type: activeTool,

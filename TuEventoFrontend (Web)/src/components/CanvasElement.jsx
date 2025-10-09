@@ -301,6 +301,7 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
       }
 
       case "chair": {
+        const isCourtesy = element.isCourtesy;
         return (
           <g data-element-id={element.id} transform={transform} {...baseProps}>
             <rect
@@ -309,7 +310,8 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
               width={ELEMENT_CONSTANTS.CHAIR_SIZE}
               height={ELEMENT_CONSTANTS.CHAIR_SIZE}
               fill="transparent"
-              stroke="none"
+              stroke={isCourtesy ? "#fbbf24" : "none"}
+              strokeWidth={isCourtesy ? 2 : 0}
               pointerEvents="auto"
             />
             <image
@@ -319,7 +321,31 @@ const CanvasElement = ({ element, isSelected, onSelect, onDelete, onUpdate, unit
               width={ELEMENT_CONSTANTS.CHAIR_SIZE}
               height={ELEMENT_CONSTANTS.CHAIR_SIZE}
               preserveAspectRatio="xMidYMid meet"
+              opacity={isCourtesy ? 0.8 : 1}
             />
+            {isCourtesy && (
+              <circle
+                cx={element.x + ELEMENT_CONSTANTS.CHAIR_SIZE / 3}
+                cy={element.y - ELEMENT_CONSTANTS.CHAIR_SIZE / 3}
+                r={8}
+                fill="#fbbf24"
+                stroke="#f59e0b"
+                strokeWidth={1}
+              />
+            )}
+            {isCourtesy && (
+              <text
+                x={element.x + ELEMENT_CONSTANTS.CHAIR_SIZE / 3}
+                y={element.y - ELEMENT_CONSTANTS.CHAIR_SIZE / 3 + 2}
+                textAnchor="middle"
+                fontSize="10"
+                fontWeight="bold"
+                fill="white"
+                pointerEvents="none"
+              >
+                ★
+              </text>
+            )}
             {renderLabelElement(element.x, element.y + ELEMENT_CONSTANTS.CHAIR_SIZE / 2 + 10)}
           </g>
         );

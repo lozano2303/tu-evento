@@ -69,16 +69,15 @@ export default function Navbar() {
       return;
     }
 
-    // Verificar si es organizador
-    const isOrganizer = userData.organizer;
-    if (!isOrganizer) {
-      // No es organizador, ir a solicitud
+    // Verificar si es organizador o admin
+    const isOrganizerOrAdmin = userData.organizer || userData.role === 'ADMIN' || userData.email === 'atuevento72@gmail.com';
+    if (isOrganizerOrAdmin) {
+      // Es organizador o admin, ir a gestión de eventos
+      navigate('/event-management');
+    } else {
+      // No es organizador ni admin, ir a solicitud
       navigate('/organizer-petition');
-      return;
     }
-
-    // Es organizador, ir a gestión de eventos
-    navigate('/event-management');
   };
 
   return (
@@ -92,13 +91,15 @@ export default function Navbar() {
         <div className="hidden md:flex space-x-6 text-white">
           <Link to="/landingPage" className="hover:text-purple-400 transition-colors">Inicio</Link>
           <Link to="/nosotros" className="hover:text-purple-400 transition-colors">Nosotros</Link>
-          <button
-            onClick={handleCreateClick}
-            className="hover:text-purple-400 transition-colors bg-transparent border-none cursor-pointer"
-          >
-            <Plus className="w-4 h-4 inline mr-1" />
-            Crear
-          </button>
+          {userData && (
+            <button
+              onClick={handleCreateClick}
+              className="hover:text-purple-400 transition-colors bg-transparent border-none cursor-pointer"
+            >
+              <Plus className="w-4 h-4 inline mr-1" />
+              {(userData.organizer || userData.role === 'ADMIN' || userData.email === 'atuevento72@gmail.com') ? "Crear" : "Enviar solicitud"}
+            </button>
+          )}
           <Link to="/events" className="hover:text-purple-400 transition-colors">Eventos</Link>
         </div>
 
