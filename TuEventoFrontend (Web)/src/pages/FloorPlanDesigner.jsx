@@ -761,7 +761,8 @@ const FloorPlanDesignerInner = () => {
       const newEl = {
         ...el,
         id: nanoid(),
-        rotation: el.rotation || 0
+        rotation: el.rotation || 0,
+        status: el.type === 'chair' ? true : el.status
       };
       elementsToAdd = [newEl];
     }
@@ -1243,7 +1244,7 @@ const FloorPlanDesignerInner = () => {
           row: chair.row || 'A',
           x: Math.round(chair.x),
           y: Math.round(chair.y),
-          status: (chair.status === 'AVAILABLE' || chair.status === true) ? "AVAILABLE" : "OCCUPIED"
+          status: "AVAILABLE"
         };
 
         const seatResult = await createSeat(seatData);
@@ -1278,7 +1279,7 @@ const FloorPlanDesignerInner = () => {
                 row: chairElement.row || 'A',
                 x: Math.round(chairElement.x),
                 y: Math.round(chairElement.y),
-                status: (chairElement.status === 'AVAILABLE' || chairElement.status === true) ? "AVAILABLE" : "OCCUPIED"
+                status: "AVAILABLE"
               };
 
               const updateResult = await updateSeat(existingSeat.id, updateData);
@@ -1335,7 +1336,7 @@ const FloorPlanDesignerInner = () => {
                 row: seatPos.row || 'A',
                 x: Math.round(seatPos.x),
                 y: Math.round(seatPos.y),
-                status: seatPos.status === 'AVAILABLE' || seatPos.status === true
+                status: "AVAILABLE"
               };
 
               const updateResult = await updateSeat(existingSeat.id, updateData);
@@ -1356,7 +1357,7 @@ const FloorPlanDesignerInner = () => {
                 row: seatPos.row || 'A',
                 x: Math.round(seatPos.x),
                 y: Math.round(seatPos.y),
-                status: (seatPos.status === 'AVAILABLE' || seatPos.status === true) ? "AVAILABLE" : "OCCUPIED"
+                status: "AVAILABLE"
               };
 
               const seatResult = await createSeat(seatData);

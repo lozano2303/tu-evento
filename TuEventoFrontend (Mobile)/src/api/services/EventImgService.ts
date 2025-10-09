@@ -1,5 +1,5 @@
 // Servicio para manejar llamadas API relacionadas con imágenes de eventos
-const API_BASE_URL = 'http://192.168.0.25:8080/api/v1';
+const API_BASE_URL = 'http://192.168.0.36:8080/api/v1';
 
 export const EventImgService = {
   // Obtener todos los eventos (sin token para acceso público)
