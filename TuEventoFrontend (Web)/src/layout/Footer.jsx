@@ -7,7 +7,7 @@ export default function Footer() {
     <footer className="bg-gray-900 border-t border-gray-700 py-8">
       <div className="max-w-6xl mx-auto px-4 text-center">
         <div className="flex items-center justify-center space-x-2 mb-4">
-          <Calendar className="w-6 h-6 text-purple-500" />
+          <img src="/src/assets/images/logo2.jpg" alt="Logo" className="w-6 h-6" />
           <span className="text-lg font-semibold text-white">Tu Evento</span>
         </div>
         <p className="text-gray-400 text-sm">

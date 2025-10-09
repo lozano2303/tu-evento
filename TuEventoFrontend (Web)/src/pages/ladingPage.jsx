@@ -1,4 +1,4 @@
-import { Calendar, Users, Gift, Smartphone, Globe, CheckCircle, X, Download } from 'lucide-react';
+import { Users, Gift, Smartphone, Globe, CheckCircle, X, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getUserById } from '../services/Login.js';

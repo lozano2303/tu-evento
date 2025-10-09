@@ -85,7 +85,7 @@ export default function Navbar() {
     <header className="bg-gray-800 p-4">
       <nav className="max-w-6xl mx-auto flex items-center justify-between">
         <div className="flex items-center space-x-2 -translate-x-4">
-          <Calendar className="w-8 h-8 text-purple-500" />
+          <img src="/src/assets/images/logo2.jpg" alt="Logo" className="w-8 h-8" />
           <span className="text-xl font-bold text-white">Tu Evento</span>
         </div>
 
