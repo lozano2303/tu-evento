@@ -619,38 +619,6 @@ const FloorPlanDesignerInner = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [confirmMessage, setConfirmMessage] = useState('');
-  const [onConfirmAction, setOnConfirmAction] = useState(null);
-  const [onCancelAction, setOnCancelAction] = useState(null);
-
-  // Función para determinar el tipo de selección actual
-  const getSelectionType = () => {
-    const chairs = Array.from(selectedChairsForSection).map(id => elements.find(el => el.id === id));
-    const positions = Array.from(selectedSeatPositionsForSection).map(key => {
-      const [seatRowId, seatIndex] = key.split('-');
-      const seatRow = elements.find(el => el.id === seatRowId);
-      return seatRow?.seatPositions?.[seatIndex];
-    });
-
-    const allElements = [...chairs, ...positions].filter(Boolean);
-
-    if (allElements.length === 0) return 'empty';
-
-    const hasCourtesy = allElements.some(el => el.isCourtesy);
-    const hasNormal = allElements.some(el => !el.isCourtesy);
-
-    if (hasCourtesy && hasNormal) return 'mixed';
-    if (hasCourtesy) return 'courtesy';
-    return 'normal';
-  };
-
-  const showConfirm = (message, onConfirm, onCancel = null) => {
-    setConfirmMessage(message);
-    setOnConfirmAction(() => onConfirm);
-    setOnCancelAction(() => onCancel);
-    setShowConfirmModal(true);
-  };
 
 
   // Load existing layout for the event when component mounts
@@ -2774,14 +2742,8 @@ const FloorPlanDesignerInner = () => {
                       .find(section => section.meta?.label === sectionNameLabel);
 
                     if (existingSectionWithSameName) {
-                      // Permitir mismo nombre si una es de cortesía y la otra normal
-                      const existingIsCourtesy = existingSectionWithSameName.meta?.hasCourtesyChairs;
-                      if (existingIsCourtesy === hasAnyCourtesy) {
-                        setErrorMessage(`Ya existe una sección con el nombre "${sectionNameLabel}" en el diseño actual.\n\nPor favor selecciona un nombre diferente o elimina la sección existente primero.`);
-                        setShowErrorModal(true);
-                        return;
-                      }
-                      // Si una es cortesía y la otra normal, permitir (son secciones diferentes)
+                      alert(`Ya existe una sección con el nombre "${sectionNameLabel}" en el diseño actual.\n\nPor favor selecciona un nombre diferente o elimina la sección existente primero.`);
+                      return;
                     }
 
                     // Calcular bounding box de todas las sillas seleccionadas
@@ -2993,46 +2955,21 @@ const FloorPlanDesignerInner = () => {
 
                   const confirmMessage = `Esta silla ya pertenece a la sección "${sectionName}" ${message}.\n\n¿Quieres mover esta silla a la nueva sección? La silla será removida de "${sectionName}" y agregada a la sección actual.`;
 
-                  showConfirm(confirmMessage, () => {
-                    // Si confirma, verificar si no crea mezcla y proceder con la selección
-                    const chair = elements.find(el => el.id === chairId);
-                    const chairType = chair?.isCourtesy ? 'courtesy' : 'normal';
-                    const currentType = getSelectionType();
+                  if (!window.confirm(confirmMessage)) {
+                    return;
+                  }
 
-                    if (currentType === 'empty' || currentType === chairType) {
-                      const newSelected = new Set(selectedChairsForSection);
-                      if (newSelected.has(chairId)) {
-                        newSelected.delete(chairId);
-                      } else {
-                        newSelected.add(chairId);
-                      }
-                      setSelectedChairsForSection(newSelected);
-                    } else {
-                      setErrorMessage('❌ No puedes mezclar sillas normales con sillas de cortesía.\n\nSelecciona solo sillas del mismo tipo.');
-                      setShowErrorModal(true);
-                    }
-                  });
-                  return;
+                  // Si confirma, proceder con la selección (la silla será movida)
                 }
               }
 
-              // Verificar si no crea mezcla antes de seleccionar
-              const chair = elements.find(el => el.id === chairId);
-              const chairType = chair?.isCourtesy ? 'courtesy' : 'normal';
-              const currentType = getSelectionType();
-
-              if (currentType === 'empty' || currentType === chairType) {
-                const newSelected = new Set(selectedChairsForSection);
-                if (newSelected.has(chairId)) {
-                  newSelected.delete(chairId);
-                } else {
-                  newSelected.add(chairId);
-                }
-                setSelectedChairsForSection(newSelected);
+              const newSelected = new Set(selectedChairsForSection);
+              if (newSelected.has(chairId)) {
+                newSelected.delete(chairId);
               } else {
-                setErrorMessage('❌ No puedes mezclar sillas normales con sillas de cortesía.\n\nSelecciona solo sillas del mismo tipo.');
-                setShowErrorModal(true);
+                newSelected.add(chairId);
               }
+              setSelectedChairsForSection(newSelected);
             }}
             onSeatPositionSelectForSection={(positionKey) => {
               // Verificar si la posición ya pertenece a alguna sección
@@ -3048,40 +2985,21 @@ const FloorPlanDesignerInner = () => {
 
                   const confirmMessage = `Esta silla ya pertenece a la sección "${sectionName}" ${message}.\n\n¿Quieres mover esta silla a la nueva sección? La silla será removida de "${sectionName}" y agregada a la sección actual.`;
 
-                  showConfirm(confirmMessage, () => {
-                    // Si confirma, verificar si no crea mezcla (posiciones son siempre normales)
-                    const currentType = getSelectionType();
-                    if (currentType === 'empty' || currentType === 'normal') {
-                      const newSelected = new Set(selectedSeatPositionsForSection);
-                      if (newSelected.has(positionKey)) {
-                        newSelected.delete(positionKey);
-                      } else {
-                        newSelected.add(positionKey);
-                      }
-                      setSelectedSeatPositionsForSection(newSelected);
-                    } else {
-                      setErrorMessage('❌ No puedes mezclar sillas normales con sillas de cortesía.\n\nSelecciona solo sillas del mismo tipo.');
-                      setShowErrorModal(true);
-                    }
-                  });
-                  return;
+                  if (!window.confirm(confirmMessage)) {
+                    return;
+                  }
+
+                  // Si confirma, proceder con la selección (la silla será movida)
                 }
               }
 
-              // Verificar si no crea mezcla (posiciones son siempre normales)
-              const currentType = getSelectionType();
-              if (currentType === 'empty' || currentType === 'normal') {
-                const newSelected = new Set(selectedSeatPositionsForSection);
-                if (newSelected.has(positionKey)) {
-                  newSelected.delete(positionKey);
-                } else {
-                  newSelected.add(positionKey);
-                }
-                setSelectedSeatPositionsForSection(newSelected);
+              const newSelected = new Set(selectedSeatPositionsForSection);
+              if (newSelected.has(positionKey)) {
+                newSelected.delete(positionKey);
               } else {
-                setErrorMessage('❌ No puedes mezclar sillas normales con sillas de cortesía.\n\nSelecciona solo sillas del mismo tipo.');
-                setShowErrorModal(true);
+                newSelected.add(positionKey);
               }
+              setSelectedSeatPositionsForSection(newSelected);
             }}
             zoom={zoom}
             setZoom={setZoom}

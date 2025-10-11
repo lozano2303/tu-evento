@@ -1,6 +1,0 @@
-{
-    "java.dependency.packagePresentation": "hierarchical",
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "CodeGPT.apiKey": "Anthropic",
-    "java.compile.nullAnalysis.mode": "automatic"
-}

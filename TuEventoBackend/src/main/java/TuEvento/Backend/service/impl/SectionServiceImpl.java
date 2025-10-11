@@ -10,6 +10,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 import TuEvento.Backend.dto.SectionDto;
 import TuEvento.Backend.dto.responses.ResponseDto;
@@ -27,6 +29,8 @@ import TuEvento.Backend.service.SeatService;
 @Service
 public class SectionServiceImpl implements SectionService {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Autowired
     private SectionRepository sectionRepository;
 
@@ -38,6 +42,13 @@ public class SectionServiceImpl implements SectionService {
 
     @Autowired
     private SeatService seatService;
+
+    // Función para sanitizar strings eliminando caracteres de control
+    private String sanitizeString(String str) {
+        if (str == null) return null;
+        // Reemplazar caracteres de control con espacios
+        return str.replaceAll("[\\x00-\\x1F\\x7F-\\x9F\\u2000-\\u200F\\u2028-\\u202F\\u205F-\\u206F]", " ").trim();
+    }
 
     @Override
     @Transactional
@@ -79,6 +90,10 @@ public class SectionServiceImpl implements SectionService {
         dto.setEventId(section.getEventID().getId());
         dto.setSectionNameID(section.getSectionNameID().getSectionNameID());
         dto.setPrice(section.getPrice().doubleValue());
+        // Sanitizar el nombre de la sección si es necesario
+        if (section.getSectionNameID().getName() != null) {
+            section.getSectionNameID().setName(sanitizeString(section.getSectionNameID().getName()));
+        }
         return dto;
     }
     @Override

@@ -15,19 +15,31 @@ import TuEvento.Backend.repository.SectionNameRepository;
 import TuEvento.Backend.service.SectionNameService;
 import jakarta.transaction.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Service
 public class SectionNameServiceImpl implements SectionNameService {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private SectionNameRepository sectionNameRepository;
 
+    // Función para sanitizar strings eliminando caracteres de control
+    private String sanitizeString(String str) {
+        if (str == null) return null;
+        // Reemplazar caracteres de control con espacios
+        return str.replaceAll("[\\x00-\\x1F\\x7F-\\x9F\\u2000-\\u200F\\u2028-\\u202F\\u205F-\\u206F]", " ").trim();
+    }
+
     private SectionNameDto toDto(SectionName sectionName) {
-        return new SectionNameDto(sectionName.getSectionNameID(), sectionName.getName());
+        String sanitizedName = sanitizeString(sectionName.getName());
+        return new SectionNameDto(sectionName.getSectionNameID(), sanitizedName);
     }
 
     private SectionName toEntity(SectionNameDto sectionNameDto) {
         SectionName sectionName = new SectionName();
-        sectionName.setName(sectionNameDto.getName());
+        sectionName.setName(sanitizeString(sectionNameDto.getName()));
         return sectionName;
     }
 
@@ -80,7 +92,7 @@ public class SectionNameServiceImpl implements SectionNameService {
             }
 
             SectionName sectionName = sectionNameOpt.get();
-            sectionName.setName(sectionNameDto.getName());
+            sectionName.setName(sanitizeString(sectionNameDto.getName()));
 
             sectionNameRepository.save(sectionName);
             return ResponseDto.ok("Nombre de sección actualizado correctamente");
